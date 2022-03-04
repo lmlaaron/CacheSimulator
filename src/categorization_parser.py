@@ -48,7 +48,7 @@ class CategorizationParser:
     #set0['order'] = set0['addr'].rank(method='dense',ascending=False).astype(int)
     #set1 = df[df.set==1]
     #set1['order'] = set1['addr'].rank(method='dense',ascending=False).astype(int)
-    df['order'] = df['addr'].rank(method='min',ascending=False).astype(int)
+    df['order'] = df['addr'].rank(method='dense',ascending=False).astype(int)
     #frames = [set0, set1]
     #result = pd.concat(frames)
     #output = pd.DataFrame(result)
@@ -59,14 +59,16 @@ class CategorizationParser:
     pass
 
   def main_parser(self, pattern):
-    #pattern_v = []
-    #for action in pattern:
-    #  action_verbose = env.parse_action(action)
-    #  pattern_v.append(action_verbose)
-    #pattern_v = self.rename_address(pattern_v)
-    #pattern_v = self.remove_rep(pattern_v)
-    #return pattern_v
-    pass
+
+    for action in pattern :
+      action_parsed = categorization_parser.parse_action(action)
+      pattern_parsed.append(action_parsed)
+
+    df = categorization_parser.convert_dataframe(pattern_parsed)
+    df = categorization_parser.add_setcolumn(df)
+    df = categorization_parser.rename_column(df)
+    output = df.values.tolist()
+    return output
 
 def main(argv): # Defining main function
   filename = argv[1]
@@ -91,6 +93,8 @@ def main(argv): # Defining main function
   df = categorization_parser.rename_column(df)
   
   print(df)
+  output = categorization_parser.main_parser(df)
+  print(output)
 
 if __name__=="__main__": # Using the special variable
     main(sys.argv)
