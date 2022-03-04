@@ -1,15 +1,20 @@
+import cache_guessing_game_env_impl as env
+import sys
 import pandas as pd
 from pandas.core.arrays import numeric
 
-def number_of_set(x):
-  return x%2 #number_of_set = 2
+#def number_of_set(x):
+#  return x%2 #number_of_set = 2
 
   # suppose "dummy" is a dual list of 7 for example. Will be relaced later
 dummy = [[1, 0, 0, 0, 0], [3, 0, 0, 0, 0], [4, 0, 0, 0, 0], [1, 0, 0, 0, 0], [5, 0, 0, 0, 0], [0, 0, 1, 0, 0], [3, 0, 0, 0, 0]]
 
-def read_file(): # will read the files in json. I have just left this function blank.
+def read_file(): # will read the files in json. I have just left this function to read 'temp.txt'
 
-  pass
+  f = open('/home/geunbae/CacheSimulator/src/temp.txt', mode='r', encoding='UTF-8')
+  d=f.read()
+  d
+  return d
 
 def parser_action(): # split the input into [(attacker's)addr, is_guess, is_victim, is_flush, victim_addr]
 
