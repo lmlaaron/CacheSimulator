@@ -40,8 +40,10 @@ class CategorizationParser:
     return df
     
 
-  def get_order(self, array): #return order_array
-    pass 
+  def get_order(self, df): #return order_array
+    total_rows = df.count
+    for index in range(total_rows-1, 0, -1):
+    print(df2)
 
   def rename_column(self,df):
     #set0 = df[df.set==0]
@@ -88,7 +90,8 @@ def main(argv): # Defining main function
   df = categorization_parser.convert_dataframe(pattern_parsed)
   df = categorization_parser.add_setcolumn(df)
   print(df)
-  df = categorization_parser.rename_column(df)
+  df = categorization_parser.get_order(df)
+  #df = categorization_parser.rename_column(df)
   
   print(df)
 
