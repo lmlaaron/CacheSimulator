@@ -106,7 +106,7 @@ class CacheGuessingGameEnv(gym.Env):
     self.sh.setFormatter(self.fh_format)
     self.logger.setLevel(logging.INFO)
     if "cache_configs" in env_config:
-      self.logger.info('Load config from JSON')
+      #self.logger.info('Load config from JSON')
       self.configs = env_config["cache_configs"]
     else:
       self.config_file_name = os.path.dirname(os.path.abspath(__file__))+'/../configs/config_simple_L1'
@@ -162,7 +162,7 @@ class CacheGuessingGameEnv(gym.Env):
         2,                                          # whether it is a cflush
       ] * self.window_size
     )
-    print('Initializing...')
+    #print('Initializing...')
     self.l1 = self.hierarchy['cache_1']
     self.current_step = 0
     self.victim_accessed = False
