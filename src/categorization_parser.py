@@ -4,9 +4,9 @@ from cache_guessing_game_env_impl import CacheGuessingGameEnv
 from pandas.core.arrays import numeric
 
 class CategorizationParser:
-  def __init__(self):
-    self.attacker_address_range_max = 8 #not include, the max value of addresses
-    self.number_of_set = 2
+  def __init__(self, number_of_set=2, attacker_address_range_max=8):
+    self.attacker_address_range_max = attacker_address_range_max #not include, the max value of addresses
+    self.number_of_set = number_of_set
 
   def _get_set(self, row): 
     """return set number"""
@@ -92,13 +92,13 @@ class CategorizationParser:
       action_parsed = self.parse_action(action)
       pattern_parsed.append(action_parsed)
     df = self.convert_dataframe(pattern_parsed)
-    print(df)
+    #print(df)
     df = self.add_set_column(df)
     df = self.rename_column(df, 'addr') # rename address
     df = self.rename_column(df, 'set') # rename set
     df = self.remove_rep(df) #remove repeated action
     df = df.drop(columns=['addr', 'set'], axis=1)
-    print(df)
+    #print(df)
     output = df.values.tolist()
     return output
 
