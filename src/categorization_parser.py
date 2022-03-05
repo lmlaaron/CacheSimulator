@@ -8,14 +8,19 @@ class CategorizationParser:
     self.attacker_address_range_max = 8 #not include, the max value of addresses
     self.number_of_set = 2
 
+  def _get_set(self, row): 
+    """return set number"""
+    return row['addr']%self.number_of_set
+
+
   def readfile(self,filename):# python categorization_parser.py temp.txt
     patterns=[]
     f = open(filename, mode='r', encoding='UTF-8')
     lines = f.readlines()
-    for d in lines:
-      d = d.split()
-      d = [int(i) for i in d]
-      patterns.append(d)
+    for l in lines:
+      l = l.split()
+      l = [int(i) for i in l]
+      patterns.append(l)
     return patterns
 
   def parse_action(self, action): 
@@ -29,13 +34,8 @@ class CategorizationParser:
     df.columns =['addr', 'is_guess', 'is_victim', 'is_flush', 'victim_addr']
     return df
 
-  def _get_set(self, row): #return addr%self.number_of_set
-    
-    #df.addr = df.addr%self.number_of_set
-    return row['addr']%self.number_of_set
 
   def add_set_column(self, df):
-    #df['set'] = df.apply(self, get_set(df.addr)) 
     df['set'] = df.apply (lambda row: self._get_set(row), axis=1)
     return df
     
@@ -65,6 +65,25 @@ class CategorizationParser:
   def remove_rep(self, df): # return pattern.drop_duplicates()
     return df.drop_duplicates()
 
+  def Is_same_action(self, action1, action2):
+    """ action format [is_guess,  is_victim,  is_flush,  victim_addr,  addr_renamed,  set_renamed]"""
+    if action1[1] == action2[1] and action1[1] == 1: # If both are Is_victim==true, ignore rest of the columns
+      return True
+    if action1[0] == action2[0] and action1[0] == 1: # If both are Is_guess==true, ignore rest of the columns
+      return True
+    if action1[4] == action2[4] and action1[5]== action2[5]: # else match the address and set
+      return True
+    return False
+
+  def Is_same_base_pattern(self,pattern1, pattern2):
+    """ return whether two patterns after renaming is the same"""
+    if len(pattern1) != len(pattern2):
+      return False
+    for i in range(len(pattern1)):
+      if self.Is_same_action(pattern1[i],pattern2[i]) == False:
+        return False
+    return True
+
   def main_parser(self, pattern):
     """output a pattern after renaming,
     format [is_guess,  is_victim,  is_flush,  victim_addr,  addr_renamed,  set_renamed]"""
@@ -73,11 +92,13 @@ class CategorizationParser:
       action_parsed = self.parse_action(action)
       pattern_parsed.append(action_parsed)
     df = self.convert_dataframe(pattern_parsed)
+    print(df)
     df = self.add_set_column(df)
     df = self.rename_column(df, 'addr') # rename address
     df = self.rename_column(df, 'set') # rename set
     df = self.remove_rep(df) #remove repeated action
     df = df.drop(columns=['addr', 'set'], axis=1)
+    print(df)
     output = df.values.tolist()
     return output
 
