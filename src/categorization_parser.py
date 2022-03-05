@@ -48,7 +48,7 @@ class CategorizationParser:
       if order[value] == -1:
         order[value] = cnt
         cnt = cnt + 1
-    print(f'order = {order}')
+    #print(f'order = {order}')
     return order
 
   def _get_order(self, row, col_name, order): 
@@ -90,9 +90,9 @@ def main(argv): # Defining main function
   print(patterns)
   
   base_pattern = categorization_parser.main_parser(patterns[0])
+  print(base_pattern)
   #for pattern in patterns :
   #  base_pattern = categorization_parser.main_parser(pattern)
-  
 
 if __name__=="__main__": # Using the special variable
     main(sys.argv)
