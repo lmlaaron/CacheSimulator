@@ -62,15 +62,38 @@ class CategorizationParser:
     df[new_col_name] = df.apply (lambda row: self._get_order(row, col_name, order), axis=1)
     return df
 
-  def remove_rep(self, df): # return pattern.drop_duplicates()
-    return df.drop_duplicates()
+  def Is_same_action_df(self, action1, action2):
+    if action1['is_victim'] == action2['is_victim'] and action1['is_victim'] == 1: # If both are Is_victim==true, ignore rest of the columns
+      return True
+    if action1['is_victim'] != action2['is_victim']:
+      return False
+    if action1['is_guess'] == action2['is_guess'] and action1['is_guess'] == 1: # If both are Is_guess==true, ignore rest of the columns
+      return True
+    if action1['is_guess'] != action2['is_guess']:
+      return False
+    if action1['addr_renamed'] == action2['addr_renamed'] and action1['set_renamed']== action2['set_renamed']: # else match the address and set
+      return True
+    return False
 
-  def Is_same_action(self, action1, action2):
+  def remove_rep(self, df): 
+    """remove contiguous repeated access"""
+    for index_i, row in df.iterrows():
+      if index_i != 0:
+        if self.Is_same_action_df(last_row, row):
+          df = df.drop(index=index_i, axis=0)
+      last_row=row
+    return df
+
+  def Is_same_action_list(self, action1, action2):
     """ action format [is_guess,  is_victim,  is_flush,  victim_addr,  addr_renamed,  set_renamed]"""
     if action1[1] == action2[1] and action1[1] == 1: # If both are Is_victim==true, ignore rest of the columns
       return True
+    if action1[1] != action2[1]: #  Is_victim is different
+      return False
     if action1[0] == action2[0] and action1[0] == 1: # If both are Is_guess==true, ignore rest of the columns
       return True
+    if action1[0] == action2[0]: # Is_guess is different 
+      return False
     if action1[4] == action2[4] and action1[5]== action2[5]: # else match the address and set
       return True
     return False
@@ -80,7 +103,7 @@ class CategorizationParser:
     if len(pattern1) != len(pattern2):
       return False
     for i in range(len(pattern1)):
-      if self.Is_same_action(pattern1[i],pattern2[i]) == False:
+      if self.Is_same_action_list(pattern1[i],pattern2[i]) == False:
         return False
     return True
 
@@ -92,13 +115,14 @@ class CategorizationParser:
       action_parsed = self.parse_action(action)
       pattern_parsed.append(action_parsed)
     df = self.convert_dataframe(pattern_parsed)
-    #print(df)
+    print(df)
     df = self.add_set_column(df)
     df = self.rename_column(df, 'addr') # rename address
     df = self.rename_column(df, 'set') # rename set
+    print(df)
     df = self.remove_rep(df) #remove repeated action
     df = df.drop(columns=['addr', 'set'], axis=1)
-    #print(df)
+    print(df)
     output = df.values.tolist()
     return output
 
