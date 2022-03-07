@@ -37,6 +37,7 @@ if os.path.isfile(config_path):
     #exit(0) 
     with open(config_path, 'rb') as handle:
         config["env_config"] = pickle.load(handle)
+    print(config["env_config"])
 else:
     print('env.config not found! using defualt one')
     print('be careful to that the env.cofnig matches the env which generate the checkpoint')
@@ -89,7 +90,7 @@ def replay_agent():
     num_correct = 0
     pattern_dict = {}
     for victim_addr in range(env.victim_address_min, env.victim_address_max + 1):
-        for repeat in range(1):#000):
+        for repeat in range(10):
             obs = env.reset(victim_address=victim_addr)
             #env._randomize_cache()#"union")#"victim")
             action_buffer = []
@@ -134,6 +135,7 @@ def replay_agent():
                 correct = False
             num_guess += 1
             pattern_buffer.append((victim_addr, action_buffer, correct))
+
             if pattern_dict.get((victim_addr, tuple(action_buffer), correct)) == None:
                 pattern_dict[(victim_addr, tuple(action_buffer), correct)] = 1
             else:
@@ -142,10 +144,17 @@ def replay_agent():
             plt.ylabel('logp')
             plt.legend(legend)
             #plt.show()
-
+            
+    secret = open('victim.txt', 'a') 
     with open('temp.txt', 'a') as out:
-        pprint.pprint(pattern_buffer, stream=out)
-    
+        for pattern in pattern_buffer:
+            trajectory = pattern[1]
+            for point in trajectory:    
+                print(point[0], end=' ', file=out)
+            
+            print(pattern[0], file = secret)
+            print(' ', file = out)
+                
     print( "overall accuray " + str(1.0 * num_correct / num_guess) )
     pprint.pprint(pattern_dict)
     print("num distinct patterns "+ str(len(pattern_dict)))
