@@ -124,6 +124,7 @@ class CacheGuessingGameEnv(gym.Env):
       self.window_size = window_size
     self.hierarchy = build_hierarchy(self.configs, self.logger)
     self.state = [0, self.cache_size, 0, 0] * self.window_size
+    #self.state = [0, self.cache_size, 0, 0, 0] * self.window_size
     self.attacker_address_min = attacker_addr_s
     self.attacker_address_max = attacker_addr_e
     self.attacker_address_space = range(self.attacker_address_min,
@@ -147,9 +148,23 @@ class CacheGuessingGameEnv(gym.Env):
     ####  self.cache_size       #what is the guess of the victim's access
     ####  ])
     
-    self.action_space = spaces.Discrete(
-      len(self.attacker_address_space) * 2 * 2 * 2 * len(self.victim_address_space)
-    )
+    ######self.action_space = spaces.Discrete(
+    ######  len(self.attacker_address_space) * 2 * 2 * 2 * len(self.victim_address_space)
+    ######)
+    # using tightened action space
+    if self.flush_inst == False:
+      # one-hot encoding
+      # | attacker_addr | v | victim_guess_addr |
+      self.action_space = spaces.Discrete(
+        len(self.attacker_address_space) + 1 + len(self.victim_address_space)
+      )
+    else:
+      # one-hot encoding
+      # | attacker_addr | flush_attacker_addr | v | victim_guess_addr |
+      self.action_space = spaces.Discrete(
+        2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space)
+      )
+
 
     # let's book keep all obvious information in the observation space 
     # since the agent is dumb
@@ -159,7 +174,7 @@ class CacheGuessingGameEnv(gym.Env):
         len(self.attacker_address_space) + 1,       #attacker accessed address
         self.window_size + 2,                       #current steps
         2,                                          #whether the victim has accessed yet
-        2,                                          # whether it is a cflush
+        #2,                                          # whether it is a cflush
       ] * self.window_size
     )
     #print('Initializing...')
@@ -190,13 +205,25 @@ class CacheGuessingGameEnv(gym.Env):
     #temp_action.append(int(action / self.cache_size) % 2 )              
     #temp_action.append(action %  self.cache_size)                      
     #action = temp_action
-    
-    action = self.parse_action(action)
+
+    ###if self.flush_inst == False:
+    ###  self.action_space = spaces.Discrete(
+    ###    len(self.attacker_address_space) + 1 + len(self.victim_address_space)
+    ###  )
+    ###else:
+    ###  self.action_space = spaces.Discrete(
+    ###    2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space)
+    ###  )
+
+    #action = self.parse_action(action)
+    action = self.parse_action_degenerate(action, self.flush_inst)
+
     address = str(action[0]+self.attacker_address_min)                # attacker address in attacker_address_space
     is_guess = action[1]                                              # check whether to guess or not
     is_victim = action[2]                                             # check whether to invoke victim
     is_flush = action[3]                                              # check whether to flush
     victim_addr = str(action[4] + self.victim_address_min)            # victim address
+    
     if self.current_step > self.window_size : # if current_step is too long, terminate
       r = 2 #
       self.vprint("length violation!")
@@ -270,8 +297,11 @@ class CacheGuessingGameEnv(gym.Env):
       victim_accessed = 1
     else:
       victim_accessed = 0
-    self.state = [r, action[0], current_step, victim_accessed, is_flush] + self.state 
-    self.state = self.state[0:len(self.state)-5]
+    #self.state = [r, action[0], current_step, victim_accessed, is_flush] + self.state 
+    #self.state = self.state[0:len(self.state)-5]
+    self.state = [r, action[0], current_step, victim_accessed] + self.state 
+    self.state = self.state[0:len(self.state)-4]
+ 
     #self.state = [r, action[0], current_step, victim_accessed]
     
     '''
@@ -294,7 +324,8 @@ class CacheGuessingGameEnv(gym.Env):
     self.hierarchy = build_hierarchy(self.configs, self.logger)
     self.l1 = self.hierarchy['cache_1']
     self._reset(victim_address)  # fake reset
-    self.state = [0, len(self.attacker_address_space), 0, 0, 0] * self.window_size
+    self.state = [0, len(self.attacker_address_space), 0, 0] * self.window_size
+    #self.state = [0, len(self.attacker_address_space), 0, 0, 0] * self.window_size
     self.reset_time = 0
     return np.array(self.state)
 
@@ -403,3 +434,40 @@ class CacheGuessingGameEnv(gym.Env):
     temp_action.append(int(action / self.cache_size) % 2 )              
     temp_action.append(int(action % self.cache_size))                      
     return temp_action
+
+  '''
+  parse the action in the degenerate space (no redundant actions)
+  returns list of 5 elements representing
+  address, is_guess, is_victim, is_flush, victim_addr
+  '''
+  def parse_action_degenerate(self, action, flush_inst):
+    address = 0
+    is_guess = 0
+    is_victim = 0
+    is_flush = 0
+    victim_addr = 0
+    if flush_inst == False:
+      if action < len(self.attacker_address_space):
+        address = action
+      elif action == len(self.attacker_address_space):
+        is_victim = 1
+      else:
+        is_guess = 1
+        victim_addr = action - ( len(self.attacker_address_space) + 1 ) 
+    else:
+      if action < len(self.attacker_address_space):
+        address = action
+      elif action < 2 * len(self.attacker_address_space):
+        address = action - len(self.attacker_address_space) 
+      elif action == 2 * len(self.attacker_address_space):
+        is_victim = 1
+      else:
+        is_guess = 1
+        victim_addr = action - ( 2 * len(self.attacker_address_space) + 1 ) 
+        
+    return [ address, is_guess, is_victim, is_flush, victim_addr ] 
+    ####address = str(action[0]+self.attacker_address_min)                # attacker address in attacker_address_space
+    ####is_guess = action[1]                                              # check whether to guess or not
+    ####is_victim = action[2]                                             # check whether to invoke victim
+    ####is_flush = action[3]                                              # check whether to flush
+    ####victim_addr = str(action[4] + self.victim_address_min) 

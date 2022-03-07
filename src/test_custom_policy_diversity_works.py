@@ -63,11 +63,12 @@ def compute_div_loss(policy: Policy, model: ModelV2,
     values = model.value_function()
     valid_mask = torch.ones_like(values, dtype=torch.bool)
     dist = dist_class(logits, model)
-    log_probs = dist.logp(train_batch[SampleBatch.ACTIONS])#.reshape(-1) 
+    #log_probs = dist.logp(train_batch[SampleBatch.ACTIONS])#.reshape(-1) 
     print('log_probs')
     #print(log_probs)
     divs = []
-    div_metric = nn.KLDivLoss(size_average=False, reduce=False)
+    #div_metric = nn.KLDivLoss(size_average=False, reduce=False)
+    div_metric = nn.KLDivLoss(reduction = 'batchmean')
     #div_metric = nn.CrossEntropyLoss()
     #if len(policy.past_models) > 1:
     #    assert(policy.past_models[0].state_dict() == policy.past_models[1].state_dict())
@@ -83,11 +84,21 @@ def compute_div_loss(policy: Policy, model: ModelV2,
         past_logits, _ = past_model.from_batch(train_batch)
         past_values = past_model.value_function()
         past_valid_mask = torch.ones_like(past_values, dtype=torch.bool)
-        past_dist = dist_class(past_logits, past_model)
-        past_log_probs = past_dist.logp(train_batch[SampleBatch.ACTIONS])#.reshape(-1) 
-        div = math.atan( - policy.timestep_array[idx] + policy.timestep ) * math.exp( ( policy.timestep_array[idx] - policy.timestep ) / policy.timestep_array[idx]) * div_metric(log_probs * train_batch[Postprocessing.ADVANTAGES], past_log_probs* train_batch[Postprocessing.ADVANTAGES])
+        past_dist = dist_class(train_batch[SampleBatch.ACTION_DIST_INPUTS], past_model)
+        div = math.atan( - policy.timestep_array[idx] + policy.timestep ) * math.exp( ( policy.timestep_array[idx] - policy.timestep ) / policy.timestep_array[idx]) * dist.kl(past_dist)
         
-        #div = div_metric(log_probs, past_log_probs) * train_batch[Postprocessing.ADVANTAGES]
+        ###print(div)
+        ###print(dist)
+        ###print(past_dist)
+        ###print(train_batch[SampleBatch.ACTION_DIST_INPUTS])
+        #print(train_batch[SampleBatch.ACTIONS])
+        #print(log_probs)
+        #print(past_log_probs)
+        #print(train_batch[Postprocessing.ADVANTAGES])
+        #print(log_probs * train_batch[Postprocessing.ADVANTAGES])
+        #print(past_log_probs * train_batch[Postprocessing.ADVANTAGES])
+
+
         #div = dist.multi_kl(past_dist) * train_batch[Postprocessing.ADVANTAGES]
         #assert(
         
@@ -100,7 +111,7 @@ def compute_div_loss(policy: Policy, model: ModelV2,
             print('div')
             #print(div)
     
-        div = div.mean(0)
+        div = div.sum().mean(0)
         divs.append(div)
     print('divs')
     #print(divs)
@@ -419,8 +430,8 @@ config = {
     'env_config': {
         'verbose': 1,
         "force_victim_hit": False,
-        'flush_inst': True,
-        "allow_victim_multi_access": True, #False,
+        'flush_inst': False,#True,
+        "allow_victim_multi_access": False, #True, #False,
         "attacker_addr_s": 0,
         "attacker_addr_e": 3,
         "victim_addr_s": 0,
@@ -445,8 +456,8 @@ config = {
     }, 
     #'gamma': 0.9, 
     'num_gpus': 1, 
-    'num_workers': 32, 
-    'num_envs_per_worker': 2, 
+    'num_workers': 1, 
+    'num_envs_per_worker': 1, 
     #'entropy_coeff': 0.001, 
     #'num_sgd_iter': 5, 
     #'vf_loss_coeff': 1e-05, 

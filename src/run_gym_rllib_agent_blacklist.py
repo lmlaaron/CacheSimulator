@@ -10,6 +10,8 @@ import torch.nn as nn
 import numpy as np
 from ray.rllib.models import ModelCatalog
 from ray.rllib.agents.ppo import PPOTrainer
+from ray.rllib.agents.sac import SACTrainer
+import json
 import sys
 import copy
 import torch
@@ -54,6 +56,48 @@ if __name__ == "__main__":
     import sys
     import pickle
     from test_custom_policy_diversity_works import *
+    
+    if len(sys.argv) > 1:
+        config_name = sys.argv[1]
+        print(config_name)
+        f = open(config_name)
+        config = json.load(f)
+        
+        if len(sys.argv) == 5:
+            nset = int(sys.argv[2])
+            nway = int(sys.argv[3])
+            nopt = int(sys.argv[4])
+            config["env_config"]["cache_configs"]["cache_1"]["associativity"] = nway        
+            config["env_config"]["cache_configs"]["cache_1"]["blocks"] = nset * nway
+            config["env_config"]["victim_addr_s"] = 0
+            config["env_config"]["victim_addr_e"] = nset * nway - 1
+            if nopt == 0: # shared
+                config["env_config"]["attacker_addr_s"] = 0
+                config["env_config"]["attacker_addr_e"] = nset * nway - 1
+                config["env_config"]["flush_inst"] = True 
+            elif nopt == 1: # not shared
+                config["env_config"]["attacker_addr_s"] = nset * nway
+                config["env_config"]["attacker_addr_e"] = 2 * nset * nway - 1 
+                config["env_config"]["flush_inst"] = False 
+            elif nopt == 2: # all + clflush allowed
+                config["env_config"]["attacker_addr_s"] = 0
+                config["env_config"]["attacker_addr_e"] = 2 * nset * nway - 1 
+                config["env_config"]["flush_inst"] = False
+            elif nopt == 3: # all + clflush not allowed
+                config["env_config"]["attacker_addr_s"] = 0
+                config["env_config"]["attacker_addr_e"] = 2 * nset * nway - 1 
+                config["env_config"]["flush_inst"] = True 
+            print(config)
+            #exit(0)
+        
+        elif len(sys.argv)!= 2:
+            print("not correct number of argument. Exit!!!")
+            exit(-1)
+ 
+    else:
+        print("(warning) config file not specified! use default configrations!")
+
+
     #tune.run(PPOTrainer, config=config)#config={"env": 'Freeway-v0', "num_gpus":1})
     from ray.tune.logger import pretty_print
     #tune.register_env("cache_guessing_game_env_fix", CacheSimulatorMultiGuessWrapper)
@@ -62,7 +106,9 @@ if __name__ == "__main__":
     #config['num_envs_per_worker']= 2
     env = CacheGuessingGameEnv(config["env_config"])
     #env = CacheSimulatorMultiGuessWrapper(config["env_config"]) 
+    
     trainer = PPOCustomTrainer(config=config)
+    #trainer = SACTrainer(config=config)
     
     def signal_handler(sig, frame):
         print('You pressed Ctrl+C!')
