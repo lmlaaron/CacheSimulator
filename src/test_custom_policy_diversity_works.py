@@ -35,6 +35,7 @@ import math
 sys.path.append("../src")
 torch, nn = try_import_torch()
 from cache_guessing_game_env_impl import *
+from categorization_parser import *
 
 def custom_init(policy: Policy, obs_space: gym.spaces.Space, 
               action_space: gym.spaces.Space, config: TrainerConfigDict)->None:
@@ -264,7 +265,8 @@ from ray.rllib.utils.annotations import override
 
 class CustomPPOTorchPolicy(PPOTorchPolicy):
     def __init__(self, observation_space, action_space, config):
-        self.past_len = 10        
+        self.past_len = 10
+        #self.categorization_parser = CategorizationParser()        
         self.past_models = deque(maxlen =self.past_len)
         #self.past_weights = deque(maxlen= self.past_len)
         self.timestep = 0
@@ -284,7 +286,7 @@ class CustomPPOTorchPolicy(PPOTorchPolicy):
         
         total_loss = PPOTorchPolicy.loss(self, model, dist_class, train_batch)
         #self.past_len
-        div_loss = 0#compute_div_loss(self, model, dist_class, train_batch)
+        div_loss = compute_div_loss(self, model, dist_class, train_batch)
         #div_loss = compute_div_loss_weight(self, copy.deepcopy(self.get_weights()), dist_class, train_batch)
         print('total_loss')
         print(total_loss)
@@ -344,6 +346,7 @@ class CustomPPOTorchPolicy(PPOTorchPolicy):
     #TODO(Mulong): is there an standard initialization condition???
     #def is_same_agent(self, weight1, weight2, env, trainer):
     def is_same_agent(self, model1, model2, env, trainer):
+        categorization_parser = CategorizationParser(env)
         original_state_dict = copy.deepcopy(self.model.state_dict())
         #original_weights = copy.deepcopy(self.get_weights())
         for victim_addr in range(env.victim_address_min, env.victim_address_max + 1):
@@ -352,21 +355,39 @@ class CustomPPOTorchPolicy(PPOTorchPolicy):
             #pp = trainer.workers.local_worker().preprocessors[DEFAULT_POLICY_ID]
             #obs = pp.transform(obs)
             done = False
+            #while done == False:
+            #    self.model.load_state_dict(model1.state_dict())
+            #    #self.set_weights(weight1)
+            #    action1 = trainer.compute_single_action(obs, explore=False) # randomized inference
+            #    self.model.load_state_dict(model2.state_dict())
+            #    #self.set_weights(weight2)
+            #    action2 = trainer.compute_single_action(obs, explore=False) # randomized inference
+            #    if action1 != action2:
+            #        self.model.load_state_dict(original_state_dict) 
+            #        #self.set_weights(original_weights)
+            #        return False
+            #    else:
+            #        action = action1
+            #        obs, reward, done, info = env.step(action)       
+            seq1 = []
             while done == False:
                 self.model.load_state_dict(model1.state_dict())
-                #self.set_weights(weight1)
                 action1 = trainer.compute_single_action(obs, explore=False) # randomized inference
+                seq1.append(action1)
+                obs, reward, done, info = env.step(action1)      
+            
+            seq2 = []
+            while done == False:
                 self.model.load_state_dict(model2.state_dict())
-                #self.set_weights(weight2)
                 action2 = trainer.compute_single_action(obs, explore=False) # randomized inference
-                if action1 != action2:
-                    self.model.load_state_dict(original_state_dict) 
-                    #self.set_weights(original_weights)
-                    return False
-                else:
-                    action = action1
-                    obs, reward, done, info = env.step(action)       
-        
+                seq1.append(action2)
+                obs, reward, done, info = env.step(action2)
+
+            if categorization_parser.is_same_base_pattern(seq1, seq2) == False:
+                return False
+              
+                
+
         self.model.load_state_dict(original_state_dict) 
         #self.set_weights(original_weights)
         return True
