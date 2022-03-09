@@ -183,7 +183,7 @@ otherwise it will be positive
 at the end output everything in the register 
 '''
 class CacheSimulatorDiversityWrapper(gym.Env):
-    def __init__(self, env_config, keep_latency=False):
+    def __init__(self, env_config, keep_latency=True):
         self.env_config = env_config
         # two choices for memorize the table
         # 1. keep both the action and the actual latency
@@ -287,15 +287,15 @@ class CacheSimulatorDiversityWrapper(gym.Env):
         if self.action_buffer in self.pattern_buffer:
             return True
         else:
-            if self._env.calc_correct_rate() > self.correct_thre:
+            if True:  ##self._env.calc_correct_rate() > self.correct_thre:
                 if self.keep_latency == True:  # need to calculate the latency of specific pattern
                     print(self.action_buffer)
-                    c = self.calc_correct_seq(self.action_buffer)
-                    if c > self.correct_thre:
+                    #c = self.calc_correct_seq(self.action_buffer)
+                    if True:#c > self.correct_thre:
                         #print("calc_correct_seq")
                         self.pattern_buffer.append(self.action_buffer)
                         self.pattern_init_state_buffer.append(copy.deepcopy(self.pattern_init_state))
-                        self.replay_pattern_buffer()
+                        #self.replay_pattern_buffer()
                 else:                           # just keep the pattern and the model
                     #c = self.calc_correct_seq(self.action_buffer) 
                     #if c > self.correct_thre: 
@@ -322,7 +322,7 @@ class CacheSimulatorDiversityWrapper(gym.Env):
         else:
             action = self._env.parse_action(action)
             is_guess = action[1]
-            if is_guess == True:
+            if is_guess == True and reward > 0:  # cprrect sequence
                 is_exist = self.check_and_save()
                 if is_exist == True and self.enable_diversity==True:
                     reward = self.repeat_pattern_reward #-10000
