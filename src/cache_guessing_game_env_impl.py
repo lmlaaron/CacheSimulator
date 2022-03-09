@@ -216,7 +216,7 @@ class CacheGuessingGameEnv(gym.Env):
     ###  )
 
     #action = self.parse_action(action)
-    action = self.parse_action_degenerate(action, self.flush_inst)
+    action = self.parse_action(action) #, self.flush_inst)
 
     address = str(action[0]+self.attacker_address_min)                # attacker address in attacker_address_space
     is_guess = action[1]                                              # check whether to guess or not
@@ -422,31 +422,17 @@ class CacheGuessingGameEnv(gym.Env):
       print( " "+" ".join(map(str,args))+" ")
 
   '''
-  parse the action 
-  returns list of 5 elements representing
-  address, is_guess, is_victim, is_flush, victim_addr
-  '''
-  def parse_action(self, action):
-    temp_action=[]
-    temp_action.append(int(action / ( 2 * 2 * 2 * self.cache_size)) )   
-    temp_action.append(int(action / ( 2 * 2 * self.cache_size)) % 2 )   
-    temp_action.append(int(action / ( 2 * self.cache_size)) % 2 )       
-    temp_action.append(int(action / self.cache_size) % 2 )              
-    temp_action.append(int(action % self.cache_size))                      
-    return temp_action
-
-  '''
   parse the action in the degenerate space (no redundant actions)
   returns list of 5 elements representing
   address, is_guess, is_victim, is_flush, victim_addr
   '''
-  def parse_action_degenerate(self, action, flush_inst):
+  def parse_action(self, action):
     address = 0
     is_guess = 0
     is_victim = 0
     is_flush = 0
-    victim_addr = 0
-    if flush_inst == False:
+    victim_addr = 0 
+    if self.flush_inst == False:
       if action < len(self.attacker_address_space):
         address = action
       elif action == len(self.attacker_address_space):

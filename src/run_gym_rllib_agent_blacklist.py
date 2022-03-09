@@ -141,7 +141,7 @@ if __name__ == "__main__":
             # HOW TO PREVENT THE SAME AGENT FROM BEING ADDED TWICE????
             # HOW TO TELL IF THEY ARE CONSIDERED THE SAME AGENT?
             # HOW TO FORCE TRAINER TO KNOW THAT THEY ARE STILL DISCOVERING THE SAME AGENT???
-            if True:#accuracy > thre:
+            if accuracy > thre:
                 # if the agent is different from the known agent
                 policy = trainer.get_policy()
                 if policy.existing_agent(env, trainer) == False:

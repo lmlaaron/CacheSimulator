@@ -396,8 +396,6 @@ class CustomPPOTorchPolicy(PPOTorchPolicy):
 
             if categorization_parser.is_same_base_pattern(seq1, seq2) == False:
                 return False
-              
-                
 
         self.model.load_state_dict(original_state_dict) 
         #self.set_weights(original_weights)
