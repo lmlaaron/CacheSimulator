@@ -297,7 +297,7 @@ class CustomPPOTorchPolicy(PPOTorchPolicy):
         
         total_loss = PPOTorchPolicy.loss(self, model, dist_class, train_batch)
         #self.past_len
-        div_loss = compute_div_loss(self, model, dist_class, train_batch)
+        div_loss = 0 #compute_div_loss(self, model, dist_class, train_batch)
         #div_loss = compute_div_loss_weight(self, copy.deepcopy(self.get_weights()), dist_class, train_batch)
         print('total_loss')
         print(total_loss)

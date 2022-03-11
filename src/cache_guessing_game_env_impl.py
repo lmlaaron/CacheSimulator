@@ -333,7 +333,7 @@ class CacheGuessingGameEnv(gym.Env):
   function to calculate the correctness rate
   '''
   def calc_correct_rate(self):
-    return self.guess_buffer.count(True) /len(self.guess_buffer)
+    return self.guess_buffer.count(True) / len(self.guess_buffer)
 
   '''
   evluate the correctness of an action sequence (action+ latency) 
