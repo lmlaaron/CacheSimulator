@@ -52,7 +52,6 @@ class Cache:
                 self.data[index] = {}   #Create a dictionary of blocks for each set
                 self.set_rep_policy[index] = self.rep_policy(associativity, block_size) 
 
-
     # flush the cache line that contains the address from all cache hierachy
     def cflush(self, address, current_step):
         r = None

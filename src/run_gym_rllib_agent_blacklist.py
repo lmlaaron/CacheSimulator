@@ -106,7 +106,6 @@ if __name__ == "__main__":
     print(config)
     env = CacheGuessingGameEnv(config["env_config"])
     #env = CacheSimulatorMultiGuessWrapper(config["env_config"]) 
-    
     trainer = PPOCustomTrainer(config=config)
     #trainer = SACTrainer(config=config)
     
@@ -117,8 +116,12 @@ if __name__ == "__main__":
         i = checkpoint.rfind('/')
         config_name = checkpoint[0:i] + '/../env.config' 
         print("env config saved ad ", config_name)
-        with open(config_name, 'wb') as handle:
-            pickle.dump(config["env_config"], handle)
+        #### dump the binary config file
+        ###with open(config_name, 'wb') as handle:
+        ###    pickle.dump(config["env_config"], handle)
+        #### dump the txt config file
+        ###with open(config_name + '.txt', 'w') as txtfile: 
+        ###    txtfile.write(json.dumps(config["env_config"]))
 
         policy = trainer.get_policy()
         for model in policy.past_models:
@@ -137,6 +140,23 @@ if __name__ == "__main__":
         i += 1
         if i % 1 == 0:  # give enought interval to achieve small verificaiton overhead
             accuracy, patterns = replay_agent(trainer, env, randomize_init=True, non_deterministic=True)
+            if i == 1:
+                checkpoint = trainer.save()
+                print("Initial checkpoint saved at", checkpoint)
+                i = checkpoint.rfind('/')
+                config_name = checkpoint[0:i] + '/../env.config' 
+                print("env config saved ad ", config_name)
+                # dump the binary config file
+                with open(config_name, 'wb') as handle:
+                    pickle.dump(config["env_config"], handle)
+                # dump the txt config file
+                #import pprint
+                #pp = pprint.PrettyPrinter(indent=4)
+                #pp.pprint(config["env_config"])
+                with open(config_name + '.txt', 'w') as txtfile: 
+                    #txtfile.write(pp.pprint(config["env_config"]))
+                    txtfile.write(json.dumps(config, indent=4, sort_keys=True))
+
             # just with lower reward
             # HOW TO PREVENT THE SAME AGENT FROM BEING ADDED TWICE????
             # HOW TO TELL IF THEY ARE CONSIDERED THE SAME AGENT?
@@ -152,6 +172,7 @@ if __name__ == "__main__":
                     # add  this agent to blacklist
                     trainer.get_policy().push_current_model()
                     #buf.append(copy.deepcopy(trainer.get_weights()))
+            
 
     policy = trainer.get_policy()
     for model in policy.past_models:
