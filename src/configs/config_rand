@@ -11,6 +11,7 @@
         "force_victim_hit": true,
         "flush_inst": false,
         "allow_victim_multi_access": true,
+        "allow_empty_victim_access": true,
         "attacker_addr_s": 0,
         "attacker_addr_e": 3,
         "victim_addr_s": 0,

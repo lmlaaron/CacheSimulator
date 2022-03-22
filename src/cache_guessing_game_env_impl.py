@@ -205,6 +205,7 @@ class CacheGuessingGameEnv(gym.Env):
     self._randomize_cache()
     
     if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
+      self.vprint("[init] victim access %d locked cache line" % self.victim_address)
       self.l1.read(str(self.victim_address), self.current_step, replacement_policy.PL_LOCK)
 
     # internal guessing buffer
@@ -257,11 +258,12 @@ class CacheGuessingGameEnv(gym.Env):
         if self.allow_victim_multi_access == True or self.victim_accessed == False:
           r = 2 #
           self.victim_accessed = True
-          self.vprint("victim access %d" % self.victim_address)
 
           if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
+            self.vprint("victim access %d and locked cache line" % self.victim_address)
             t = self.l1.read(str(self.victim_address), self.current_step, replacement_policy.PL_LOCK).time
           else: # normal victim access
+            self.vprint("victim access %d" % self.victim_address)
             t = self.l1.read(str(self.victim_address), self.current_step).time
           
           if t > 500:   # for LRU attack, has to force victim access being hit
@@ -371,6 +373,7 @@ class CacheGuessingGameEnv(gym.Env):
     self.reset_time = 0
 
     if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
+      self.vprint("[reset] victim access %d and locked cache line" % self.victim_address)
       self.l1.read(str(self.victim_address), self.current_step, replacement_policy.PL_LOCK)
     
     return np.array(self.state)
