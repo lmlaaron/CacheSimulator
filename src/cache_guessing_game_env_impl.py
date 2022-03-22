@@ -9,6 +9,7 @@ import os
 import yaml, logging
 from cache_simulator import *
 import sys
+import replacement_policy
 
 class CacheGuessingGameEnv(gym.Env):
   """
@@ -84,6 +85,7 @@ class CacheGuessingGameEnv(gym.Env):
     self.force_victim_hit =env_config["force_victim_hit"] if "force_victim_hit" in env_config else False
     self.length_violation_reward = env_config["length_violation_reward"] if "length_violation_reward" in env_config else -10000
     self.victim_access_reward = env_config["victim_access_reward"] if "victim_access_reward" in env_config else -10
+    self.victim_miss_reward = env_config["victim_miss_reward"] if "victim_miss_reward" in env_config else -10000 if self.force_victim_hit else self.victim_access_reward
     self.double_victim_access_reward = env_config["double_victim_access_reward"] if "double_victim_access_reward" in env_config else -10000
     self.allow_victim_multi_access = env_config["allow_victim_multi_access"] if "allow_victim_multi_access" in env_config else True
     self.correct_reward = env_config["correct_reward"] if "correct_reward" in env_config else 200
@@ -118,6 +120,9 @@ class CacheGuessingGameEnv(gym.Env):
 
     self.num_ways = self.configs['cache_1']['associativity'] 
     self.cache_size = self.configs['cache_1']['blocks']
+    
+    if "rep_policy" not in self.configs['cache_1']:
+      self.config['cache_1']['rep_policy'] = 'lru'
     
     if window_size == 0:
       self.window_size = self.cache_size * 4 + 8 #10 
@@ -198,6 +203,9 @@ class CacheGuessingGameEnv(gym.Env):
     else:
       self.victim_address = random.randint(self.victim_address_min, self.victim_address_max + 1 )
     self._randomize_cache()
+    
+    if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
+      self.l1.read(str(self.victim_address), self.current_step, replacement_policy.PL_LOCK)
 
     # internal guessing buffer
     # does not change after reset
@@ -249,17 +257,21 @@ class CacheGuessingGameEnv(gym.Env):
         if self.allow_victim_multi_access == True or self.victim_accessed == False:
           r = 2 #
           self.victim_accessed = True
-          if self.victim_address <= self.victim_address_max:   # if it is smaller than the range, then do a real access
-            self.vprint("victim access %d" % self.victim_address)
+          self.vprint("victim access %d" % self.victim_address)
+
+          if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
+            t = self.l1.read(str(self.victim_address), self.current_step, replacement_policy.PL_LOCK).time
+          else: # normal victim access
             t = self.l1.read(str(self.victim_address), self.current_step).time
-          else:
-            self.vprint("victim empty access!")
-          # otherwise just do a fake access
-          if self.force_victim_hit == True and t > 500:   # for LRU attack, has to force victim access being hit
+          
+          if t > 500:   # for LRU attack, has to force victim access being hit
             self.current_step += 1
-            reward = -5000
-            done = False
-            self.vprint("victim access has to be hit! terminate!")
+            reward = self.victim_miss_reward #-5000
+            if self.force_victim_hit == True:
+              done = True
+              self.vprint("victim access has to be hit! terminate!")
+            else:
+              done = False
           else:
             self.current_step += 1
             reward = self.victim_access_reward #-10
@@ -357,6 +369,10 @@ class CacheGuessingGameEnv(gym.Env):
     self.state = [0, len(self.attacker_address_space), 0, 0] * self.window_size
     #self.state = [0, len(self.attacker_address_space), 0, 0, 0] * self.window_size
     self.reset_time = 0
+
+    if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
+      self.l1.read(str(self.victim_address), self.current_step, replacement_policy.PL_LOCK)
+    
     return np.array(self.state)
 
   '''

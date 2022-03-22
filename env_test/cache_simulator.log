@@ -1,0 +1,72 @@
+[32mLoading config...[0m
+[32mMemory hierarchy built.[0m
+[32mLoading tracefile...[0m
+[32mLoaded tracefile plru_pl/test.txt[0m
+[32mBegin simulation![0m
+[32m0:	Reading 00000000[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
+[0m
+[32m1:	Reading 00000001[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
+[0m
+[32m2:	Reading 00000002[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
+[0m
+[32m3:	Reading 00000003[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
+[0m
+[32m4:	Reading 00000004[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
+[0m
+[32m5:	Reading 00000000[0m
+[33m	hit_list: {'cache_1': True}	time: 1
+[0m
+[32m6:	Reading 00000004[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
+[0m
+[32m7:	Reading 00000004[0m
+[33m	hit_list: {'cache_1': True}	time: 1
+[0m
+[32m8:	Reading 00000005[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
+[0m
+[32m9:	Reading 00000006[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
+[0m
+[32m10:	Reading 00000007[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
+[0m
+[32m11:	Reading 00000008[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
+[0m
+[32m12:	Reading 00000000[0m
+[33m	hit_list: {'cache_1': True}	time: 1
+[0m
+[32m13:	Reading 00000004[0m
+[33m	hit_list: {'cache_1': True}	time: 1
+[0m
+[32m14:	Reading 00000003[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
+[0m
+[32m15:	Reading 00000002[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
+[0m
+[32m16:	Reading 00000001[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
+[0m
+[32m17:	Reading 00000000[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
+[0m
+[32mSimulation complete[0m
+[32m
+Number of instructions: 18[0m
+[32m
+Total cycles taken: 14018
+[0m
+[32mcache_1[0m
+[32m	Number of accesses: 18[0m
+[32m	Number of hits: 4[0m
+[32m	Number of misses: 14[0m
+[32m
+AMATs:
+{'cache_1': 778.7777777777778, 'mem': 1000}[0m

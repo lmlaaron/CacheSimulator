@@ -521,8 +521,6 @@ if __name__ == "__main__":
         print("checkpoint saved at", checkpoint)
         sys.exit(0)
 
-
-
     signal.signal(signal.SIGINT, signal_handler)
     
     while True:

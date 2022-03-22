@@ -441,6 +441,13 @@ config = {
     #'num_sgd_iter': 5, 
     #'vf_loss_coeff': 1e-05, 
     'model': {
+        "conv_filters": None,
+        # Nonlinearity for built-in convnet
+        "conv_activation": "relu",
+        # Nonlinearity for fully connected net (tanh, relu)
+        "fcnet_activation": "tanh",
+        # Number of hidden layers for fully connected net
+        "fcnet_hiddens": [512, 512, 512],
         #'custom_model': 'test_model',#'rnn', 
         #'max_seq_len': 20, 
         #'custom_model_config': {
