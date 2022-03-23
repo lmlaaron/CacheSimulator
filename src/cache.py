@@ -89,7 +89,7 @@ class Cache:
     # pl_opt = PL_LOCK: lock the cache line
     # pl_opt = PL_UNLOCK: unlock the cache line
     def read(self, address, current_step, pl_opt= -1):
-        print('pl_opt ' + str(pl_opt))
+        #print('pl_opt ' + str(pl_opt))
         r = None
         #Check if this is main memory
         #Main memory is always a hit

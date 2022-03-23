@@ -4,6 +4,9 @@ INVALID_TAG = '--------'
 
 # interface for cache replacement policy per set
 class rep_policy:
+    def __init__(self):
+        self.verbose = False
+
     def touch(self, tag, timestamp):
         pass
 
@@ -15,6 +18,10 @@ class rep_policy:
 
     def find_victim(self, timestamp):
         pass
+
+    def vprint(self, *args):
+        if self.verbose == 1:
+            print( " "+" ".join(map(str,args))+" ")
 
 # LRU policy
 class lru_policy(rep_policy):
@@ -83,16 +90,17 @@ import math
 # https://github.com/gem5/gem5/blob/87c121fd954ea5a6e6b0760d693a2e744c2200de/src/mem/cache/replacement_policies/tree_plru_rp.cc
 class tree_plru_policy(rep_policy):
     import math
-    def __init__(self, associativity, block_size):
+    def __init__(self, associativity, block_size, verbose = False):
         self.associativity = associativity
         self.block_size = block_size
         self.num_leaves = associativity
         self.plrutree = [ False ] * ( self.num_leaves - 1 )
         self.count = 0
         self.candidate_tags = [ INVALID_TAG ] * self.num_leaves
+        self.verbose = verbose
 
-        print(self.plrutree)
-        print(self.candidate_tags)
+        self.vprint(self.plrutree)
+        self.vprint(self.candidate_tags)
         #self.tree_instance = # holds the latest temporary tree instance created by 
 
     def parent_index(self,index):
@@ -110,7 +118,7 @@ class tree_plru_policy(rep_policy):
     def touch(self, tag, timestamp):
         # find the index
         tree_index = 0
-        print(tree_index)
+        self.vprint(tree_index)
         while tree_index < len(self.candidate_tags):
             if self.candidate_tags[tree_index] == tag:
                 break
@@ -127,8 +135,8 @@ class tree_plru_policy(rep_policy):
             tree_index = self.parent_index(tree_index)
             #exit(-1)
             self.plrutree[tree_index] = not right
-        print(self.plrutree)
-        print(self.candidate_tags)
+        self.vprint(self.plrutree)
+        self.vprint(self.candidate_tags)
 
     def reset(self, tag, timestamp):
         self.touch(tag, timestamp)
@@ -136,7 +144,7 @@ class tree_plru_policy(rep_policy):
     #def reset(self, tag):
     def invalidate(self, tag):
         # find index of tag
-        print('invalidate  ' + tag)
+        self.vprint('invalidate  ' + tag)
         tree_index = 0
         while tree_index < len(self.candidate_tags):
             if self.candidate_tags[tree_index] == tag:
@@ -157,8 +165,8 @@ class tree_plru_policy(rep_policy):
             tree_index = self.parent_index(tree_index)
             self.plrutree[tree_index] = right
 
-        print(self.plrutree)
-        print(self.candidate_tags)
+        self.vprint(self.plrutree)
+        self.vprint(self.candidate_tags)
 
     def find_victim(self, timestamp):
         tree_index = 0
@@ -197,10 +205,11 @@ class tree_plru_policy(rep_policy):
         self.touch(tag, timestamp)
 
 class bit_plru(rep_policy):
-    def __init__(self, associativity, block_size):
+    def __init__(self, associativity, block_size, verbose = False):
         self.associativity = associativity
         self.block_size = block_size
         self.blocks = {}
+        self.verbose = verbose
 
     def touch(self, tag, timestamp):
         assert(tag in self.blocks)
@@ -224,7 +233,7 @@ class bit_plru(rep_policy):
         victim_tag = in_cache[0] 
         found = False
         for b in in_cache:
-            print(b + ' '+ str(self.blocks[b].last_accessed))
+            self.vprint(b + ' '+ str(self.blocks[b].last_accessed))
             # find the smallest last_accessed address 
             if self.blocks[b].last_accessed == 0:
                 victim_tag = b
@@ -250,7 +259,7 @@ PL_NOTSET = 0
 PL_LOCK = 1
 PL_UNLOCK = 2
 class plru_pl_policy(rep_policy):
-    def __init__(self, associativity, block_size):
+    def __init__(self, associativity, block_size, verbose = False):
         self.associativity = associativity
         self.block_size = block_size
         self.num_leaves = associativity
@@ -258,10 +267,11 @@ class plru_pl_policy(rep_policy):
         self.count = 0
         self.candidate_tags = [ INVALID_TAG ] * self.num_leaves
         self.lockarray = [ PL_UNLOCK ] * self.num_leaves
+        self.verbose = verbose
 
-        print(self.plrutree)
-        print(self.lockarray)
-        print(self.candidate_tags)
+        self.vprint(self.plrutree)
+        self.vprint(self.lockarray)
+        self.vprint(self.candidate_tags)
         #self.tree_instance = # holds the latest temporary tree instance created by 
 
     def parent_index(self,index):
@@ -279,7 +289,7 @@ class plru_pl_policy(rep_policy):
     def touch(self, tag, timestamp):
         # find the index
         tree_index = 0
-        print(tree_index)
+        self.vprint(tree_index)
         while tree_index < len(self.candidate_tags):
             if self.candidate_tags[tree_index] == tag:
                 break
@@ -296,9 +306,9 @@ class plru_pl_policy(rep_policy):
             tree_index = self.parent_index(tree_index)
             #exit(-1)
             self.plrutree[tree_index] = not right
-        print(self.plrutree)
-        print(self.lockarray)
-        print(self.candidate_tags)
+        self.vprint(self.plrutree)
+        self.vprint(self.lockarray)
+        self.vprint(self.candidate_tags)
 
     def reset(self, tag, timestamp):
         self.touch(tag, timestamp)
@@ -306,7 +316,7 @@ class plru_pl_policy(rep_policy):
     #def reset(self, tag):
     def invalidate(self, tag):
         # find index of tag
-        print('invalidate  ' + tag)
+        self.vprint('invalidate  ' + tag)
         tree_index = 0
         while tree_index < len(self.candidate_tags):
             if self.candidate_tags[tree_index] == tag:
@@ -326,9 +336,9 @@ class plru_pl_policy(rep_policy):
             tree_index = self.parent_index(tree_index)
             self.plrutree[tree_index] = right
 
-        print(self.plrutree)
-        print(self.lockarray) 
-        print(self.candidate_tags)
+        self.vprint(self.plrutree)
+        self.vprint(self.lockarray) 
+        self.vprint(self.candidate_tags)
 
     def find_victim(self, timestamp):
         tree_index = 0
@@ -373,10 +383,10 @@ class plru_pl_policy(rep_policy):
 
     # pl cache set lock scenario
     def setlock(self, tag, lock):
-        print("setlock "+ tag + ' ' + str(lock))
+        self.vprint("setlock "+ tag + ' ' + str(lock))
         # find the index
         index = 0
-        print(index)
+        self.vprint(index)
         while index < len(self.candidate_tags):
             if self.candidate_tags[index] == tag:
                 break
@@ -384,7 +394,6 @@ class plru_pl_policy(rep_policy):
                 index += 1
         # set / unset lock
         self.lockarray[index] = lock 
-
 
 '''
 class brrip_policy(rep_policy):
