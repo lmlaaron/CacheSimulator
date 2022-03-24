@@ -260,16 +260,14 @@ class CacheGuessingGameEnv(gym.Env):
           r = 2 #
           self.victim_accessed = True
 
-          if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
-            if self.victim_address <= self.victim_addr_max:
+          if True: #self.configs['cache_1']["rep_policy"] == "plru_pl": no need to distinuish pl and normal rep_policy
+            if self.victim_address <= self.victim_address_max:
               self.vprint("victim access %d " % self.victim_address)
               t = self.l1.read(str(self.victim_address), self.current_step).time # do not need to lock again
             else:
               self.vprint("victim make a empty access!") # do not need to actually do something
-          else: # normal victim access
-            self.vprint("victim access %d" % self.victim_address)
-            t = self.l1.read(str(self.victim_address), self.current_step).time
-          
+              t = 1 # empty access will be treated as HIT??? does that make sense???
+              #t = self.l1.read(str(self.victim_address), self.current_step).time 
           if t > 500:   # for LRU attack, has to force victim access being hit
             self.current_step += 1
             reward = self.victim_miss_reward #-5000
