@@ -1,7 +1,7 @@
 [32mLoading config...[0m
 [32mMemory hierarchy built.[0m
 [32mLoading tracefile...[0m
-[32mLoaded tracefile plru_pl/test.txt[0m
+[32mLoaded tracefile brrip/test.txt[0m
 [32mBegin simulation![0m
 [32m0:	Reading 00000000[0m
 [33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
@@ -19,10 +19,10 @@
 [33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
 [0m
 [32m5:	Reading 00000000[0m
-[33m	hit_list: {'cache_1': True}	time: 1
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
 [0m
 [32m6:	Reading 00000004[0m
-[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
+[33m	hit_list: {'cache_1': True}	time: 1
 [0m
 [32m7:	Reading 00000004[0m
 [33m	hit_list: {'cache_1': True}	time: 1
@@ -40,7 +40,7 @@
 [33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
 [0m
 [32m12:	Reading 00000000[0m
-[33m	hit_list: {'cache_1': True}	time: 1
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
 [0m
 [32m13:	Reading 00000004[0m
 [33m	hit_list: {'cache_1': True}	time: 1
@@ -61,12 +61,12 @@
 [32m
 Number of instructions: 18[0m
 [32m
-Total cycles taken: 14018
+Total cycles taken: 15018
 [0m
 [32mcache_1[0m
 [32m	Number of accesses: 18[0m
-[32m	Number of hits: 4[0m
-[32m	Number of misses: 14[0m
+[32m	Number of hits: 3[0m
+[32m	Number of misses: 15[0m
 [32m
 AMATs:
-{'cache_1': 778.7777777777778, 'mem': 1000}[0m
+{'cache_1': 834.3333333333334, 'mem': 1000}[0m

@@ -23,8 +23,8 @@ class Cache:
             self.rep_policy = rand_policy
         elif rep_policy == 'plru_pl':
             self.rep_policy = plru_pl_policy
-        #elif rep_policy == 'brrip': 
-        #   self.rep_policy = brrip
+        elif rep_policy == 'brrip': 
+           self.rep_policy = brrip_policy
         else:
             self.rep_policy = lru_policy
 

@@ -395,6 +395,94 @@ class plru_pl_policy(rep_policy):
         # set / unset lock
         self.lockarray[index] = lock 
 
-'''
+
 class brrip_policy(rep_policy):
-'''
+    def __init__(self, associativity, block_size, verbose = False):
+        self.associativity = associativity
+        self.block_size = block_size
+        self.rrpv = [ 0 ] * associativity
+        self.count = 0
+        self.candidate_tags = [ INVALID_TAG ] * self.associativity
+        self.verbose = verbose
+        self.num_rrpv_bits = 2
+        self.rrpv_max = int(math.pow(2, self.num_rrpv_bits)) 
+        self.hit_priority = False
+        self.btp = 100
+
+        self.vprint(self.candidate_tags)
+        #self.tree_instance = # holds the latest temporary tree instance created by 
+
+    def instantiate_entry(self, tag, timestamp):
+        # find a tag that can be invalidated
+        index = 0
+        while index < len(self.candidate_tags): 
+            if self.candidate_tags[index] == INVALID_TAG:
+                self.candidate_tags[index] = tag
+                self.rrpv[index] = self.rrpv_max
+                break
+            index += 1
+        # touch the entry
+        self.touch(tag, timestamp)
+
+    def touch(self, tag, timestamp):
+        # find the index
+        index = 0
+        self.vprint(index)
+        while index < len(self.candidate_tags):
+            if self.candidate_tags[index] == tag:
+                break
+            else:
+                index += 1
+        if self.hit_priority == True:
+            self.rrpv[index] = 0
+        else:
+            if self.rrpv[index] > 0:
+                self.rrpv[index] -= 1
+        
+
+    def reset(self, tag, timestamp):
+        index = 0
+        self.vprint(index)
+        while index < len(self.candidate_tags):
+            if self.candidate_tags[index] == tag:
+                break
+            else:
+                index += 1
+        if random.randint(1,100) <= self.btp:
+            if self.rrpv[index] > 0:
+                self.rrpv[index] -= 1
+
+    #def reset(self, tag):
+    def invalidate(self, tag):
+        # find index of tag
+        self.vprint('invalidate  ' + tag)
+        index = 0
+        while index < len(self.candidate_tags):
+            if self.candidate_tags[index] == tag:
+                break
+            else:
+                index += 1
+        #print(tree_index)        
+        self.candidate_tags[index] = INVALID_TAG
+        self.rrpv[index] = self.rrpv_max
+                
+
+    def find_victim(self, timestamp):
+        max_index = 0
+        index = 0
+        while index < len(self.candidate_tags):
+            if self.rrpv[index] > self.rrpv[max_index]:
+                max_index = index
+            index += 1
+
+       # invalidate the path
+        diff = self.rrpv_max - self.rrpv[max_index] 
+        self.rrpv[max_index] = self.rrpv_max
+        if diff > 0:
+            index = 0
+            while index < len(self.candidate_tags):
+                self.rrpv[index] += diff
+                index += 1
+        #self.vprint(self.plrutree)
+        #self.vprint(self.candidate_tags)
+        return self.candidate_tags[max_index] 
