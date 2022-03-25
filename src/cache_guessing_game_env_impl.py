@@ -178,6 +178,7 @@ class CacheGuessingGameEnv(gym.Env):
         self.action_space = spaces.Discrete(
           2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space) 
         )
+    
     # let's book keep all obvious information in the observation space 
     # since the agent is dumb
     #self.observation_space = spaces.MultiDiscrete(
@@ -189,7 +190,7 @@ class CacheGuessingGameEnv(gym.Env):
     #    #2,                                          # whether it is a cflush
     #  ] * self.window_size
     #)
-    self.max_box_value = max(self.window_size + 2, len(self.attacker_address_space) + 1) 
+    self.max_box_value = max(self.window_size + 2,  2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space) + 1)#max(self.window_size + 2, len(self.attacker_address_space) + 1) 
     self.feature_size = 4
     self.observation_space = spaces.Box(low=-1, high=self.max_box_value, shape=(self.window_size, self.feature_size))
 
@@ -237,7 +238,8 @@ class CacheGuessingGameEnv(gym.Env):
     ###  )
 
     #action = self.parse_action(action)
-    action = self.parse_action(action) #, self.flush_inst)
+    original_action = action
+    action = self.parse_action(original_action) #, self.flush_inst)
 
     address = str(action[0]+self.attacker_address_min)                # attacker address in attacker_address_space
     is_guess = action[1]                                              # check whether to guess or not
@@ -337,7 +339,7 @@ class CacheGuessingGameEnv(gym.Env):
     
     ####self.state = [r, action[0], current_step, victim_accessed] + self.state 
     #Xiaomeng
-    self.state = [r, victim_accessed, action[0], current_step ] + self.state  
+    self.state = [r, victim_accessed, original_action, current_step ] + self.state  
     self.state = self.state[0:len(self.state)-4]
     #self.state = [r, action[0], current_step, victim_accessed]
     

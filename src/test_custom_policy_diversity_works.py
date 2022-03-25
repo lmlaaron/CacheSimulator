@@ -458,7 +458,7 @@ config = {
     }, 
     #'gamma': 0.9, 
     'num_gpus': 1, 
-    'num_workers': 1, 
+    'num_workers': 4, 
     'num_envs_per_worker': 1, 
     #'entropy_coeff': 0.001, 
     #'num_sgd_iter': 5, 
