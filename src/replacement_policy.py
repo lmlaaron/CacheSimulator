@@ -397,19 +397,21 @@ class plru_pl_policy(rep_policy):
 
 
 class brrip_policy(rep_policy):
-    def __init__(self, associativity, block_size, verbose = False):
+    def __init__(self, associativity, block_size, verbose = True):
         self.associativity = associativity
         self.block_size = block_size
-        self.rrpv = [ 0 ] * associativity
         self.count = 0
         self.candidate_tags = [ INVALID_TAG ] * self.associativity
         self.verbose = verbose
         self.num_rrpv_bits = 2
-        self.rrpv_max = int(math.pow(2, self.num_rrpv_bits)) 
+        self.rrpv_max = int(math.pow(2, self.num_rrpv_bits)) - 1
+        
+        self.rrpv = [ self.rrpv_max ] * associativity
         self.hit_priority = False
         self.btp = 100
 
         self.vprint(self.candidate_tags)
+        self.vprint(self.rrpv)
         #self.tree_instance = # holds the latest temporary tree instance created by 
 
     def instantiate_entry(self, tag, timestamp):
@@ -438,7 +440,8 @@ class brrip_policy(rep_policy):
         else:
             if self.rrpv[index] > 0:
                 self.rrpv[index] -= 1
-        
+        self.vprint(self.candidate_tags)
+        self.vprint(self.rrpv)
 
     def reset(self, tag, timestamp):
         index = 0
@@ -451,6 +454,8 @@ class brrip_policy(rep_policy):
         if random.randint(1,100) <= self.btp:
             if self.rrpv[index] > 0:
                 self.rrpv[index] -= 1
+        self.vprint(self.candidate_tags)
+        self.vprint(self.rrpv)
 
     #def reset(self, tag):
     def invalidate(self, tag):
@@ -465,7 +470,8 @@ class brrip_policy(rep_policy):
         #print(tree_index)        
         self.candidate_tags[index] = INVALID_TAG
         self.rrpv[index] = self.rrpv_max
-                
+        self.vprint(self.candidate_tags)
+        self.vprint(self.rrpv)
 
     def find_victim(self, timestamp):
         max_index = 0
@@ -474,8 +480,7 @@ class brrip_policy(rep_policy):
             if self.rrpv[index] > self.rrpv[max_index]:
                 max_index = index
             index += 1
-
-       # invalidate the path
+        # invalidate the path
         diff = self.rrpv_max - self.rrpv[max_index] 
         self.rrpv[max_index] = self.rrpv_max
         if diff > 0:
@@ -485,4 +490,7 @@ class brrip_policy(rep_policy):
                 index += 1
         #self.vprint(self.plrutree)
         #self.vprint(self.candidate_tags)
+        self.vprint(self.candidate_tags)
+        self.vprint(self.rrpv)
+
         return self.candidate_tags[max_index] 

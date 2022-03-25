@@ -8,14 +8,14 @@
         "wrong_reward": -10000,
         "step_reward": -10,
         "verbose": 1,
-        "force_victim_hit": true,
+        "force_victim_hit": false,
         "flush_inst": false,
         "allow_victim_multi_access": true,
         "allow_empty_victim_access": false,
         "attacker_addr_s": 0,
-        "attacker_addr_e": 3,
+        "attacker_addr_e": 15,
         "victim_addr_s": 0,
-        "victim_addr_e": 1,
+        "victim_addr_e": 7,
         "reset_limit": 1,
         "cache_configs": {
             "architecture": {
@@ -24,8 +24,8 @@
               "write_back": true
             },
             "cache_1": {
-              "blocks": 2, 
-              "associativity": 2,  
+              "blocks": 8, 
+              "associativity": 8,  
               "hit_time": 1,
               "rep_policy": "lru"
             },
