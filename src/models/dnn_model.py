@@ -11,7 +11,7 @@ from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 from ray.rllib.utils.annotations import override
 from ray.rllib.utils.typing import ModelConfigDict, TensorType
 
-from dnn import DNNEncoder
+from models.dnn import DNNEncoder
 
 
 class DNNModel(TorchModelV2, nn.Module):
@@ -31,11 +31,12 @@ class DNNModel(TorchModelV2, nn.Module):
         self.victim_acc_dim = custom_model_config["victim_acc_dim"]
         self.action_dim = custom_model_config["action_dim"]
         self.step_dim = custom_model_config["step_dim"]
+        self.window_size = custom_model_config["window_size"]
 
-        self.input_dim = (self.latency_dim + self.victim_acc_dim +
-                          self.action_dim + self.step_dim)
-        self.action_embed_dim = custom_model_config["actoin_embed_dim"]
+        self.action_embed_dim = custom_model_config["action_embed_dim"]
         self.step_embed_dim = custom_model_config["step_embed_dim"]
+        self.input_dim = (self.latency_dim + self.victim_acc_dim +
+                        self.action_embed_dim + self.step_embed_dim) * self.window_size 
         self.hidden_dim = custom_model_config["hidden_dim"]
         self.output_dim = num_outputs
         self.num_blocks = custom_model_config.get("num_blocks", 1)
@@ -54,18 +55,16 @@ class DNNModel(TorchModelV2, nn.Module):
     def make_one_hot(self, src: torch.Tensor,
                      num_classes: int) -> torch.Tensor:
         mask = (src == -1)
-        src.masked_fill_(mask, 0)
+        src = src.masked_fill(mask, 0)
         ret = F.one_hot(src, num_classes)
-        ret.masked_fill_(mask.unsqueeze(-1), 0.0)
-        return ret
+        return ret.masked_fill(mask.unsqueeze(-1), 0.0)
 
     def make_embedding(self, src: torch.Tensor,
                        embed: nn.Embedding) -> torch.Tensor:
         mask = (src == -1)
-        src.masked_fill_(mask, 0)
+        src = src.masked_fill(mask, 0)
         ret = embed(src)
-        ret.masked_fill_(mask.unsqueeze(-1), 0.0)
-        return ret
+        return ret.masked_fill(mask.unsqueeze(-1), 0.0)
 
     @override(TorchModelV2)
     def forward(self, input_dict: Dict[str,

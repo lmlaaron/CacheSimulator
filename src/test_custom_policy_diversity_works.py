@@ -419,6 +419,10 @@ PPOCustomTrainer = PPOTrainer.with_updates(
     get_policy_class=lambda _: CustomPPOTorchPolicy)
 
 
+
+import models.dnn_model 
+
+
 #tune.run(CustomTrainer, config={"env": 'Frostbite-v0', "num_gpus":0})#, 'model': { 'custom_model': 'test_model' }})
 tune.register_env("cache_guessing_game_env_fix", CacheGuessingGameEnv)#Fix)
 # Two ways of training
@@ -460,11 +464,18 @@ config = {
     #'num_sgd_iter': 5, 
     #'vf_loss_coeff': 1e-05, 
     'model': {
-        #'custom_model': 'test_model',#'rnn', 
-        #'max_seq_len': 20, 
-        #'custom_model_config': {
-        #    'cell_size': 32
-        #   }
+        'custom_model': 'dnn_model',#'rnn', 
+        'custom_model_config': {
+            'window_size': 16,
+            'latency_dim': 3,
+            'victim_acc_dim': 2,
+            'action_dim': 100, # need to be precise
+            'step_dim': 40,   # need to be precise
+            'action_embed_dim': 8,
+            'step_embed_dim': 4,
+            'hidden_dim': 32,
+            'num_blocks': 1
+        }
     }, 
     'framework': 'torch',
 }
