@@ -124,7 +124,8 @@ class CacheGuessingGameEnv(gym.Env):
     else:
       self.window_size = window_size
     self.hierarchy = build_hierarchy(self.configs, self.logger)
-    self.state = [0, self.cache_size, 0, 0] * self.window_size
+    #self.state = [0, self.cache_size, 0, 0] * self.window_size
+    self.state = [-1, -1, -1, -1] * self.window_size # Xiaomeng
     #self.state = [0, self.cache_size, 0, 0, 0] * self.window_size
     self.attacker_address_min = attacker_addr_s
     self.attacker_address_max = attacker_addr_e
@@ -179,15 +180,20 @@ class CacheGuessingGameEnv(gym.Env):
         )
     # let's book keep all obvious information in the observation space 
     # since the agent is dumb
-    self.observation_space = spaces.MultiDiscrete(
-      [
-        3,                                          #cache latency
-        len(self.attacker_address_space) + 1,       #attacker accessed address
-        self.window_size + 2,                       #current steps
-        2,                                          #whether the victim has accessed yet
-        #2,                                          # whether it is a cflush
-      ] * self.window_size
-    )
+    #self.observation_space = spaces.MultiDiscrete(
+    #  [
+    #    3,                                          #cache latency
+    #    len(self.attacker_address_space) + 1,       #attacker accessed address
+    #    self.window_size + 2,                       #current steps
+    #    2,                                          #whether the victim has accessed yet
+    #    #2,                                          # whether it is a cflush
+    #  ] * self.window_size
+    #)
+    self.max_box_value = max(self.window_size + 2, len(self.attacker_address_space) + 1) 
+    self.feature_size = 4
+    self.observation_space = spaces.Box(low=-1, high=self.max_box_value, shape=(self.window_size, self.feature_size))
+
+    
     #print('Initializing...')
     self.l1 = self.hierarchy['cache_1']
     self.current_step = 0
@@ -327,9 +333,12 @@ class CacheGuessingGameEnv(gym.Env):
       victim_accessed = 0
     #self.state = [r, action[0], current_step, victim_accessed, is_flush] + self.state 
     #self.state = self.state[0:len(self.state)-5]
-    self.state = [r, action[0], current_step, victim_accessed] + self.state 
+    
+    
+    ####self.state = [r, action[0], current_step, victim_accessed] + self.state 
+    #Xiaomeng
+    self.state = [r, victim_accessed, action[0], current_step ] + self.state  
     self.state = self.state[0:len(self.state)-4]
- 
     #self.state = [r, action[0], current_step, victim_accessed]
     
     '''
@@ -345,17 +354,18 @@ class CacheGuessingGameEnv(gym.Env):
         done = False                           # fake reset
         self._reset()                          # manually reset
 
-    return np.array(self.state), reward, done, info
+    return np.array(self.state).reshape(self.window_size, self.feature_size), reward, done, info
 
   def reset(self, victim_address=-1):
     self.vprint('Reset...')
     self.hierarchy = build_hierarchy(self.configs, self.logger)
     self.l1 = self.hierarchy['cache_1']
     self._reset(victim_address)  # fake reset
-    self.state = [0, len(self.attacker_address_space), 0, 0] * self.window_size
+    #self.state = [0, len(self.attacker_address_space), 0, 0] * self.window_size
+    self.state = [-1, -1,-1, -1] * self.window_size
     #self.state = [0, len(self.attacker_address_space), 0, 0, 0] * self.window_size
     self.reset_time = 0
-    return np.array(self.state)
+    return np.array(self.state).reshape(self.window_size, self.feature_size)
 
   '''
   function to calculate the correctness rate
