@@ -80,6 +80,7 @@ class CacheGuessingGameEnv(gym.Env):
     }
   }
 ):
+    self.allow_empty_victim_access = env_config["allow_empty_victim_access"] if "allow_empty_victim_access" in env_config else False
     self.force_victim_hit =env_config["force_victim_hit"] if "force_victim_hit" in env_config else False
     self.length_violation_reward = env_config["length_violation_reward"] if "length_violation_reward" in env_config else -10000
     self.victim_access_reward = env_config["victim_access_reward"] if "victim_access_reward" in env_config else -10
@@ -119,7 +120,7 @@ class CacheGuessingGameEnv(gym.Env):
     self.cache_size = self.configs['cache_1']['blocks']
     
     if window_size == 0:
-      self.window_size = self.cache_size * 2 + 8 #10 
+      self.window_size = self.cache_size * 4 + 8 #10 
     else:
       self.window_size = window_size
     self.hierarchy = build_hierarchy(self.configs, self.logger)
@@ -154,18 +155,28 @@ class CacheGuessingGameEnv(gym.Env):
     # using tightened action space
     if self.flush_inst == False:
       # one-hot encoding
-      # | attacker_addr | v | victim_guess_addr |
-      self.action_space = spaces.Discrete(
-        len(self.attacker_address_space) + 1 + len(self.victim_address_space)
-      )
+      if self.allow_empty_victim_access == True:
+        # | attacker_addr | v | victim_guess_addr | guess victim not access |
+        self.action_space = spaces.Discrete(
+          len(self.attacker_address_space) + 1 + len(self.victim_address_space) + 1
+        )
+      else:
+        # | attacker_addr | v | victim_guess_addr | 
+        self.action_space = spaces.Discrete(
+          len(self.attacker_address_space) + 1 + len(self.victim_address_space)
+        )
     else:
       # one-hot encoding
-      # | attacker_addr | flush_attacker_addr | v | victim_guess_addr |
-      self.action_space = spaces.Discrete(
-        2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space)
-      )
-
-
+      if self.allow_empty_victim_access == True:
+        # | attacker_addr | flush_attacker_addr | v | victim_guess_addr | guess victim not access |
+        self.action_space = spaces.Discrete(
+          2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space) + 1
+        )
+      else:
+        # | attacker_addr | flush_attacker_addr | v | victim_guess_addr |
+        self.action_space = spaces.Discrete(
+          2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space) 
+        )
     # let's book keep all obvious information in the observation space 
     # since the agent is dumb
     self.observation_space = spaces.MultiDiscrete(
@@ -181,7 +192,11 @@ class CacheGuessingGameEnv(gym.Env):
     self.l1 = self.hierarchy['cache_1']
     self.current_step = 0
     self.victim_accessed = False
-    self.victim_address = random.randint(self.victim_address_min, self.victim_address_max + 1)
+    if self.allow_empty_victim_access == True:
+      #self.victim_address = random.randint(self.victim_address_max +1, self.)
+      self.victim_address = random.randint(self.victim_address_min, self.victim_address_max + 1 + 1)
+    else:
+      self.victim_address = random.randint(self.victim_address_min, self.victim_address_max + 1 )
     self._randomize_cache()
 
     # internal guessing buffer
@@ -235,7 +250,9 @@ class CacheGuessingGameEnv(gym.Env):
           r = 2 #
           self.victim_accessed = True
           self.vprint("victim access %d" % self.victim_address)
-          t = self.l1.read(str(self.victim_address), self.current_step).time
+          if self.victim_address <= self.victim_address_max:   # if it is smaller than the range, then do a real access
+            t = self.l1.read(str(self.victim_address), self.current_step).time
+          # otherwise just do a fake access
           if self.force_victim_hit == True and t > 500:   # for LRU attack, has to force victim access being hit
             self.current_step += 1
             reward = -5000
@@ -253,16 +270,27 @@ class CacheGuessingGameEnv(gym.Env):
           done = True
       else:
         if is_guess == True:
-          r = 2  # 
+          r = 2  #
+          # this includes two scenarios
+          # 1. normal scenario
+          # 2. empty victim access scenario: victim_addr parsed is victim_addr_e, 
+          # and self.victim_address is also victim_addr_e + 1
           if self.victim_accessed and victim_addr == str(self.victim_address):
-              self.vprint("correct guess " + victim_addr)
+              if victim_addr != str(self.victim_address_max + 1): 
+                self.vprint("correct guess " + victim_addr)
+              else:
+                self.vprint("correct guess empty access!")
               # update the guess buffer 
               self.guess_buffer.append(True)
               self.guess_buffer.pop(0) 
               reward = self.correct_reward # 200
               done = True
           else:
-              self.vprint("wrong guess " + victim_addr )
+              if victim_addr != str(self.victim_address_max + 1):
+                self.vprint("wrong guess " + victim_addr )
+              else:
+                self.vprint("wrong guess empty access!")
+
               # update the guess buffer 
               self.guess_buffer.append(False)
               self.guess_buffer.pop(0) 
@@ -369,12 +397,23 @@ class CacheGuessingGameEnv(gym.Env):
     self.current_step = 0
     self.victim_accessed = False
     if victim_address == -1:
-      self.victim_address = random.randint(self.victim_address_min, self.victim_address_max) 
+      if self.allow_empty_victim_access == False:
+        self.victim_address = random.randint(self.victim_address_min, self.victim_address_max)
+      else:  # when generating random addr use self.victim_address_max + 1 to represent empty access
+        self.victim_address = random.randint(self.victim_address_min, self.victim_address_max + 1) 
+
     else:
       assert(victim_address >= self.victim_address_min)
-      assert(victim_address <= self.victim_address_max)
+      if self.allow_empty_victim_access == True:
+        assert(victim_address <= self.victim_address_max + 1 )
+      else:
+        assert(victim_address <= self.victim_address_max ) 
+      
       self.victim_address = victim_address
-    self.vprint("victim address %d", self.victim_address)
+    if self.victim_address <= self.victim_address_max:
+      self.vprint("victim address ", self.victim_address)
+    else:
+      self.vprint("victim has empty access")
     self._randomize_cache()
 
   def render(self, mode='human'):
@@ -446,6 +485,7 @@ class CacheGuessingGameEnv(gym.Env):
       elif action < 2 * len(self.attacker_address_space):
         is_flush = 1
         address = action - len(self.attacker_address_space) 
+        is_flush = 1
       elif action == 2 * len(self.attacker_address_space):
         is_victim = 1
       else:

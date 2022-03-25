@@ -62,7 +62,7 @@ def print_cache(cache):
     sets = []
     set_indexes = sorted(cache.data.keys())
     if len(cache.data.keys()) > 0:
-        first_key = cache.data.keys()[0]
+        first_key = list(cache.data.keys())[0]
         way_no = 0
         
         #Label the columns
