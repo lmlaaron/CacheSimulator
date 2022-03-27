@@ -92,6 +92,7 @@ class CacheGuessingGameEnv(gym.Env):
     self.wrong_reward = env_config["wrong_reward"] if "wrong_reward" in env_config else -9999
     self.step_reward = env_config["step_reward"] if "step_reward" in env_config else 0
     self.reset_limit = env_config["reset_limit"] if "reset_limit" in env_config else 1
+    self.cache_state_reset = env_config["cache_state_reset"] if "cache_state_reset" in env_config else True
     window_size = env_config["window_size"] if "window_size" in env_config else 0
     attacker_addr_s = env_config["attacker_addr_s"] if "attacker_addr_s" in env_config else 4
     attacker_addr_e = env_config["attacker_addr_e"] if "attacker_addr_e" in env_config else 7
@@ -366,9 +367,13 @@ class CacheGuessingGameEnv(gym.Env):
     return np.array(self.state), reward, done, info
 
   def reset(self, victim_address=-1):
-    self.vprint('Reset...')
-    self.hierarchy = build_hierarchy(self.configs, self.logger)
-    self.l1 = self.hierarchy['cache_1']
+    if self.cache_state_reset == True:
+      self.vprint('Reset...(also the cache state)')
+      self.hierarchy = build_hierarchy(self.configs, self.logger)
+      self.l1 = self.hierarchy['cache_1']
+    else:
+      self.vprint('Reset...(cache state the same)')
+
     self._reset(victim_address)  # fake reset
     self.state = [0, len(self.attacker_address_space), 0, 0] * self.window_size
     #self.state = [0, len(self.attacker_address_space), 0, 0, 0] * self.window_size
