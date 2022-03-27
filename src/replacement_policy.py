@@ -395,9 +395,9 @@ class plru_pl_policy(rep_policy):
         # set / unset lock
         self.lockarray[index] = lock 
 
-
+# testcase based on https://dl.acm.org/doi/pdf/10.1145/1816038.1815971
 class brrip_policy(rep_policy):
-    def __init__(self, associativity, block_size, verbose = True):
+    def __init__(self, associativity, block_size, verbose = False):
         self.associativity = associativity
         self.block_size = block_size
         self.count = 0
@@ -424,9 +424,9 @@ class brrip_policy(rep_policy):
                 break
             index += 1
         # touch the entry
-        self.touch(tag, timestamp)
+        self.touch(tag, timestamp, hit = False)
 
-    def touch(self, tag, timestamp):
+    def touch(self, tag, timestamp, hit = True):
         # find the index
         index = 0
         self.vprint(index)
@@ -439,7 +439,10 @@ class brrip_policy(rep_policy):
             self.rrpv[index] = 0
         else:
             if self.rrpv[index] > 0:
-                self.rrpv[index] -= 1
+                if hit == True:
+                    self.rrpv[index] = 0
+                else:
+                    self.rrpv[index] -= 1
         self.vprint(self.candidate_tags)
         self.vprint(self.rrpv)
 
