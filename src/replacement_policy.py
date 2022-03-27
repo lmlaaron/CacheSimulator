@@ -395,6 +395,7 @@ class plru_pl_policy(rep_policy):
         # set / unset lock
         self.lockarray[index] = lock 
 
+#implementation based on https://github.com/gem5/gem5/blob/87c121fd954ea5a6e6b0760d693a2e744c2200de/src/mem/cache/replacement_policies/brrip_rp.cc
 # testcase based on https://dl.acm.org/doi/pdf/10.1145/1816038.1815971
 class brrip_policy(rep_policy):
     def __init__(self, associativity, block_size, verbose = False):

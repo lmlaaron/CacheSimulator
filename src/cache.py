@@ -11,6 +11,7 @@ class Cache:
         self.n_blocks = n_blocks
         self.associativity = associativity
         self.hit_time = hit_time
+        self.cflush_time = hit_time # assume flush is as fast as hit since
         self.write_time = write_time
         self.write_back = write_back
         self.logger = logger
@@ -54,7 +55,8 @@ class Cache:
 
     # flush the cache line that contains the address from all cache hierachy
     def cflush(self, address, current_step):
-        r = None
+        #r = None
+        r = response.Response({self.name:True}, self.cflush_time) #flush regardless 
         #Parse our address to look through this cache
         block_offset, index, tag = self.parse_address(address)
         #print(block_offset)
