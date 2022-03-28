@@ -12,7 +12,7 @@
         "flush_inst": true,
         "allow_victim_multi_access": true,
         "allow_empty_victim_access": true,
-        "cache_state_reset": false,
+        "cache_state_reset": true,
         "attacker_addr_s": 0,
         "attacker_addr_e": 8,
         "victim_addr_s": 0,

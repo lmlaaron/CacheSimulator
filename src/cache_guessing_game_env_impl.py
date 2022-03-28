@@ -123,7 +123,7 @@ class CacheGuessingGameEnv(gym.Env):
     self.cache_size = self.configs['cache_1']['blocks']
     
     if "rep_policy" not in self.configs['cache_1']:
-      self.config['cache_1']['rep_policy'] = 'lru'
+      self.configs['cache_1']['rep_policy'] = 'lru'
     
     if window_size == 0:
       self.window_size = self.cache_size * 4 + 8 #10 

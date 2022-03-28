@@ -8,13 +8,12 @@
         "wrong_reward": -10000,
         "step_reward": -10,
         "verbose": 1,
-        "force_victim_hit": true,
-        "flush_inst": true,
+        "force_victim_hit": false,
+        "flush_inst": false,
         "allow_victim_multi_access": true,
         "allow_empty_victim_access": true,
-        "cache_state_reset": true,
-        "attacker_addr_s": 0,
-        "attacker_addr_e": 4,
+        "attacker_addr_s": 1,
+        "attacker_addr_e": 8,
         "victim_addr_s": 0,
         "victim_addr_e": 0,
         "reset_limit": 1,
@@ -25,10 +24,9 @@
               "write_back": true
             },
             "cache_1": {
-              "blocks": 4, 
-              "associativity": 4,  
-              "hit_time": 1,
-              "rep_policy": "brrip"
+              "blocks": 8, 
+              "associativity": 8,  
+              "hit_time": 1 
             },
             "mem": {
               "hit_time": 1000 
