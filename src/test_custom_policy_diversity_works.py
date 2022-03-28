@@ -439,6 +439,12 @@ config = {
         "victim_addr_s": 0,
         "victim_addr_e": 1,
         "reset_limit": 1,
+        "length_violation_reward": -10,
+        "double_victim_access_reward": -0.1,
+        "victim_access_reward": -0.1,
+        "correct_reward": 1,
+        "wrong_reward": -10,
+        "step_reward": -0.1,
         "cache_configs": {
                 # YAML config file for cache simulaton
             "architecture": {
@@ -460,6 +466,7 @@ config = {
     'num_gpus': 1, 
     'num_workers': 4, 
     'num_envs_per_worker': 1, 
+    'lr': 1e-3, # decrease lr if unstable 
     #'entropy_coeff': 0.001, 
     #'num_sgd_iter': 5, 
     #'vf_loss_coeff': 1e-05, 
@@ -471,8 +478,8 @@ config = {
             'victim_acc_dim': 2,
             'action_dim': 100, # need to be precise
             'step_dim': 40,   # need to be precise
-            'action_embed_dim': 8,
-            'step_embed_dim': 4,
+            'action_embed_dim': 8, # can be increased 32
+            'step_embed_dim': 4, # can be increased less than 16
             'hidden_dim': 32,
             'num_blocks': 1
         }
