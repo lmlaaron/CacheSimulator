@@ -429,6 +429,10 @@ tune.register_env("cache_guessing_game_env_fix", CacheGuessingGameEnv)#Fix)
 # method 2b
 config = {
     'env': 'cache_guessing_game_env_fix', #'cache_simulator_diversity_wrapper',
+
+    "evaluation_num_workers": 1, 
+    "evaluation_interval": 5,
+
     'env_config': {
         'verbose': 1,
         "force_victim_hit": False,
