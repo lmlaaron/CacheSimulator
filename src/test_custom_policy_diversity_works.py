@@ -439,12 +439,14 @@ config = {
         "victim_addr_s": 0,
         "victim_addr_e": 1,
         "reset_limit": 1,
-        "length_violation_reward": -10,
-        "double_victim_access_reward": -0.1,
-        "victim_access_reward": -0.1,
-        "correct_reward": 1,
-        "wrong_reward": -10,
-        "step_reward": -0.1,
+
+        "length_violation_reward": -1,
+        "double_victim_access_reward": -1,  # must be large value if not allow victim multi access
+        "victim_access_reward": -0.001,
+        "correct_reward": 0.02,
+        "wrong_reward": -1,
+        "step_reward": -0.001,
+
         "cache_configs": {
                 # YAML config file for cache simulaton
             "architecture": {
