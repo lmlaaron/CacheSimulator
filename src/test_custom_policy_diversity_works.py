@@ -470,7 +470,7 @@ config = {
     }, 
     #'gamma': 0.9, 
     'num_gpus': 1, 
-    'num_workers': 4, 
+    'num_workers': 1, 
     'num_envs_per_worker': 1, 
     'lr': 1e-3, # decrease lr if unstable 
     #'entropy_coeff': 0.001, 
@@ -482,10 +482,10 @@ config = {
             'window_size': 40, #16, #need to match
             'latency_dim': 3,
             'victim_acc_dim': 2,
-            'action_dim': 100, # need to be precise
-            'step_dim': 40,   # need to be precise
-            'action_embed_dim': 8, # can be increased 32
-            'step_embed_dim': 4, # can be increased less than 16
+            'action_dim': 200, # need to be precise
+            'step_dim': 80,#40,   # need to be precise
+            'action_embed_dim': 32,#,8, # can be increased 32
+            'step_embed_dim': 6,#4, # can be increased less than 16
             'hidden_dim': 32,
             'num_blocks': 1
         }
