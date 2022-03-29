@@ -437,15 +437,15 @@ config = {
         'verbose': 1,
         "force_victim_hit": False,
         'flush_inst': False,#True,
-        "allow_victim_multi_access": False, #True, #False,
+        "allow_victim_multi_access": True, #False,
         "attacker_addr_s": 0,
-        "attacker_addr_e": 3,
+        "attacker_addr_e": 15,
         "victim_addr_s": 0,
-        "victim_addr_e": 1,
+        "victim_addr_e": 7,
         "reset_limit": 1,
 
         "length_violation_reward": -1,
-        "double_victim_access_reward": -1,  # must be large value if not allow victim multi access
+        "double_victim_access_reward": -0.001,  # must be large value if not allow victim multi access
         "victim_access_reward": -0.001,
         "correct_reward": 0.02,
         "wrong_reward": -1,
@@ -459,8 +459,8 @@ config = {
               "write_back": True
             },
             "cache_1": {#required
-              "blocks": 2, 
-              "associativity": 2,  
+              "blocks": 8, 
+              "associativity": 8,  
               "hit_time": 1 #cycles
             },
             "mem": {#required
@@ -479,7 +479,7 @@ config = {
     'model': {
         'custom_model': 'dnn_model',#'rnn', 
         'custom_model_config': {
-            'window_size': 16,
+            'window_size': 40, #16, #need to match
             'latency_dim': 3,
             'victim_acc_dim': 2,
             'action_dim': 100, # need to be precise
