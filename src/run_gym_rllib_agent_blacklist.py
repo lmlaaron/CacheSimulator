@@ -133,6 +133,8 @@ if __name__ == "__main__":
     thre =0.95 #0.98
     #buf = []
 
+    all_raw_patterns = []
+    all_categorized_patterns = []
     while True:
         # Perform one iteration of training the policy with PPO
         result = trainer.train()

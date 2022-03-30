@@ -19,8 +19,6 @@ from torch.autograd import Variable
 sys.path.append("../src")
 from models.dqn_model import DNNEncoder 
 
-
-
 # the actual model used by the RLlib
 from collections import deque
 class TestModel(TorchModelV2, nn.Module):
@@ -165,112 +163,6 @@ class TestModel(TorchModelV2, nn.Module):
             "imitation_loss": self.div_loss_metric,
         }
 
-    '''
-    Author: Zhang-Wei Hong 
-    Email: williamd4112@gapp.nthu.edu.tw>
-    Description: source code for paper
-    “Diversity-driven exploration strategy for deep reinforcement learning” (NIPS 2018) 
-    '''        
-    '''
-    def compute_div_loss(self, states, log_probs):
-        div_metric = nn.KLDivLoss(size_average=False, reduce=False)
-        # Div loss
-        div_loss = 0
-        #if args.use_neg_ratio or args.use_ratio or args.rel:
-        #    max_perf = current_max_perf if args.use_history_max else current_perf
-        #    min_perf = current_min_perf if args.use_history_max else current_perf
-        #    past_mean_reward_max = max(max(past_mean_rewards), max_perf)
-        #    past_mean_reward_min = min(min(past_mean_rewards), min_perf)
-        #    past_mean_reward_rng = past_mean_reward_max - past_mean_reward_min + 1e-9
-
-        #if args.use_neg_ratio:
-        #    past_ratios = [((r - past_mean_reward_min) / past_mean_reward_rng) * 2 - 1 for r in past_mean_rewards]
-        #elif args.use_ratio:
-        #    past_ratios = [((r - past_mean_reward_min) / past_mean_reward_rng)  for r in past_mean_rewards]
-        #elif args.rel:
-        #    past_ratios = [((r - current_perf) / past_mean_reward_rng)  for r in past_mean_rewards]
-        #else:
-        #    past_ratios = [1.0 for r in range(len(past_models))]
-        past_ratios = [1.0 for r in range(len(self.past_models))]
-
-        divs = []
-        for idx, past_model in enumerate(self.past_models):
-            past_model.forward(states,)?????
-            _, target_inds = t_probs.max(1)
-            target_inds = target_inds.data
-            action_size = t_probs.size()
-            target_probs = Variable(torch.zeros(action_size[0], action_size[1]).cuda().scatter_(1, target_inds.unsqueeze(1), 1.0), requires_grad=False)
-
-            div = div_metric(log_probs, target_probs).sum(1)
-            div = torch.clamp(div, min=-self.div_threshold, max=self.div_threshold)
-            div = div.mean(0)
-            divs.append(div)
-
-        divs_sort_idx = np.argsort([d.data[0] for d in divs])
-
-        div_loss_orig = 0
-        for idx in divs_sort_idx:
-            if self.use_neg_ratio and self.past_mean_reward_min != self.past_mean_reward_max:
-                div_loss += float(-past_ratios[idx]) * divs[idx]
-            elif self.use_ratio and self.past_mean_reward_min != self.past_mean_reward_max:
-                div_loss += (1.0 - float(past_ratios[idx])) * divs[idx]
-            elif self.rel and self.past_mean_reward_min != self.current_perf:
-                div_loss += float(-past_ratios[idx]) * divs[idx]
-            else:
-                div_loss += divs[idx]
-            div_loss_orig += divs[idx]
-
-        if self.use_clip_div_loss:
-            div_loss = torch.clamp(div_loss / float(len(self.past_models)), min=-self.div_max, max=self.div_max)
-        else:
-            div_loss = div_loss / float(len(self.past_models))
-
-        return div_loss, div_loss_orig / float(len(self.past_models))
-        
-
-        for idx, past_model in enumerate(self.past_models):
-            temperature = args.temp
-            actions = Variable(rollouts.actions.view(-1, action_shape), volatile=True)
-            _, t_action_log_probs, _, t_log_probs, t_probs = past_model.evaluate_actions(Variable(states.data, volatile=True), actions, temperature=temperature)
-            target_log_probs = t_log_probs
-            target_log_probs = Variable(target_log_probs.data, requires_grad=False)
-
-            if self.div_soft:
-                target_probs = Variable(t_probs.data, requires_grad=False)
-            else:
-                _, target_inds = t_probs.max(1)
-                target_inds = target_inds.data
-                action_size = t_probs.size()
-                target_probs = Variable(torch.zeros(action_size[0], action_size[1]).cuda().scatter_(1, target_inds.unsqueeze(1), 1.0), requires_grad=False)
-            div = div_metric(log_probs, target_probs).sum(1)
-            div = torch.clamp(div, min=-self.div_threshold, max=self.div_threshold)
-            div = div.mean(0)
-            divs.append(div)
-
-        divs_sort_idx = np.argsort([d.data[0] for d in divs])
-        if self.knn != 0:
-            divs_sort_idx = divs_sort_idx[:self.knn]
-
-        div_loss_orig = 0
-        for idx in divs_sort_idx:
-            if self.use_neg_ratio and self.past_mean_reward_min != self.past_mean_reward_max:
-                div_loss += float(-past_ratios[idx]) * divs[idx]
-            elif self.use_ratio and self.past_mean_reward_min != self.past_mean_reward_max:
-                div_loss += (1.0 - float(past_ratios[idx])) * divs[idx]
-            elif self.rel and self.past_mean_reward_min != self.current_perf:
-                div_loss += float(-past_ratios[idx]) * divs[idx]
-            else:
-                div_loss += divs[idx]
-            div_loss_orig += divs[idx]
-
-        if self.use_clip_div_loss:
-            div_loss = torch.clamp(div_loss / float(len(self.past_models)), min=-self.div_max, max=self.div_max)
-        else:
-            div_loss = div_loss / float(len(self.past_models))
-
-        return div_loss, div_loss_orig / float(len(self.past_models))
-        '''
-
 ModelCatalog.register_custom_model("test_model", TestModel)
 # RLlib does not work with gym registry, must redefine the environment in RLlib
 # from cache_guessing_game_env_fix_impl_evict import * # for evict time attack
@@ -291,7 +183,7 @@ otherwise it will be positive
 at the end output everything in the register 
 '''
 class CacheSimulatorDiversityWrapper(gym.Env):
-    def __init__(self, env_config, keep_latency=False):
+    def __init__(self, env_config, keep_latency=True):
         self.env_config = env_config
         # two choices for memorize the table
         # 1. keep both the action and the actual latency
@@ -395,15 +287,15 @@ class CacheSimulatorDiversityWrapper(gym.Env):
         if self.action_buffer in self.pattern_buffer:
             return True
         else:
-            if self._env.calc_correct_rate() > self.correct_thre:
+            if True:  ##self._env.calc_correct_rate() > self.correct_thre:
                 if self.keep_latency == True:  # need to calculate the latency of specific pattern
                     print(self.action_buffer)
-                    c = self.calc_correct_seq(self.action_buffer)
-                    if c > self.correct_thre:
+                    #c = self.calc_correct_seq(self.action_buffer)
+                    if True:#c > self.correct_thre:
                         #print("calc_correct_seq")
                         self.pattern_buffer.append(self.action_buffer)
                         self.pattern_init_state_buffer.append(copy.deepcopy(self.pattern_init_state))
-                        self.replay_pattern_buffer()
+                        #self.replay_pattern_buffer()
                 else:                           # just keep the pattern and the model
                     #c = self.calc_correct_seq(self.action_buffer) 
                     #if c > self.correct_thre: 
@@ -416,6 +308,7 @@ class CacheSimulatorDiversityWrapper(gym.Env):
     '''        
     def step(self,action):
         state, reward, done, info = self._env.step(action)
+        #return state, reward, done, info
         #state = [state self._env.calc_correct_rate()]
         if self.keep_latency == True:
             latency = state[0]
@@ -429,7 +322,7 @@ class CacheSimulatorDiversityWrapper(gym.Env):
         else:
             action = self._env.parse_action(action)
             is_guess = action[1]
-            if is_guess == True:
+            if is_guess == True and reward > 0:  # cprrect sequence
                 is_exist = self.check_and_save()
                 if is_exist == True and self.enable_diversity==True:
                     reward = self.repeat_pattern_reward #-10000
@@ -460,16 +353,16 @@ tune.register_env("cache_simulator_diversity_wrapper", CacheSimulatorDiversityWr
 # Two ways of training
 # method 2b
 config = {
-    'env': 'cache_guessing_game_env_fix', #'cache_simulator_diversity_wrapper',
+    'env': 'cache_simulator_diversity_wrapper',
     'env_config': {
         'verbose': 1,
         "force_victim_hit": False,
         'flush_inst': False,
         "allow_victim_multi_access": False,
         "attacker_addr_s": 0,
-        "attacker_addr_e": 7,#3,
+        "attacker_addr_e": 3,
         "victim_addr_s": 0,
-        "victim_addr_e": 3,#1,
+        "victim_addr_e": 1,
         "reset_limit": 1,
         "cache_configs": {
                 # YAML config file for cache simulaton
@@ -479,7 +372,7 @@ config = {
               "write_back": True
             },
             "cache_1": {#required
-              "blocks": 4,#2, 
+              "blocks": 2,#2, 
               "associativity": 1,#2,  
               "hit_time": 1 #cycles
             },
@@ -489,9 +382,9 @@ config = {
         }
     }, 
     #'gamma': 0.9, 
-    'num_gpus': 2, 
-    'num_workers': 16, 
-    'num_envs_per_worker': 2, 
+    'num_gpus': 1, 
+    'num_workers': 1, 
+    'num_envs_per_worker': 1, 
     #'entropy_coeff': 0.001, 
     #'num_sgd_iter': 5, 
     #'vf_loss_coeff': 1e-05, 
@@ -512,8 +405,8 @@ if __name__ == "__main__":
 
     #tune.run(PPOTrainer, config=config)#config={"env": 'Freeway-v0', "num_gpus":1})
     from ray.tune.logger import pretty_print
-    #trainer = PPOTrainer(config=config)
-    trainer = SACTrainer(config=config)
+    trainer = PPOTrainer(config=config)
+    #trainer = SACTrainer(config=config)
 
     def signal_handler(sig, frame):
         print('You pressed Ctrl+C!')

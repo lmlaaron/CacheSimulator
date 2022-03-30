@@ -35,6 +35,7 @@ import math
 sys.path.append("../src")
 torch, nn = try_import_torch()
 from cache_guessing_game_env_impl import *
+from categorization_parser import *
 
 def custom_init(policy: Policy, obs_space: gym.spaces.Space, 
               action_space: gym.spaces.Space, config: TrainerConfigDict)->None:
@@ -275,7 +276,8 @@ from ray.rllib.utils.annotations import override
 
 class CustomPPOTorchPolicy(PPOTorchPolicy):
     def __init__(self, observation_space, action_space, config):
-        self.past_len = 10        
+        self.past_len = 10
+        #self.categorization_parser = CategorizationParser()        
         self.past_models = deque(maxlen =self.past_len)
         #self.past_weights = deque(maxlen= self.past_len)
         self.timestep = 0
@@ -295,7 +297,7 @@ class CustomPPOTorchPolicy(PPOTorchPolicy):
         
         total_loss = PPOTorchPolicy.loss(self, model, dist_class, train_batch)
         #self.past_len
-        div_loss = 0#compute_div_loss(self, model, dist_class, train_batch)
+        div_loss = 0 #compute_div_loss(self, model, dist_class, train_batch)
         #div_loss = compute_div_loss_weight(self, copy.deepcopy(self.get_weights()), dist_class, train_batch)
         print('total_loss')
         print(total_loss)
@@ -355,6 +357,7 @@ class CustomPPOTorchPolicy(PPOTorchPolicy):
     #TODO(Mulong): is there an standard initialization condition???
     #def is_same_agent(self, weight1, weight2, env, trainer):
     def is_same_agent(self, model1, model2, env, trainer):
+        categorization_parser = CategorizationParser(env)
         original_state_dict = copy.deepcopy(self.model.state_dict())
         #original_weights = copy.deepcopy(self.get_weights())
         for victim_addr in range(env.victim_address_min, env.victim_address_max + 1):
@@ -363,21 +366,37 @@ class CustomPPOTorchPolicy(PPOTorchPolicy):
             #pp = trainer.workers.local_worker().preprocessors[DEFAULT_POLICY_ID]
             #obs = pp.transform(obs)
             done = False
+            #while done == False:
+            #    self.model.load_state_dict(model1.state_dict())
+            #    #self.set_weights(weight1)
+            #    action1 = trainer.compute_single_action(obs, explore=False) # randomized inference
+            #    self.model.load_state_dict(model2.state_dict())
+            #    #self.set_weights(weight2)
+            #    action2 = trainer.compute_single_action(obs, explore=False) # randomized inference
+            #    if action1 != action2:
+            #        self.model.load_state_dict(original_state_dict) 
+            #        #self.set_weights(original_weights)
+            #        return False
+            #    else:
+            #        action = action1
+            #        obs, reward, done, info = env.step(action)       
+            seq1 = []
             while done == False:
                 self.model.load_state_dict(model1.state_dict())
-                #self.set_weights(weight1)
                 action1 = trainer.compute_single_action(obs, explore=False) # randomized inference
+                seq1.append(action1)
+                obs, reward, done, info = env.step(action1)      
+            
+            seq2 = []
+            while done == False:
                 self.model.load_state_dict(model2.state_dict())
-                #self.set_weights(weight2)
                 action2 = trainer.compute_single_action(obs, explore=False) # randomized inference
-                if action1 != action2:
-                    self.model.load_state_dict(original_state_dict) 
-                    #self.set_weights(original_weights)
-                    return False
-                else:
-                    action = action1
-                    obs, reward, done, info = env.step(action)       
-        
+                seq1.append(action2)
+                obs, reward, done, info = env.step(action2)
+
+            if categorization_parser.is_same_base_pattern(seq1, seq2) == False:
+                return False
+
         self.model.load_state_dict(original_state_dict) 
         #self.set_weights(original_weights)
         return True
@@ -400,22 +419,38 @@ PPOCustomTrainer = PPOTrainer.with_updates(
     get_policy_class=lambda _: CustomPPOTorchPolicy)
 
 
+
+import models.dnn_model 
+
+
 #tune.run(CustomTrainer, config={"env": 'Frostbite-v0', "num_gpus":0})#, 'model': { 'custom_model': 'test_model' }})
 tune.register_env("cache_guessing_game_env_fix", CacheGuessingGameEnv)#Fix)
 # Two ways of training
 # method 2b
 config = {
     'env': 'cache_guessing_game_env_fix', #'cache_simulator_diversity_wrapper',
+
+    "evaluation_num_workers": 1, 
+    "evaluation_interval": 5,
+
     'env_config': {
         'verbose': 1,
         "force_victim_hit": False,
         'flush_inst': False,#True,
-        "allow_victim_multi_access": False, #True, #False,
+        "allow_victim_multi_access": True, #False,
         "attacker_addr_s": 0,
-        "attacker_addr_e": 3,
+        "attacker_addr_e": 15,
         "victim_addr_s": 0,
-        "victim_addr_e": 1,
+        "victim_addr_e": 7,
         "reset_limit": 1,
+
+        "length_violation_reward": -1,
+        "double_victim_access_reward": -0.001,  # must be large value if not allow victim multi access
+        "victim_access_reward": -0.001,
+        "correct_reward": 0.02,
+        "wrong_reward": -1,
+        "step_reward": -0.001,
+
         "cache_configs": {
                 # YAML config file for cache simulaton
             "architecture": {
@@ -424,8 +459,8 @@ config = {
               "write_back": True
             },
             "cache_1": {#required
-              "blocks": 2, 
-              "associativity": 2,  
+              "blocks": 8, 
+              "associativity": 8,  
               "hit_time": 1 #cycles
             },
             "mem": {#required
@@ -435,24 +470,25 @@ config = {
     }, 
     #'gamma': 0.9, 
     'num_gpus': 1, 
-    'num_workers': 1, 
+    'num_workers': 4, 
     'num_envs_per_worker': 1, 
+    'lr': 1e-3, # decrease lr if unstable 
     #'entropy_coeff': 0.001, 
     #'num_sgd_iter': 5, 
     #'vf_loss_coeff': 1e-05, 
     'model': {
-        ####"conv_filters": None,
-        ##### Nonlinearity for built-in convnet
-        ####"conv_activation": "relu",
-        ##### Nonlinearity for fully connected net (tanh, relu)
-        ####"fcnet_activation": "tanh",
-        ##### Number of hidden layers for fully connected net
-        ####"fcnet_hiddens": [512, 512, 512],
-        #####'custom_model': 'test_model',#'rnn', 
-        #####'max_seq_len': 20, 
-        #####'custom_model_config': {
-        #####    'cell_size': 32
-        #####   }
+        'custom_model': 'dnn_model',#'rnn', 
+        'custom_model_config': {
+            'window_size': 40, #16, #need to match
+            'latency_dim': 3,
+            'victim_acc_dim': 2,
+            'action_dim': 100, # need to be precise
+            'step_dim': 40,   # need to be precise
+            'action_embed_dim': 8, # can be increased 32
+            'step_embed_dim': 4, # can be increased less than 16
+            'hidden_dim': 32,
+            'num_blocks': 1
+        }
     }, 
     'framework': 'torch',
 }

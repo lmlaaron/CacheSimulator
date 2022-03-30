@@ -110,7 +110,7 @@ class CacheGuessingGameEnv(gym.Env):
     self.sh.setFormatter(self.fh_format)
     self.logger.setLevel(logging.INFO)
     if "cache_configs" in env_config:
-      self.logger.info('Load config from JSON')
+      #self.logger.info('Load config from JSON')
       self.configs = env_config["cache_configs"]
     else:
       self.config_file_name = os.path.dirname(os.path.abspath(__file__))+'/../configs/config_simple_L1'
@@ -130,7 +130,8 @@ class CacheGuessingGameEnv(gym.Env):
     else:
       self.window_size = window_size
     self.hierarchy = build_hierarchy(self.configs, self.logger)
-    self.state = [0, self.cache_size, 0, 0] * self.window_size
+    #self.state = [0, self.cache_size, 0, 0] * self.window_size
+    self.state = [-1, -1, -1, -1] * self.window_size # Xiaomeng
     #self.state = [0, self.cache_size, 0, 0, 0] * self.window_size
     self.attacker_address_min = attacker_addr_s
     self.attacker_address_max = attacker_addr_e
@@ -183,18 +184,24 @@ class CacheGuessingGameEnv(gym.Env):
         self.action_space = spaces.Discrete(
           2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space) 
         )
+    
     # let's book keep all obvious information in the observation space 
     # since the agent is dumb
-    self.observation_space = spaces.MultiDiscrete(
-      [
-        3,                                          #cache latency
-        len(self.attacker_address_space) + 1,       #attacker accessed address
-        self.window_size + 2,                       #current steps
-        2,                                          #whether the victim has accessed yet
-        #2,                                          # whether it is a cflush
-      ] * self.window_size
-    )
-    print('Initializing...')
+    #self.observation_space = spaces.MultiDiscrete(
+    #  [
+    #    3,                                          #cache latency
+    #    len(self.attacker_address_space) + 1,       #attacker accessed address
+    #    self.window_size + 2,                       #current steps
+    #    2,                                          #whether the victim has accessed yet
+    #    #2,                                          # whether it is a cflush
+    #  ] * self.window_size
+    #)
+    self.max_box_value = max(self.window_size + 2,  2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space) + 1)#max(self.window_size + 2, len(self.attacker_address_space) + 1) 
+    self.feature_size = 4
+    self.observation_space = spaces.Box(low=-1, high=self.max_box_value, shape=(self.window_size, self.feature_size))
+
+    
+    #print('Initializing...')
     self.l1 = self.hierarchy['cache_1']
     self.current_step = 0
     self.victim_accessed = False
@@ -242,7 +249,8 @@ class CacheGuessingGameEnv(gym.Env):
     ###  )
 
     #action = self.parse_action(action)
-    action = self.parse_action_degenerate(action, self.flush_inst)
+    original_action = action
+    action = self.parse_action(original_action) #, self.flush_inst)
 
     address = str(action[0]+self.attacker_address_min)                # attacker address in attacker_address_space
     is_guess = action[1]                                              # check whether to guess or not
@@ -346,9 +354,12 @@ class CacheGuessingGameEnv(gym.Env):
       victim_accessed = 0
     #self.state = [r, action[0], current_step, victim_accessed, is_flush] + self.state 
     #self.state = self.state[0:len(self.state)-5]
-    self.state = [r, action[0], current_step, victim_accessed] + self.state 
+    
+    
+    ####self.state = [r, action[0], current_step, victim_accessed] + self.state 
+    #Xiaomeng
+    self.state = [r, victim_accessed, original_action, current_step ] + self.state  
     self.state = self.state[0:len(self.state)-4]
- 
     #self.state = [r, action[0], current_step, victim_accessed]
     
     '''
@@ -364,7 +375,7 @@ class CacheGuessingGameEnv(gym.Env):
         done = False                           # fake reset
         self._reset()                          # manually reset
 
-    return np.array(self.state), reward, done, info
+    return np.array(self.state).reshape(self.window_size, self.feature_size), reward, done, info
 
   def reset(self, victim_address=-1):
     if self.cache_state_reset == True:
@@ -375,51 +386,53 @@ class CacheGuessingGameEnv(gym.Env):
       self.vprint('Reset...(cache state the same)')
 
     self._reset(victim_address)  # fake reset
-    self.state = [0, len(self.attacker_address_space), 0, 0] * self.window_size
+    #self.state = [0, len(self.attacker_address_space), 0, 0] * self.window_size
+    self.state = [-1, -1,-1, -1] * self.window_size
     #self.state = [0, len(self.attacker_address_space), 0, 0, 0] * self.window_size
     self.reset_time = 0
+
 
     if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
       assert(self.victim_address_min == self.victim_address_max) # for plru_pl cache, only one address is allowed
       self.vprint("[reset] victim access %d locked cache line" % self.victim_address_max)
       self.l1.read(str(self.victim_address_max), self.current_step, replacement_policy.PL_LOCK)
 
-    return np.array(self.state)
+    return np.array(self.state).reshape(self.window_size, self.feature_size)
 
   '''
   function to calculate the correctness rate
   '''
   def calc_correct_rate(self):
-    return self.guess_buffer.count(True) /len(self.guess_buffer)
+    return self.guess_buffer.count(True) / len(self.guess_buffer)
 
-  #'''
-  #evluate the correctness of an action sequence (action+ latency) 
-  #action_buffer: list [(action, latency)]
-  #'''
-  #def calc_correct_seq(self, action_buffer):
-  #  last_action, _ = action_buffer[-1]
-  #  last_action = self.parse_action(last_action)
-  #  print(last_action)
-  #  guess_addr = last_action[4]
-  #  print(guess_addr)
-  #  self.reset()
-  #  self.total_guess = 0
-  #  self.correct_guess = 0
-  #  while self.total_guess < 20:
-  #    self.reset()
-  #    for i in range(0, len(action_buffer)):
-  #      p = action_buffer[i]
-  #      state, _, _, _ = self.step(p[0])
-  #      latency = state[0]
-  #      if latency != p[1]:
-  #        break
-  #    if i < len(action_buffer) - 1:
-  #      continue
-  #    else:
-  #      self.total_guess += 1
-  #      if guess_addr == self.victim_address:
-  #        self.correct_guess += 1
-  #  return self.correct_guess / self.total_guess
+  '''
+  evluate the correctness of an action sequence (action+ latency) 
+  action_buffer: list [(action, latency)]
+  '''
+  def calc_correct_seq(self, action_buffer):
+    last_action, _ = action_buffer[-1]
+    last_action = self.parse_action(last_action)
+    print(last_action)
+    guess_addr = last_action[4]
+    print(guess_addr)
+    self.reset(victim_addr = guess_addr)
+    self.total_guess = 0
+    self.correct_guess = 0
+    while self.total_guess < 20:
+      self.reset(victim_addr)
+      for i in range(0, len(action_buffer)):
+        p = action_buffer[i]
+        state, _, _, _ = self.step(p[0])
+        latency = state[0]
+        if latency != p[1]:
+          break
+      if i < len(action_buffer) - 1:
+        continue
+      else:
+        self.total_guess += 1
+        if guess_addr == self.victim_address:
+          self.correct_guess += 1
+    return self.correct_guess / self.total_guess
 
   # fake reset, just set a new victim addr 
   def _reset(self, victim_address=-1):
@@ -490,31 +503,17 @@ class CacheGuessingGameEnv(gym.Env):
       print( " "+" ".join(map(str,args))+" ")
 
   '''
-  parse the action 
-  returns list of 5 elements representing
-  address, is_guess, is_victim, is_flush, victim_addr
-  '''
-  def parse_action(self, action):
-    temp_action=[]
-    temp_action.append(int(action / ( 2 * 2 * 2 * self.cache_size)) )   
-    temp_action.append(int(action / ( 2 * 2 * self.cache_size)) % 2 )   
-    temp_action.append(int(action / ( 2 * self.cache_size)) % 2 )       
-    temp_action.append(int(action / self.cache_size) % 2 )              
-    temp_action.append(int(action % self.cache_size))                      
-    return temp_action
-
-  '''
   parse the action in the degenerate space (no redundant actions)
   returns list of 5 elements representing
   address, is_guess, is_victim, is_flush, victim_addr
   '''
-  def parse_action_degenerate(self, action, flush_inst):
+  def parse_action(self, action):
     address = 0
     is_guess = 0
     is_victim = 0
     is_flush = 0
-    victim_addr = 0
-    if flush_inst == False:
+    victim_addr = 0 
+    if self.flush_inst == False:
       if action < len(self.attacker_address_space):
         address = action
       elif action == len(self.attacker_address_space):
@@ -526,6 +525,7 @@ class CacheGuessingGameEnv(gym.Env):
       if action < len(self.attacker_address_space):
         address = action
       elif action < 2 * len(self.attacker_address_space):
+        is_flush = 1
         address = action - len(self.attacker_address_space) 
         is_flush = 1
       elif action == 2 * len(self.attacker_address_space):
