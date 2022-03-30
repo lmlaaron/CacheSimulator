@@ -4,6 +4,7 @@ import json
 from matplotlib import pyplot as plt
 import numpy as np
 import sys
+import math
 
 #pathname = '/home/mulong/ray_results/PPO_cache_guessing_game_env_fix_2022-03-30_09-03-46wrptlf7f'
 
@@ -53,11 +54,11 @@ while i < len(correct_rate):
         break
     i += 1
 if i == len(correct_rate):
-    coverage_time = math.nan
-    coverage_steps = math.nan
+    converge_time = math.nan
+    converge_steps = math.nan
 else:
-    coverge_time = time_total_s[i]
-    coverge_steps = num_steps_sampled[i]
+    converge_time = time_total_s[i]
+    converge_steps = num_steps_sampled[i]
 
 #plotting
 #print(correct_rate)
@@ -68,7 +69,7 @@ plt.axhline(y=correct_rate_threshold, color='r', linestyle='-')
 plt.xlim(left=0)
 plt.xlabel('num_steps_sampled')
 plt.ylabel('correct_rate')
-plt.text(0, correct_rate_threshold - 0.1, 'coverge_steps ='+str(coverge_steps), color='r')
+plt.text(0, correct_rate_threshold - 0.1, 'converge_steps ='+str(converge_steps), color='r')
 plt.grid(True)
 plt.savefig(pathname  + 'correct_rate_steps.png')
 plt.close()
@@ -80,21 +81,23 @@ plt.axhline(y=correct_rate_threshold, color='r', linestyle='-')
 plt.xlim(left=0)
 plt.xlabel('time_total_s')
 plt.ylabel('correct_rate')
-plt.text(0, correct_rate_threshold - 0.1, 'coverge_time ='+str(coverge_time), color='r')
+plt.text(0, correct_rate_threshold - 0.1, 'converge_time ='+str(converge_time), color='r')
 plt.grid(True)
 plt.savefig(pathname + 'correct_rate_time.png')
 plt.close()
 
 plt.plot(num_steps_sampled, episode_len_mean)
 #plt.ylim(0,1)
-coverge_len=np.average(np.array(episode_len_mean[len(episode_len_mean)-100::len(episode_len_mean)-1]))
-plt.axhline(y=coverge_len, color='r', linestyle='-')
-plt.text(0, correct_rate_threshold - 0.1, 'coverge_len ='+str(coverge_len), color ='r')
+converge_len=np.average(np.array(episode_len_mean[len(episode_len_mean)-100::len(episode_len_mean)-1]))
+plt.axhline(y=converge_len, color='r', linestyle='-')
+plt.text(0, correct_rate_threshold - 0.1, 'coverge_len ='+str(converge_len), color ='r')
 plt.xlim(left=0)
 plt.xlabel('num_steps_sampled')
 plt.ylabel('episode_len_mean')
 plt.grid(True)
 plt.savefig(pathname  + 'len_steps.png')
 plt.close()
+if converge_steps == math.nan:
+    converge_len = math.nan
 
-print(str(coverge_steps)+ ' ' + str(coverge_time) + ' ' + str(coverge_len))
+print(str(converge_steps)+ ' ' + str(converge_time) + ' ' + str(converge_len))
