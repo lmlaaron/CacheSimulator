@@ -2,7 +2,7 @@
 
 import yaml, cache, argparse, logging, pprint
 from terminaltables.other_tables import UnixTable
-
+from replacement_policy import *
 def main():
     #Set up our arguments
     parser = argparse.ArgumentParser(description='Simulate a cache')
@@ -11,6 +11,7 @@ def main():
     parser.add_argument('-l', '--log-file', help='Log file name', required=False)
     parser.add_argument('-p', '--pretty', help='Use pretty colors', required=False, action='store_true')
     parser.add_argument('-d', '--draw-cache', help='Draw cache layouts', required=False, action='store_true')
+    parser.add_argument('-f', '--result-file', help='Result trace', required=False)
     arguments = vars(parser.parse_args())
     
     if arguments['pretty']:
@@ -19,6 +20,14 @@ def main():
     log_filename = 'cache_simulator.log'
     if arguments['log_file']:
         log_filename = arguments['log_file']
+
+    result_file = ''
+    if arguments['result_file']:
+        result_file = arguments['result_file']
+    #print(result_file)
+
+    with open(result_file, 'w'):
+        pass
 
     #Clear the log file if it exists
     with open(log_filename, 'w'):
@@ -37,7 +46,7 @@ def main():
     
     logger.info('Loading config...')
     config_file = open(arguments['config_file'])
-    configs = yaml.load(config_file)
+    configs = yaml.full_load(config_file)
     hierarchy = build_hierarchy(configs, logger)
     logger.info('Memory hierarchy built.')
 
@@ -47,7 +56,7 @@ def main():
     trace = [item for item in trace if not item.startswith('#')]
     logger.info('Loaded tracefile ' + arguments['trace_file'])
     logger.info('Begin simulation!')
-    simulate(hierarchy, trace, logger)
+    simulate(hierarchy, trace, logger, result_file = result_file)
     if arguments['draw_cache']:
         for cache in hierarchy:
             if hierarchy[cache].next_level:
@@ -103,13 +112,16 @@ def print_cache(cache):
         table = UnixTable(sets)
         table.title = cache.name
         table.inner_row_border = True
-        print("\n")
+        #print("\n")
         print(table.table)
 
 #Loop through the instructions in the tracefile and use
 #the given memory hierarchy to find AMAT
-def simulate(hierarchy, trace, logger):
+def simulate(hierarchy, trace, logger, result_file=''):
     responses = []
+    if result_file != '':
+        f = open(result_file, 'w')
+    #print(result_file)
     #We only interface directly with L1. Reads and writes will automatically
     #interact with lower levels of the hierarchy
     l1 = hierarchy['cache_1']
@@ -120,6 +132,18 @@ def simulate(hierarchy, trace, logger):
         if op == 'R':
             logger.info(str(current_step) + ':\tReading ' + address)
             r = l1.read(address, current_step)
+            logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')
+            responses.append(r)
+        elif op == 'RL':      # pl cache lock cacheline
+            assert(l1.rep_policy == plru_pl_policy) # must be pl cache 
+            logger.info(str(current_step) + ':\tReading ' + address)
+            r = l1.read(address, current_step, pl_opt = PL_LOCK )
+            logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')
+            responses.append(r)
+        elif op == 'RU':      # pl cache unlock cacheline
+            assert(l1.rep_policy == plru_pl_policy)
+            logger.info(str(current_step) + ':\tReading ' + address)
+            r = l1.read(address, current_step, pl_opt = PL_UNLOCK )
             logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')
             responses.append(r)
         #Call write
@@ -136,11 +160,13 @@ def simulate(hierarchy, trace, logger):
         else:
             raise InvalidOpError
         
-        if int(address, 16) >= l1.block_size * l1.n_blocks  and op != 'F':   # receiver adress space is larger than the cache size, receiver is able to measure time      
-            print('trace ' + address + ' ' + str(r.time) + '\n' ) 
-        else:  # senders address space is within the cache size, sender do not measure time
-            print('trace ' + address + ' -1\n')
-
+        #if result_file != '':
+        # print the trace 
+        print(address + ' ' + str(r.time), file = f )
+        for cache in hierarchy:
+            if hierarchy[cache].next_level:
+                print_cache(hierarchy[cache])
+    
     logger.info('Simulation complete')
     analyze_results(hierarchy, responses, logger)
 
@@ -252,7 +278,8 @@ def build_cache(configs, name, next_level_cache, logger):
                 configs[name]['hit_time'],
                 configs['architecture']['write_back'],
                 logger,
-                next_level_cache)
+                next_level_cache,
+                configs[name]['rep_policy'] if 'rep_policy' in configs[name] else '')
 
 
 if __name__ == '__main__':

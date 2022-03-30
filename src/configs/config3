@@ -1,10 +1,15 @@
 {
     "env": "cache_guessing_game_env_fix",
     "env_config": {
+        "length_violation_reward": -1,
+        "double_victim_access_reward": -1,
+        "victim_access_reward": -0.001,
+        "correct_reward": 0.02,
+        "wrong_reward": -1,
+        "step_reward": -0.001,
         "verbose": 1,
         "force_victim_hit": false,
         "flush_inst": false,
-        "allow_empty_victim_access": true,
         "allow_victim_multi_access": false,
         "attacker_addr_s": 0,
         "attacker_addr_e": 3,

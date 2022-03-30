@@ -9,6 +9,7 @@ import os
 import yaml, logging
 from cache_simulator import *
 import sys
+import replacement_policy
 
 class CacheGuessingGameEnv(gym.Env):
   """
@@ -84,12 +85,14 @@ class CacheGuessingGameEnv(gym.Env):
     self.force_victim_hit =env_config["force_victim_hit"] if "force_victim_hit" in env_config else False
     self.length_violation_reward = env_config["length_violation_reward"] if "length_violation_reward" in env_config else -10000
     self.victim_access_reward = env_config["victim_access_reward"] if "victim_access_reward" in env_config else -10
+    self.victim_miss_reward = env_config["victim_miss_reward"] if "victim_miss_reward" in env_config else -10000 if self.force_victim_hit else self.victim_access_reward
     self.double_victim_access_reward = env_config["double_victim_access_reward"] if "double_victim_access_reward" in env_config else -10000
     self.allow_victim_multi_access = env_config["allow_victim_multi_access"] if "allow_victim_multi_access" in env_config else True
     self.correct_reward = env_config["correct_reward"] if "correct_reward" in env_config else 200
     self.wrong_reward = env_config["wrong_reward"] if "wrong_reward" in env_config else -9999
     self.step_reward = env_config["step_reward"] if "step_reward" in env_config else 0
     self.reset_limit = env_config["reset_limit"] if "reset_limit" in env_config else 1
+    self.cache_state_reset = env_config["cache_state_reset"] if "cache_state_reset" in env_config else True
     window_size = env_config["window_size"] if "window_size" in env_config else 0
     attacker_addr_s = env_config["attacker_addr_s"] if "attacker_addr_s" in env_config else 4
     attacker_addr_e = env_config["attacker_addr_e"] if "attacker_addr_e" in env_config else 7
@@ -118,6 +121,9 @@ class CacheGuessingGameEnv(gym.Env):
 
     self.num_ways = self.configs['cache_1']['associativity'] 
     self.cache_size = self.configs['cache_1']['blocks']
+    
+    if "rep_policy" not in self.configs['cache_1']:
+      self.configs['cache_1']['rep_policy'] = 'lru'
     
     if window_size == 0:
       self.window_size = self.cache_size * 4 + 8 #10 
@@ -201,10 +207,15 @@ class CacheGuessingGameEnv(gym.Env):
     self.victim_accessed = False
     if self.allow_empty_victim_access == True:
       #self.victim_address = random.randint(self.victim_address_max +1, self.)
-      self.victim_address = random.randint(self.victim_address_min, self.victim_address_max + 1 + 1)
-    else:
       self.victim_address = random.randint(self.victim_address_min, self.victim_address_max + 1 )
+    else:
+      self.victim_address = random.randint(self.victim_address_min, self.victim_address_max  )
     self._randomize_cache()
+    
+    if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
+      assert(self.victim_address_min == self.victim_address_max) # for plru_pl cache, only one address is allowed
+      self.vprint("[init] victim access %d locked cache line" % self.victim_address_max)
+      self.l1.read(str(self.victim_address_max), self.current_step, replacement_policy.PL_LOCK)
 
     # internal guessing buffer
     # does not change after reset
@@ -257,15 +268,23 @@ class CacheGuessingGameEnv(gym.Env):
         if self.allow_victim_multi_access == True or self.victim_accessed == False:
           r = 2 #
           self.victim_accessed = True
-          self.vprint("victim access %d" % self.victim_address)
-          if self.victim_address <= self.victim_address_max:   # if it is smaller than the range, then do a real access
-            t = self.l1.read(str(self.victim_address), self.current_step).time
-          # otherwise just do a fake access
-          if self.force_victim_hit == True and t > 500:   # for LRU attack, has to force victim access being hit
+
+          if True: #self.configs['cache_1']["rep_policy"] == "plru_pl": no need to distinuish pl and normal rep_policy
+            if self.victim_address <= self.victim_address_max:
+              self.vprint("victim access %d " % self.victim_address)
+              t = self.l1.read(str(self.victim_address), self.current_step).time # do not need to lock again
+            else:
+              self.vprint("victim make a empty access!") # do not need to actually do something
+              t = 1 # empty access will be treated as HIT??? does that make sense???
+              #t = self.l1.read(str(self.victim_address), self.current_step).time 
+          if t > 500:   # for LRU attack, has to force victim access being hit
             self.current_step += 1
-            reward = -5000
-            done = False
-            self.vprint("victim access has to be hit! terminate!")
+            reward = self.victim_miss_reward #-5000
+            if self.force_victim_hit == True:
+              done = True
+              self.vprint("victim access has to be hit! terminate!")
+            else:
+              done = False
           else:
             self.current_step += 1
             reward = self.victim_access_reward #-10
@@ -359,14 +378,25 @@ class CacheGuessingGameEnv(gym.Env):
     return np.array(self.state).reshape(self.window_size, self.feature_size), reward, done, info
 
   def reset(self, victim_address=-1):
-    self.vprint('Reset...')
-    self.hierarchy = build_hierarchy(self.configs, self.logger)
-    self.l1 = self.hierarchy['cache_1']
+    if self.cache_state_reset == True:
+      self.vprint('Reset...(also the cache state)')
+      self.hierarchy = build_hierarchy(self.configs, self.logger)
+      self.l1 = self.hierarchy['cache_1']
+    else:
+      self.vprint('Reset...(cache state the same)')
+
     self._reset(victim_address)  # fake reset
     #self.state = [0, len(self.attacker_address_space), 0, 0] * self.window_size
     self.state = [-1, -1,-1, -1] * self.window_size
     #self.state = [0, len(self.attacker_address_space), 0, 0, 0] * self.window_size
     self.reset_time = 0
+
+
+    if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
+      assert(self.victim_address_min == self.victim_address_max) # for plru_pl cache, only one address is allowed
+      self.vprint("[reset] victim access %d locked cache line" % self.victim_address_max)
+      self.l1.read(str(self.victim_address_max), self.current_step, replacement_policy.PL_LOCK)
+
     return np.array(self.state).reshape(self.window_size, self.feature_size)
 
   '''
