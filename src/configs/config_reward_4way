@@ -1,12 +1,12 @@
 {
     "env": "cache_guessing_game_env_fix",
     "env_config": {
-        "length_violation_reward": -10000,
-        "double_victim_access_reward": -10,
-        "victim_access_reward": -10,
-        "correct_reward": 200,
-        "wrong_reward": -10000,
-        "step_reward": -10,
+        "length_violation_reward": -1,
+        "double_victim_access_reward": -0.001,
+        "victim_access_reward": -0.001,
+        "correct_reward": 0.02,
+        "wrong_reward": -1,
+        "step_reward": -0.001,
         "verbose": 1,
         "force_victim_hit": false,
         "flush_inst": false,
