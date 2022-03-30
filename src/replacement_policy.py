@@ -90,7 +90,7 @@ import math
 # https://github.com/gem5/gem5/blob/87c121fd954ea5a6e6b0760d693a2e744c2200de/src/mem/cache/replacement_policies/tree_plru_rp.cc
 class tree_plru_policy(rep_policy):
     import math
-    def __init__(self, associativity, block_size, verbose = False):
+    def __init__(self, associativity, block_size, verbose = True):
         self.associativity = associativity
         self.block_size = block_size
         self.num_leaves = associativity
@@ -185,22 +185,15 @@ class tree_plru_policy(rep_policy):
     # while here instantiate_entry is used when a line is evicted and new line is installed
     def instantiate_entry(self, tag, timestamp):
         # find a tag that can be invalidated
+
         index = 0
-        tree_index = 0
-        while tree_index < len(self.plrutree): 
-            if self.plrutree[tree_index] == 1:
-                tree_index = self.right_subtree_index(tree_index)
-            else:
-                tree_index = self.left_subtree_index(tree_index)        
-        index = tree_index - (self.num_leaves - 1) 
-        assert(self.candidate_tags[index] == INVALID_TAG)
+        while index < len(self.candidate_tags):
+            if self.candidate_tags[index] == INVALID_TAG:
+                break
+            index += 1
+        assert(self.candidate_tags[index] == INVALID_TAG) # this does not always hold for tree-plru
         self.candidate_tags[index] = tag
-        ###while index < self.num_leaves:
-        ###    if self.candidate_tags[index] == INVALID_TAG:
-        ###        self.candidate_tags[index] = tag  
-        ###        break 
-        ###    else:
-        ###        index += 1     
+
         # touch the entry
         self.touch(tag, timestamp)
 
@@ -363,13 +356,11 @@ class plru_pl_policy(rep_policy):
     def instantiate_entry(self, tag, timestamp):
         # find a tag that can be invalidated
         index = 0
-        tree_index = 0
-        while tree_index < len(self.plrutree): 
-            if self.plrutree[tree_index] == 1:
-                tree_index = self.right_subtree_index(tree_index)
-            else:
-                tree_index = self.left_subtree_index(tree_index)        
-        index = tree_index - (self.num_leaves - 1) 
+        while index < len(self.candidate_tags):
+            if self.candidate_tags[index] == INVALID_TAG:
+                break
+            index += 1
+
         assert(self.candidate_tags[index] == INVALID_TAG)
         self.candidate_tags[index] = tag
         ###while index < self.num_leaves:

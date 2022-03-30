@@ -28,6 +28,8 @@ class Cache:
            self.rep_policy = brrip_policy
         else:
             self.rep_policy = lru_policy
+            print("no rep_policy specified or policy specified not exist")
+            print("use lru_policy")
 
         #Total number of sets in the cache
         self.n_sets =int( n_blocks / associativity )
@@ -132,6 +134,11 @@ class Cache:
                 if len(in_cache) < self.associativity:
                     self.data[index][tag] = block.Block(self.block_size, current_step, False, address)
                     self.set_rep_policy[index].instantiate_entry(tag, current_step)
+                    
+                    ###if inst_victim_tag != INVALID_TAG: #instantiated entry sometimes does not replace an empty tag
+                    ####we have to evict it from the cache in this scenario
+                    ###    del self.data[index][inst_victim_tag]
+                        
                     if pl_opt != -1:
                         self.set_rep_policy[index].setlock(tag, pl_opt)
                 else:
