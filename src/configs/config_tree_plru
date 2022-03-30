@@ -1,15 +1,21 @@
 {
     "env": "cache_guessing_game_env_fix",
     "env_config": {
+        "length_violation_reward": -10000,
+        "double_victim_access_reward": -10,
+        "victim_access_reward": -10,
+        "correct_reward": 200,
+        "wrong_reward": -10000,
+        "step_reward": -10,
         "verbose": 1,
-        "force_victim_hit": false,
+        "force_victim_hit": true,
         "flush_inst": false,
+        "allow_victim_multi_access": true,
         "allow_empty_victim_access": true,
-        "allow_victim_multi_access": false,
-        "attacker_addr_s": 0,
+        "attacker_addr_s": 1,
         "attacker_addr_e": 3,
         "victim_addr_s": 0,
-        "victim_addr_e": 1,
+        "victim_addr_e": 0,
         "reset_limit": 1,
         "cache_configs": {
             "architecture": {
@@ -20,7 +26,8 @@
             "cache_1": {
               "blocks": 2, 
               "associativity": 2,  
-              "hit_time": 1 
+              "hit_time": 1,
+              "rep_policy": "tree_plru"
             },
             "mem": {
               "hit_time": 1000 
