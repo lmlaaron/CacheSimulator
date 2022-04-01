@@ -231,24 +231,6 @@ class CacheGuessingGameEnv(gym.Env):
     if action.ndim > 1:  # workaround for training and predict discrepency
       action = action[0]  
 
-    #temp_action=[]
-    #temp_action.append(int(action / ( 2 * 2 * 2 * self.cache_size)) )   
-    #temp_action.append(int(action / ( 2 * 2 * self.cache_size)) % 2 )   
-    #temp_action.append(int(action / ( 2 * self.cache_size)) % 2 )       
-    #temp_action.append(int(action / self.cache_size) % 2 )              
-    #temp_action.append(action %  self.cache_size)                      
-    #action = temp_action
-
-    ###if self.flush_inst == False:
-    ###  self.action_space = spaces.Discrete(
-    ###    len(self.attacker_address_space) + 1 + len(self.victim_address_space)
-    ###  )
-    ###else:
-    ###  self.action_space = spaces.Discrete(
-    ###    2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space)
-    ###  )
-
-    #action = self.parse_action(action)
     original_action = action
     action = self.parse_action(original_action) #, self.flush_inst)
 
@@ -352,15 +334,11 @@ class CacheGuessingGameEnv(gym.Env):
       victim_accessed = 1
     else:
       victim_accessed = 0
-    #self.state = [r, action[0], current_step, victim_accessed, is_flush] + self.state 
-    #self.state = self.state[0:len(self.state)-5]
-    
     
     ####self.state = [r, action[0], current_step, victim_accessed] + self.state 
     #Xiaomeng
     self.state = [r, victim_accessed, original_action, current_step ] + self.state  
     self.state = self.state[0:len(self.state)-4]
-    #self.state = [r, action[0], current_step, victim_accessed]
     
     '''
     support for multiple guess per episode
@@ -484,11 +462,6 @@ class CacheGuessingGameEnv(gym.Env):
         addr = random.randint(0, sys.maxsize)
       else:
         raise RuntimeError from None
-      #if partial == True:
-        #addr = random.randint(0,self.cache_size * 2)
-        #if addr == self.cache_size * 2:
-        #self.l1.cflush(str(addr), self.current_step)
-      #else:
       self.l1.read(str(addr), self.current_step)
       self.current_step += 1
 
@@ -535,8 +508,4 @@ class CacheGuessingGameEnv(gym.Env):
         victim_addr = action - ( 2 * len(self.attacker_address_space) + 1 ) 
         
     return [ address, is_guess, is_victim, is_flush, victim_addr ] 
-    ####address = str(action[0]+self.attacker_address_min)                # attacker address in attacker_address_space
-    ####is_guess = action[1]                                              # check whether to guess or not
-    ####is_victim = action[2]                                             # check whether to invoke victim
-    ####is_flush = action[3]                                              # check whether to flush
-    ####victim_addr = str(action[4] + self.victim_address_min) 
+ 

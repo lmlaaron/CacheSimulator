@@ -17,19 +17,27 @@ class Cache:
         self.logger = logger
         self.set_rep_policy = {}
         if rep_policy == 'lru':
+            print("use lru") 
             self.rep_policy = lru_policy
         elif rep_policy == 'tree_plru':
+            print("use tree_plru") 
             self.rep_policy = tree_plru_policy
         elif rep_policy == 'rand':
+            print("use rand") 
             self.rep_policy = rand_policy
         elif rep_policy == 'plru_pl':
+            print("use plru_pl") 
             self.rep_policy = plru_pl_policy
-        elif rep_policy == 'brrip': 
-           self.rep_policy = brrip_policy
+        elif rep_policy == 'brrip':
+            print("use brrip")
+            #assert(False) 
+            self.rep_policy = brrip_policy
         else:
             self.rep_policy = lru_policy
-            print("no rep_policy specified or policy specified not exist")
-            print("use lru_policy")
+            if name == 'cache_1':
+                print("no rep_policy specified or policy specified not exist")
+                print("use lru_policy")
+                #assert(False)
 
         #Total number of sets in the cache
         self.n_sets =int( n_blocks / associativity )

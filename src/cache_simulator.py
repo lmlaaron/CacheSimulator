@@ -279,7 +279,7 @@ def build_cache(configs, name, next_level_cache, logger):
                 configs['architecture']['write_back'],
                 logger,
                 next_level_cache,
-                configs[name]['rep_policy'] if 'rep_policy' in configs[name] else '')
+                rep_policy = configs[name]['rep_policy'] if 'rep_policy' in configs[name] else '')
 
 
 if __name__ == '__main__':
