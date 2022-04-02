@@ -3,7 +3,7 @@ import pprint
 from replacement_policy import * 
 
 class Cache:
-    def __init__(self, name, word_size, block_size, n_blocks, associativity, hit_time, write_time, write_back, logger, next_level=None, rep_policy=''):
+    def __init__(self, name, word_size, block_size, n_blocks, associativity, hit_time, write_time, write_back, logger, next_level=None, rep_policy='', verbose=False):
         #Parameters configured by the user
         self.name = name
         self.word_size = word_size
@@ -15,28 +15,30 @@ class Cache:
         self.write_time = write_time
         self.write_back = write_back
         self.logger = logger
+        self.logger.disabled = True
         self.set_rep_policy = {}
+        self.verbose = verbose
         if rep_policy == 'lru':
-            print("use lru") 
+            self.vprint("use lru") 
             self.rep_policy = lru_policy
         elif rep_policy == 'tree_plru':
-            print("use tree_plru") 
+            self.vprint("use tree_plru") 
             self.rep_policy = tree_plru_policy
         elif rep_policy == 'rand':
-            print("use rand") 
+            self.vprint("use rand") 
             self.rep_policy = rand_policy
         elif rep_policy == 'plru_pl':
-            print("use plru_pl") 
+            self.vprint("use plru_pl") 
             self.rep_policy = plru_pl_policy
         elif rep_policy == 'brrip':
-            print("use brrip")
+            self.vprint("use brrip")
             #assert(False) 
             self.rep_policy = brrip_policy
         else:
             self.rep_policy = lru_policy
             if name == 'cache_1':
-                print("no rep_policy specified or policy specified not exist")
-                print("use lru_policy")
+                self.vprint("no rep_policy specified or policy specified not exist")
+                self.vprint("use lru_policy")
                 #assert(False)
 
         #Total number of sets in the cache
@@ -63,6 +65,10 @@ class Cache:
                 self.data[index] = {}   #Create a dictionary of blocks for each set
                 self.set_rep_policy[index] = self.rep_policy(associativity, block_size) 
 
+    def vprint(self, *args):
+        if self.verbose == 1:
+            print( " "+" ".join(map(str,args))+" ")
+
     # flush the cache line that contains the address from all cache hierachy
     def cflush(self, address, current_step):
         #r = None
@@ -83,8 +89,8 @@ class Cache:
         
         #If this tag exists in the set, this is a hit
         if tag in in_cache:
-            if len(tag) == 0:
-                print('false')
+            #if len(tag) == 0:
+            #    print('false')
             
             #Delete the old block and write the new one
             del self.data[index][tag] 
@@ -124,8 +130,8 @@ class Cache:
 
             #If this tag exists in the set, this is a hit
             if tag in in_cache:
-                if len(tag) == 0:
-                    print('false')
+                #if len(tag) == 0:
+                #    print('false')
                 self.data[index][tag].read(current_step)
                 self.set_rep_policy[index].touch(tag, current_step)
                 
@@ -152,7 +158,7 @@ class Cache:
                 else:
                     #Find the victim block and replace it
                     victim_tag = self.set_rep_policy[index].find_victim(current_step)
-                    print(victim_tag)
+                    #print(victim_tag)
                     # pl cache may find the victim that is partition locked
                     if victim_tag != INVALID_TAG: 
                         #oldest_tag = in_cache[0] 
