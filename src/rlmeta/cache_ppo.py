@@ -87,17 +87,30 @@ def main(cfg):
 
     servers.start()
     loops.start()
-
     agent.connect()
+
+    start_time = time.perf_counter()
     for epoch in range(cfg.num_epochs):
         stats = agent.train(cfg.steps_per_epoch)
+        cur_time = time.perf_counter() - start_time
         info = f"T Epoch {epoch}"
-        logging.info("\n\n" + stats.table(info) + "\n")
+        if cfg.table_view:
+            logging.info("\n\n" + stats.table(info) + "\n")
+        else:
+            logging.info(
+                stats.json(info, phase="Train", epoch=epoch, time=cur_time))
         time.sleep(1)
+
         stats = agent.eval(cfg.num_eval_episodes)
+        cur_time = time.perf_counter() - start_time
         info = f"E Epoch {epoch}"
-        logging.info("\n\n" + stats.table(info) + "\n")
+        if cfg.table_view:
+            logging.info("\n\n" + stats.table(info) + "\n")
+        else:
+            logging.info(
+                stats.json(info, phase="Eval", epoch=epoch, time=cur_time))
         time.sleep(1)
+
         torch.save(train_model.state_dict(), f"ppo_agent-{epoch}.pth")
 
     loops.terminate()
