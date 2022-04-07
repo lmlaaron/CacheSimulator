@@ -228,8 +228,9 @@ class CacheGuessingGameEnv(gym.Env):
 
   def step(self, action):
     self.vprint('Step...')
-    if action.ndim > 1:  # workaround for training and predict discrepency
-      action = action[0]  
+
+    if isinstance(action, np.ndarray):
+        action = action.item()
 
     original_action = action
     action = self.parse_action(original_action) #, self.flush_inst)

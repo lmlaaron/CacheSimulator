@@ -8,6 +8,7 @@ import torch
 import torch.multiprocessing as mp
 
 import rlmeta.envs.gym_wrappers as gym_wrappers
+import rlmeta.utils.hydra_utils as hydra_utils
 import rlmeta.utils.remote_utils as remote_utils
 
 from rlmeta.agents.agent import AgentFactory
@@ -24,7 +25,7 @@ from cache_ppo_model import CachePPOModel
 
 @hydra.main(config_path="./conf", config_name="conf_ppo_lru_8way")
 def main(cfg):
-    logging.info(cfg)
+    logging.info(hydra_utils.config_to_json(cfg))
 
     env_fac = CacheEnvWrapperFactory(cfg.env_config)
     env = env_fac(0)
@@ -95,7 +96,7 @@ def main(cfg):
         cur_time = time.perf_counter() - start_time
         info = f"T Epoch {epoch}"
         if cfg.table_view:
-            logging.info("\n\n" + stats.table(info) + "\n")
+            logging.info("\n\n" + stats.table(info, time=cur_time) + "\n")
         else:
             logging.info(
                 stats.json(info, phase="Train", epoch=epoch, time=cur_time))
@@ -105,7 +106,7 @@ def main(cfg):
         cur_time = time.perf_counter() - start_time
         info = f"E Epoch {epoch}"
         if cfg.table_view:
-            logging.info("\n\n" + stats.table(info) + "\n")
+            logging.info("\n\n" + stats.table(info, time=cur_time) + "\n")
         else:
             logging.info(
                 stats.json(info, phase="Eval", epoch=epoch, time=cur_time))
