@@ -23,7 +23,7 @@ from cache_env_wrapper import CacheEnvWrapperFactory
 from cache_ppo_model import CachePPOModel
 
 
-@hydra.main(config_path="./conf", config_name="conf_ppo_lru_8way")
+@hydra.main(config_path="./config", config_name="ppo")
 def main(cfg):
     logging.info(hydra_utils.config_to_json(cfg))
 
