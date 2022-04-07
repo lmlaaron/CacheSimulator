@@ -101,3 +101,10 @@ if converge_steps == math.nan:
     converge_len = math.nan
 
 print(str(converge_steps)+ ' ' + str(converge_time) + ' ' + str(converge_len))
+
+length = episode_len_mean # updated on 2022/04/06 
+min = min(length)
+max = max(length)
+
+print('min length of the episode:', min)
+print('max length of the episode:', max)
