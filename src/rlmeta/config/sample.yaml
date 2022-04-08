@@ -1,0 +1,9 @@
+num_episodes: 10
+seed: 1234
+
+checkpoint: ""
+deterministic_policy: true
+
+defaults:
+  - env_config: lru_8way
+  - model_config: resnet
