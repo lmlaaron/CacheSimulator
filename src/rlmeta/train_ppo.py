@@ -18,6 +18,20 @@ from rlmeta.core.loop import LoopList, ParallelLoop
 from rlmeta.core.model import wrap_downstream_model
 from rlmeta.core.replay_buffer import ReplayBuffer, make_remote_replay_buffer
 from rlmeta.core.server import Server, ServerList
+from rlmeta.core.callbacks import EpisodeCallbacks
+
+
+# add guess correctness statistics during training
+class MyCallbacks(EpisodeCallbacks):
+    def __init__(self):
+        super.__init__()
+
+    def on_episode_step(self, index: int, step: int, action: Action,
+                        timestep: TimeStep) -> None:
+        obs, reward, done, info = timestep
+        if info['']:
+            self._custom_metrics = {"correct_rate": 1}
+
 
 from cache_env_wrapper import CacheEnvWrapperFactory
 from cache_ppo_model import CachePPOModel
