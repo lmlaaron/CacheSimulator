@@ -15,7 +15,7 @@ class Cache:
         self.write_time = write_time
         self.write_back = write_back
         self.logger = logger
-        self.logger.disabled = True
+        self.logger.disabled = False#True
         self.set_rep_policy = {}
         self.verbose = verbose
         if rep_policy == 'lru':
