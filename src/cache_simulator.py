@@ -61,6 +61,8 @@ def main():
         for cache in hierarchy:
             if hierarchy[cache].next_level:
                 print_cache(hierarchy[cache])
+    
+    
 
 #Print the contents of a cache as a table
 #If the table is too long, it will print the first few sets,
@@ -279,7 +281,8 @@ def build_cache(configs, name, next_level_cache, logger):
                 configs['architecture']['write_back'],
                 logger,
                 next_level_cache,
-                rep_policy = configs[name]['rep_policy'] if 'rep_policy' in configs[name] else '')
+                rep_policy = configs[name]['rep_policy'] if 'rep_policy' in configs[name] else '',
+                verbose = configs['verbose'] if 'verbose' in configs else 'False' )
 
 
 if __name__ == '__main__':

@@ -101,3 +101,5 @@ if converge_steps == math.nan:
     converge_len = math.nan
 
 print(str(converge_steps)+ ' ' + str(converge_time) + ' ' + str(converge_len))
+
+

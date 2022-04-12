@@ -106,7 +106,7 @@ if __name__ == "__main__":
     print(config)
     env = CacheGuessingGameEnv(config["env_config"])
     #env = CacheSimulatorMultiGuessWrapper(config["env_config"]) 
-    trainer = PPOCustomTrainer(config=config)
+    trainer = PPOTrainer(config=config)
     #trainer = SACTrainer(config=config)
     
     def signal_handler(sig, frame):

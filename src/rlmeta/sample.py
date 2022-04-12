@@ -24,11 +24,15 @@ def unbatch_action(action: Action) -> Action:
     return Action(act, info)
 
 
-def run_loop(env: Env, agent: PPOAgent) -> Dict[str, float]:
+def run_loop(env: Env, agent: PPOAgent, victim_addr=-1) -> Dict[str, float]:
     episode_length = 0
     episode_return = 0.0
 
-    timestep = env.reset()
+    if victim_addr == -1:
+        timestep = env.reset()
+    else:
+        timestep = env.reset(victim_address=victim_addr)
+    
     agent.observe_init(timestep)
     while not timestep.done:
         # Model server requires a batch_dim, so unsqueeze here for local runs.
@@ -58,8 +62,13 @@ def run_loops(env: Env,
     env.seed(seed)
     metrics = StatsDict()
 
-    for _ in range(num_episodes):
-        cur_metrics = run_loop(env, agent)
+    if env.env.allow_empty_victim_access == False:
+        end_address = env.env.victim_address_max + 1
+    else:
+        end_address = env.env.victim_address_max + 1 + 1
+
+    for victim_addr in range(env.env.victim_address_min, end_address):
+        cur_metrics = run_loop(env, agent, victim_addr=victim_addr)
         metrics.extend(cur_metrics)
 
     return metrics
@@ -68,9 +77,10 @@ def run_loops(env: Env,
 @hydra.main(config_path="./config", config_name="sample")
 def main(cfg):
     # Create env
+    cfg.env_config['verbose'] = 1
     env_fac = CacheEnvWrapperFactory(cfg.env_config)
     env = env_fac(index=0)
-
+    
     # Load model
     cfg.model_config["output_dim"] = env.action_space.n
     params = torch.load(cfg.checkpoint)

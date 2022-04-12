@@ -325,7 +325,13 @@ class CacheGuessingGameEnv(gym.Env):
           reward = self.step_reward
           done = False
     #return observation, reward, done, info
-    info = {}
+    if done == True and is_guess != 0:
+      if reward > 0:
+        info = {"is_guess": True, "guess_correct": True}
+      else:
+        info = {"is_guess": True, "guess_correct": False}
+    else:
+      info = {"is_guess": False}
     # the observation (r.time) in this case 
     # must be consistent with the observation space
     # return observation, reward, done?, info

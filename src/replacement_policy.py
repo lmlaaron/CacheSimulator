@@ -25,10 +25,11 @@ class rep_policy:
 
 # LRU policy
 class lru_policy(rep_policy):
-    def __init__(self, associativity, block_size):
+    def __init__(self, associativity, block_size, verbose=False):
         self.associativity = associativity
         self.block_size = block_size
         self.blocks = {}
+        self.verbose = verbose
 
     def touch(self, tag, timestamp):
         assert(tag in self.blocks)
@@ -50,17 +51,18 @@ class lru_policy(rep_policy):
         in_cache = list(self.blocks.keys())
         victim_tag = in_cache[0] 
         for b in in_cache:
-            print(b + ' '+ str(self.blocks[b].last_accessed))
+            self.vprint(b + ' '+ str(self.blocks[b].last_accessed))
             if self.blocks[b].last_accessed < self.blocks[victim_tag].last_accessed:
                 victim_tag = b
         return victim_tag 
 
 # random replacement policy
 class rand_policy(rep_policy):
-    def __init__(self, associativity, block_size):
+    def __init__(self, associativity, block_size, verbose=False):
         self.associativity = associativity
         self.block_size = block_size
         self.blocks = {}
+        self.verbose = verbose
 
     def touch(self, tag, timestamp):
         assert(tag in self.blocks)
@@ -90,7 +92,7 @@ import math
 # https://github.com/gem5/gem5/blob/87c121fd954ea5a6e6b0760d693a2e744c2200de/src/mem/cache/replacement_policies/tree_plru_rp.cc
 class tree_plru_policy(rep_policy):
     import math
-    def __init__(self, associativity, block_size, verbose = True):
+    def __init__(self, associativity, block_size, verbose = False):
         self.associativity = associativity
         self.block_size = block_size
         self.num_leaves = associativity
