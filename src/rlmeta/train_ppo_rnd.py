@@ -21,7 +21,6 @@ from rlmeta.core.server import Server, ServerList
 
 from cache_env_wrapper import CacheEnvWrapperFactory
 from cache_ppo_rnd_model import CachePPORNDModel
-from renyi_entropy_ppo_agent import RenyiEntropyPPOAgent
 
 
 # @hydra.main(config_path="./config", config_name="ppo")
@@ -69,22 +68,8 @@ def main(cfg):
                         entropy_coeff=cfg.get("entropy_coeff", 1e-2),
                         learning_starts=cfg.get("learning_starts", None),
                         push_every_n_steps=cfg.push_every_n_steps)
-    # agent = RenyiEntropyPPOAgent(a_model,
-    #                              replay_buffer=a_rb,
-    #                              controller=a_ctrl,
-    #                              optimizer=optimizer,
-    #                              batch_size=cfg.batch_size,
-    #                              learning_starts=cfg.get(
-    #                                  "learning_starts", None),
-    #                              push_every_n_steps=cfg.push_every_n_steps)
     t_agent_fac = AgentFactory(PPORNDAgent, t_model, replay_buffer=t_rb)
     e_agent_fac = AgentFactory(PPORNDAgent, e_model, deterministic_policy=True)
-    # t_agent_fac = AgentFactory(RenyiEntropyPPOAgent,
-    #                            t_model,
-    #                            replay_buffer=t_rb)
-    # e_agent_fac = AgentFactory(RenyiEntropyPPOAgent,
-    #                            e_model,
-    #                            deterministic_policy=True)
 
     t_loop = ParallelLoop(env_fac,
                           t_agent_fac,

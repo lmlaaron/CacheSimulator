@@ -36,9 +36,9 @@ class MyCallbacks(EpisodeCallbacks):
             elif info['guess_correct'] == False:
                 self._custom_metrics = {"correct_rate": 0}
 
+
 from cache_env_wrapper import CacheEnvWrapperFactory
 from cache_ppo_model import CachePPOModel
-from renyi_entropy_ppo_agent import RenyiEntropyPPOAgent
 
 
 # @hydra.main(config_path="./config", config_name="ppo")
@@ -86,22 +86,8 @@ def main(cfg):
                      batch_size=cfg.batch_size,
                      learning_starts=cfg.get("learning_starts", None),
                      push_every_n_steps=cfg.push_every_n_steps)
-    # agent = RenyiEntropyPPOAgent(a_model,
-    #                              replay_buffer=a_rb,
-    #                              controller=a_ctrl,
-    #                              optimizer=optimizer,
-    #                              batch_size=cfg.batch_size,
-    #                              learning_starts=cfg.get(
-    #                                  "learning_starts", None),
-    #                              push_every_n_steps=cfg.push_every_n_steps)
     t_agent_fac = AgentFactory(PPOAgent, t_model, replay_buffer=t_rb)
     e_agent_fac = AgentFactory(PPOAgent, e_model, deterministic_policy=True)
-    # t_agent_fac = AgentFactory(RenyiEntropyPPOAgent,
-    #                            t_model,
-    #                            replay_buffer=t_rb)
-    # e_agent_fac = AgentFactory(RenyiEntropyPPOAgent,
-    #                            e_model,
-    #                            deterministic_policy=True)
 
     t_loop = ParallelLoop(env_fac,
                           t_agent_fac,
@@ -111,7 +97,7 @@ def main(cfg):
                           num_rollouts=cfg.num_train_rollouts,
                           num_workers=cfg.num_train_workers,
                           seed=cfg.train_seed,
-                          episode_callbacks = my_callbacks)
+                          episode_callbacks=my_callbacks)
     e_loop = ParallelLoop(env_fac,
                           e_agent_fac,
                           e_ctrl,
@@ -120,7 +106,7 @@ def main(cfg):
                           num_rollouts=cfg.num_eval_rollouts,
                           num_workers=cfg.num_eval_workers,
                           seed=cfg.eval_seed,
-                          episode_callbacks = my_callbacks)
+                          episode_callbacks=my_callbacks)
     loops = LoopList([t_loop, e_loop])
 
     servers.start()
