@@ -449,7 +449,7 @@ class CacheGuessingGameEnv(gym.Env):
   def close(self):
     return
 
-  def _randomize_cache(self, mode = "attacker"):
+  def _randomize_cache(self, mode = "union"):
     if mode == "attacker":
       self.l1.read(str(0), -2)
       self.l1.read(str(1), -1)
