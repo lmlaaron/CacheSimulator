@@ -1,0 +1,10 @@
+latency_dim: 3
+victim_acc_dim: 2
+action_dim: 128
+step_dim: 144
+window_size: -1
+action_embed_dim: 32
+step_embed_dim: 8
+hidden_dim: 256
+output_dim: -1
+num_blocks: 4

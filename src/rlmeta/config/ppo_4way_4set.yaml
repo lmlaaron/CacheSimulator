@@ -39,6 +39,5 @@ eval_seed: 456
 table_view: false
 
 defaults:
-  # - env_config: 4way_4set
-  - env_config: 8way_8set
-  - model_config: resnet_8way_8set
+  - env_config: 4way_4set
+  - model_config: resnet_4way_4set

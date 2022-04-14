@@ -21,13 +21,17 @@ from rlmeta.core.server import Server, ServerList
 
 from cache_env_wrapper import CacheEnvWrapperFactory
 from cache_ppo_rnd_model import CachePPORNDModel
+from metric_callbacks import MetricCallbacks
 
 
 # @hydra.main(config_path="./config", config_name="ppo")
-@hydra.main(config_path="./config", config_name="ppo_8way_8set")
+# @hydra.main(config_path="./config", config_name="ppo_2way_2set")
+@hydra.main(config_path="./config", config_name="ppo_4way_4set")
+# @hydra.main(config_path="./config", config_name="ppo_8way_8set")
 def main(cfg):
     logging.info(hydra_utils.config_to_json(cfg))
 
+    metric_callbacks = MetricCallbacks()
     env_fac = CacheEnvWrapperFactory(cfg.env_config)
     env = env_fac(0)
     cfg.model_config["window_size"] = cfg.env_config.window_size
@@ -78,7 +82,8 @@ def main(cfg):
                           should_update=True,
                           num_rollouts=cfg.num_train_rollouts,
                           num_workers=cfg.num_train_workers,
-                          seed=cfg.train_seed)
+                          seed=cfg.train_seed,
+                          episode_callbacks=metric_callbacks)
     e_loop = ParallelLoop(env_fac,
                           e_agent_fac,
                           e_ctrl,
@@ -86,7 +91,8 @@ def main(cfg):
                           should_update=False,
                           num_rollouts=cfg.num_eval_rollouts,
                           num_workers=cfg.num_eval_workers,
-                          seed=cfg.eval_seed)
+                          seed=cfg.eval_seed,
+                          episode_callbacks=metric_callbacks)
     loops = LoopList([t_loop, e_loop])
 
     servers.start()
