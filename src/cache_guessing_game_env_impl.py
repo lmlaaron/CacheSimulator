@@ -11,6 +11,8 @@ from cache_simulator import *
 import sys
 import replacement_policy
 
+import time
+
 class CacheGuessingGameEnv(gym.Env):
   """
   Description:
@@ -129,10 +131,16 @@ class CacheGuessingGameEnv(gym.Env):
       self.window_size = self.cache_size * 4 + 8 #10 
     else:
       self.window_size = window_size
+    self.feature_size = 4
+
     self.hierarchy = build_hierarchy(self.configs, self.logger)
+
     #self.state = [0, self.cache_size, 0, 0] * self.window_size
-    self.state = [-1, -1, -1, -1] * self.window_size # Xiaomeng
+    # self.state = [-1, -1, -1, -1] * self.window_size # Xiaomeng
     #self.state = [0, self.cache_size, 0, 0, 0] * self.window_size
+    self.state = np.full((self.window_size, self.feature_size), -1)
+    self.step_count = 0
+
     self.attacker_address_min = attacker_addr_s
     self.attacker_address_max = attacker_addr_e
     self.attacker_address_space = range(self.attacker_address_min,
@@ -197,7 +205,6 @@ class CacheGuessingGameEnv(gym.Env):
     #  ] * self.window_size
     #)
     self.max_box_value = max(self.window_size + 2,  2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space) + 1)#max(self.window_size + 2, len(self.attacker_address_space) + 1) 
-    self.feature_size = 4
     self.observation_space = spaces.Box(low=-1, high=self.max_box_value, shape=(self.window_size, self.feature_size))
 
     
@@ -241,7 +248,8 @@ class CacheGuessingGameEnv(gym.Env):
     is_flush = action[3]                                              # check whether to flush
     victim_addr = str(action[4] + self.victim_address_min)            # victim address
     
-    if self.current_step > self.window_size : # if current_step is too long, terminate
+    # if self.current_step > self.window_size : # if current_step is too long, terminate
+    if self.step_count >= self.window_size - 1: # if current_step is too long, terminate
       r = 2 #
       self.vprint("length violation!")
       reward = self.length_violation_reward #-10000 
@@ -344,8 +352,10 @@ class CacheGuessingGameEnv(gym.Env):
     
     ####self.state = [r, action[0], current_step, victim_accessed] + self.state 
     #Xiaomeng
-    self.state = [r, victim_accessed, original_action, current_step ] + self.state  
-    self.state = self.state[0:len(self.state)-4]
+    # self.state = [r, victim_accessed, original_action, current_step ] + self.state  
+    # self.state = self.state[0:len(self.state)-4]
+    self.state[self.step_count, :] = [r, victim_accessed, original_action, current_step]
+    self.step_count += 1
     
     '''
     support for multiple guess per episode
@@ -360,7 +370,12 @@ class CacheGuessingGameEnv(gym.Env):
         done = False                           # fake reset
         self._reset()                          # manually reset
 
-    return np.array(self.state).reshape(self.window_size, self.feature_size), reward, done, info
+    # return np.array(self.state).reshape(self.window_size, self.feature_size), reward, done, info
+    # state = np.array(self.state).reshape(self.window_size, self.feature_size)
+    # print(f"[step] current_step = {current_step}")
+    # print(f"[step] state = {self.state}")
+    # time.sleep(1)
+    return self.state, reward, done, info
 
   def reset(self, victim_address=-1):
     if self.cache_state_reset == True:
@@ -372,7 +387,9 @@ class CacheGuessingGameEnv(gym.Env):
 
     self._reset(victim_address)  # fake reset
     #self.state = [0, len(self.attacker_address_space), 0, 0] * self.window_size
-    self.state = [-1, -1,-1, -1] * self.window_size
+    # self.state = [-1, -1,-1, -1] * self.window_size
+    self.state = np.full((self.window_size, self.feature_size), -1)
+    self.step_count = 0
     #self.state = [0, len(self.attacker_address_space), 0, 0, 0] * self.window_size
     self.reset_time = 0
 
@@ -382,7 +399,11 @@ class CacheGuessingGameEnv(gym.Env):
       self.vprint("[reset] victim access %d locked cache line" % self.victim_address_max)
       self.l1.read(str(self.victim_address_max), self.current_step, replacement_policy.PL_LOCK)
 
-    return np.array(self.state).reshape(self.window_size, self.feature_size)
+    # return np.array(self.state).reshape(self.window_size, self.feature_size)
+    # state = np.array(self.state).reshape(self.window_size, self.feature_size)
+    # print(f"[Reset] state = {self.state}")
+    # time.sleep(1)
+    return self.state
 
   '''
   function to calculate the correctness rate
