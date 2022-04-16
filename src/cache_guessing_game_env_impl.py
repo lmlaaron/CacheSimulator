@@ -1,15 +1,19 @@
 # Author: Mulong Luo
 # date 2021.12.3
 # description: environment for study RL for side channel attack
-import gym
-from gym import spaces
+from collections import deque
+
 import numpy as np
 import random
 import os
 import yaml, logging
-from cache_simulator import *
 import sys
 import replacement_policy
+
+import gym
+from gym import spaces
+
+from cache_simulator import *
 
 class CacheGuessingGameEnv(gym.Env):
   """
@@ -132,8 +136,12 @@ class CacheGuessingGameEnv(gym.Env):
     self.feature_size = 4
     self.hierarchy = build_hierarchy(self.configs, self.logger)
     #self.state = [0, self.cache_size, 0, 0] * self.window_size
-    self.state = [-1, -1, -1, -1] * self.window_size # Xiaomeng
+    # self.state = [-1, -1, -1, -1] * self.window_size # Xiaomeng
     #self.state = [0, self.cache_size, 0, 0, 0] * self.window_size
+
+    self.state = deque([[-1, -1, -1, -1]] * self.window_size)
+    self.step_count = 0
+
     self.attacker_address_min = attacker_addr_s
     self.attacker_address_max = attacker_addr_e
     self.attacker_address_space = range(self.attacker_address_min,
@@ -223,7 +231,6 @@ class CacheGuessingGameEnv(gym.Env):
     self.guess_buffer = [False] * self.guess_buffer_size
     #return
 
-    self.step_count = 0
 
   def clear_guess_buffer_history(self):
     self.guess_buffer = [False] * self.guess_buffer_size
@@ -347,8 +354,10 @@ class CacheGuessingGameEnv(gym.Env):
     
     ####self.state = [r, action[0], current_step, victim_accessed] + self.state 
     #Xiaomeng
-    self.state = [r, victim_accessed, original_action, current_step ] + self.state  
-    self.state = self.state[0:len(self.state)-4]
+    # self.state = [r, victim_accessed, original_action, current_step ] + self.state  
+    # self.state = self.state[0:len(self.state)-4]
+    self.state.append([r, victim_accessed, original_action, current_step])
+    self.state.popleft()
     self.step_count += 1
     
     '''
@@ -364,7 +373,7 @@ class CacheGuessingGameEnv(gym.Env):
         done = False                           # fake reset
         self._reset()                          # manually reset
 
-    return np.array(self.state).reshape(self.window_size, self.feature_size), reward, done, info
+    return np.array(list(reversed(self.state))), reward, done, info
 
   def reset(self, victim_address=-1):
     if self.cache_state_reset == True:
@@ -376,19 +385,19 @@ class CacheGuessingGameEnv(gym.Env):
 
     self._reset(victim_address)  # fake reset
     #self.state = [0, len(self.attacker_address_space), 0, 0] * self.window_size
-    self.state = [-1, -1,-1, -1] * self.window_size
+    # self.state = [-1, -1,-1, -1] * self.window_size
     #self.state = [0, len(self.attacker_address_space), 0, 0, 0] * self.window_size
-    self.reset_time = 0
+    self.state = deque([[-1, -1, -1, -1]] * self.window_size)
+    self.step_count = 0
 
+    self.reset_time = 0
 
     if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
       assert(self.victim_address_min == self.victim_address_max) # for plru_pl cache, only one address is allowed
       self.vprint("[reset] victim access %d locked cache line" % self.victim_address_max)
       self.l1.read(str(self.victim_address_max), self.current_step, replacement_policy.PL_LOCK)
 
-    self.step_count = 0
-
-    return np.array(self.state).reshape(self.window_size, self.feature_size)
+    return np.array(list(reversed(self.state)))
 
   '''
   function to calculate the correctness rate
