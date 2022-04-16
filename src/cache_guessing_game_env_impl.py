@@ -129,6 +129,7 @@ class CacheGuessingGameEnv(gym.Env):
       self.window_size = self.cache_size * 4 + 8 #10 
     else:
       self.window_size = window_size
+    self.feature_size = 4
     self.hierarchy = build_hierarchy(self.configs, self.logger)
     #self.state = [0, self.cache_size, 0, 0] * self.window_size
     self.state = [-1, -1, -1, -1] * self.window_size # Xiaomeng
@@ -197,7 +198,6 @@ class CacheGuessingGameEnv(gym.Env):
     #  ] * self.window_size
     #)
     self.max_box_value = max(self.window_size + 2,  2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space) + 1)#max(self.window_size + 2, len(self.attacker_address_space) + 1) 
-    self.feature_size = 4
     self.observation_space = spaces.Box(low=-1, high=self.max_box_value, shape=(self.window_size, self.feature_size))
 
     
@@ -223,6 +223,8 @@ class CacheGuessingGameEnv(gym.Env):
     self.guess_buffer = [False] * self.guess_buffer_size
     #return
 
+    self.step_count = 0
+
   def clear_guess_buffer_history(self):
     self.guess_buffer = [False] * self.guess_buffer_size
 
@@ -241,7 +243,8 @@ class CacheGuessingGameEnv(gym.Env):
     is_flush = action[3]                                              # check whether to flush
     victim_addr = str(action[4] + self.victim_address_min)            # victim address
     
-    if self.current_step > self.window_size : # if current_step is too long, terminate
+    # if self.current_step > self.window_size : # if current_step is too long, terminate
+    if self.step_count >= self.window_size - 1:
       r = 2 #
       self.vprint("length violation!")
       reward = self.length_violation_reward #-10000 
@@ -346,6 +349,7 @@ class CacheGuessingGameEnv(gym.Env):
     #Xiaomeng
     self.state = [r, victim_accessed, original_action, current_step ] + self.state  
     self.state = self.state[0:len(self.state)-4]
+    self.step_count += 1
     
     '''
     support for multiple guess per episode
@@ -381,6 +385,8 @@ class CacheGuessingGameEnv(gym.Env):
       assert(self.victim_address_min == self.victim_address_max) # for plru_pl cache, only one address is allowed
       self.vprint("[reset] victim access %d locked cache line" % self.victim_address_max)
       self.l1.read(str(self.victim_address_max), self.current_step, replacement_policy.PL_LOCK)
+
+    self.step_count = 0
 
     return np.array(self.state).reshape(self.window_size, self.feature_size)
 
@@ -449,7 +455,8 @@ class CacheGuessingGameEnv(gym.Env):
   def close(self):
     return
 
-  def _randomize_cache(self, mode = "union"):
+  # def _randomize_cache(self, mode = "union"):
+  def _randomize_cache(self, mode = "attacker"):
     if mode == "attacker":
       self.l1.read(str(0), -2)
       self.l1.read(str(1), -1)
