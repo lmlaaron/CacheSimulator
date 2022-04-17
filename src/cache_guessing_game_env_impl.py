@@ -215,9 +215,9 @@ class CacheGuessingGameEnv(gym.Env):
     self.victim_accessed = False
     if self.allow_empty_victim_access == True:
       #self.victim_address = random.randint(self.victim_address_max +1, self.)
-      self.victim_address = random.randint(self.victim_address_min, self.victim_address_max + 1 )
+      self.victim_address = random.randint(self.victim_address_min, self.victim_address_max + 1)
     else:
-      self.victim_address = random.randint(self.victim_address_min, self.victim_address_max  )
+      self.victim_address = random.randint(self.victim_address_min, self.victim_address_max)
     self._randomize_cache()
     
     if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
@@ -356,7 +356,7 @@ class CacheGuessingGameEnv(gym.Env):
     #Xiaomeng
     # self.state = [r, victim_accessed, original_action, current_step ] + self.state  
     # self.state = self.state[0:len(self.state)-4]
-    self.state.append([r, victim_accessed, original_action, current_step])
+    self.state.append([r, victim_accessed, original_action, self.step_count])
     self.state.popleft()
     self.step_count += 1
     
@@ -464,8 +464,8 @@ class CacheGuessingGameEnv(gym.Env):
   def close(self):
     return
 
-  # def _randomize_cache(self, mode = "union"):
-  def _randomize_cache(self, mode = "attacker"):
+  def _randomize_cache(self, mode = "union"):
+  # def _randomize_cache(self, mode = "attacker"):
     if mode == "attacker":
       self.l1.read(str(0), -2)
       self.l1.read(str(1), -1)
@@ -481,6 +481,14 @@ class CacheGuessingGameEnv(gym.Env):
         addr = random.randint(self.attacker_address_min, self.attacker_address_max)
       elif mode == "union":
         addr = random.randint(self.victim_address_min, self.victim_address_max) if random.randint(0,1) == 1 else random.randint(self.attacker_address_min, self.attacker_address_max)
+        # v_addr_space = self.victim_address_max - self.victim_address_min + 1
+        # a_addr_space = self.attacker_address_max - self.attacker_address_min + 1
+        # addr = np.random.randint(v_addr_space + a_addr_space)
+        # if addr < v_addr_space:
+        #     addr += self.victim_address_min
+        # else:
+        #     addr += self.attacker_address_min - self.victim_address_max - 1
+
       elif mode == "random":
         addr = random.randint(0, sys.maxsize)
       else:

@@ -2,7 +2,7 @@ length_violation_reward: -2.0
 double_victim_access_reward: -0.01
 victim_access_reward: -0.01
 correct_reward: 1.0
-wrong_reward: -2.0
+wrong_reward: -1.0
 step_reward: -0.01
 
 verbose: 0
