@@ -51,8 +51,7 @@ class CachePPOTransformerModel(PPOModel):
         #                           self.hidden_dim)
 
         encoder_layer = nn.TransformerEncoderLayer(d_model=self.hidden_dim,
-                                                   nhead=8,
-                                                   batch_first=True)
+                                                   nhead=8)
         self.encoder = nn.TransformerEncoder(encoder_layer, self.num_layers)
 
         self.linear_a = nn.Linear(self.hidden_dim, self.output_dim)
@@ -87,9 +86,10 @@ class CachePPOTransformerModel(PPOModel):
 
         x = torch.cat((l, v, act, stp), dim=-1)
         x = self.linear_i(x)
+        x = x.transpose(0, 1).contiguous()
         h = self.encoder(x)
         # h = self.linear_o(h.view(batch_size, -1))
-        h = h.mean(dim=1)
+        h = h.mean(dim=0)
 
         p = self.linear_a(h)
         logpi = F.log_softmax(p, dim=-1)
