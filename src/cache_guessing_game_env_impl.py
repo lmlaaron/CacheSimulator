@@ -375,8 +375,11 @@ class CacheGuessingGameEnv(gym.Env):
 
     return np.array(list(reversed(self.state))), reward, done, info
 
-  def reset(self, victim_address=-1):
-    if self.cache_state_reset == True:
+  def reset(self,
+            victim_address=-1,
+            reset_cache_state=False,
+            reset_observation=True):
+    if self.cache_state_reset or reset_cache_state:
       self.vprint('Reset...(also the cache state)')
       self.hierarchy = build_hierarchy(self.configs, self.logger)
       self.l1 = self.hierarchy['cache_1']
@@ -384,11 +387,13 @@ class CacheGuessingGameEnv(gym.Env):
       self.vprint('Reset...(cache state the same)')
 
     self._reset(victim_address)  # fake reset
-    #self.state = [0, len(self.attacker_address_space), 0, 0] * self.window_size
+
+    # self.state = [0, len(self.attacker_address_space), 0, 0] * self.window_size
     # self.state = [-1, -1,-1, -1] * self.window_size
-    #self.state = [0, len(self.attacker_address_space), 0, 0, 0] * self.window_size
-    self.state = deque([[-1, -1, -1, -1]] * self.window_size)
-    self.step_count = 0
+    # self.state = [0, len(self.attacker_address_space), 0, 0, 0] * self.window_size
+    if reset_observation:
+        self.state = deque([[-1, -1, -1, -1]] * self.window_size)
+        self.step_count = 0
 
     self.reset_time = 0
 

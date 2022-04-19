@@ -6,22 +6,35 @@ class MetricCallbacks(EpisodeCallbacks):
     def __init__(self):
         super().__init__()
 
-        self.tot_guess = 0
-        self.acc_guess = 0
+    def on_episode_step(self, index: int, step: int, action: Action,
+                        timestep: TimeStep) -> None:
+        info = timestep.info
+        if info["is_guess"]:
+            self._custom_metrics["correct_rate"] = float(info["guess_correct"])
 
-    def on_reset(self) -> None:
-        self._custom_metrics = {}
 
+class CCHunterMetricCallbacks(EpisodeCallbacks):
+    def __init__(self):
+        super().__init__()
+
+    def on_episode_start(self, index: int) -> None:
         self.tot_guess = 0
         self.acc_guess = 0
 
     def on_episode_step(self, index: int, step: int, action: Action,
                         timestep: TimeStep) -> None:
         info = timestep.info
+
         if info["is_guess"]:
             self.tot_guess += 1
-            self.acc_guess += float(info["guess_correct"])
+            self.acc_guess += int(info["guess_correct"])
 
         if timestep.done:
-            self._custom_metrics[
-                "correct_rate"] = self.acc_guess / self.tot_guess
+            self._custom_metrics["total_guess"] = self.tot_guess
+            if self.tot_guess > 0:
+                self._custom_metrics[
+                    "correct_rate"] = self.acc_guess / self.tot_guess
+
+        if "cc_hunter_attack" in info:
+            self._custom_metrics["cc_hunter_attack"] = float(
+                info["cc_hunter_attack"])

@@ -43,7 +43,7 @@ class CCHunterWrapper(gym.Env):  #TODO(LISA)
         self.validation_env.reset()  # Is this needed?
         # obs = self._env.reset(victim_address=-1,
         #                       if_only_reinitialize_rl_related_variables=True)
-        obs = self._env.reset(victim_address=-1)
+        obs = self._env.reset(victim_address=-1, reset_cache_state=True)
         self.pattern_init_state = (copy.deepcopy(self._env.l1),
                                    self._env.victim_address)
         # print("number of found patterns:" + str(len(self.pattern_buffer)))
@@ -146,23 +146,28 @@ class CCHunterWrapper(gym.Env):  #TODO(LISA)
         if not done:
             if self._env.parse_action(action)[1] == 1:
                 # if the guess is correct, we will store this in info
-                info['correct_guess'] = (reward > 0)
+                info["correct_guess"] = (reward > 0)
 
             return state, reward, done, info
         else:  # DONE
             length = len(self.cc_hunter_buffer)
             # self._env.reset(victim_address=-1,
             #                 if_only_reinitialize_rl_related_variables=True)
-            self._env.reset(victim_address=-1)
+            self._env.reset(victim_address=-1,
+                            reset_cache_state=False,
+                            reset_observation=False)
             # print('cc hunter buffer length is', length)
             if self._env.parse_action(action)[1] == 1:
                 # if the guess is correct, we will store this in info
-                info['correct_guess'] = (reward > 0)
+                info["correct_guess"] = (reward > 0)
 
             if length < self.cc_hunter_episode:
                 done = False
             else:
-                if self.cc_hunter_attack(self.cc_hunter_buffer,
-                                         self._env.flush_inst)[0]:
+                cc_hunter_attack, _ = self.cc_hunter_attack(
+                    self.cc_hunter_buffer, self._env.flush_inst)
+                if cc_hunter_attack:
                     reward += self.cc_hunter_detection_reward  # TODO
+                info["cc_hunter_attack"] = cc_hunter_attack
+
             return state, reward, done, info

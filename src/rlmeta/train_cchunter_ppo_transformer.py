@@ -23,12 +23,13 @@ from rlmeta.core.types import Action, TimeStep
 
 from cache_env_wrapper import CacheEnvCCHunterWrapperFactory
 from cache_ppo_transformer_model import CachePPOTransformerModel
-from metric_callbacks import MetricCallbacks
+from cache_ppo_model import CachePPOModel
+from metric_callbacks import CCHunterMetricCallbacks
 
 
 @hydra.main(config_path="./config", config_name="ppo_cchunter")
 def main(cfg):
-    my_callbacks = MetricCallbacks()
+    my_callbacks = CCHunterMetricCallbacks()
     logging.info(hydra_utils.config_to_json(cfg))
 
     env_fac = CacheEnvCCHunterWrapperFactory(cfg.env_config)
@@ -37,6 +38,8 @@ def main(cfg):
 
     train_model = CachePPOTransformerModel(**cfg.model_config).to(
         cfg.train_device)
+    # train_model = CachePPOModel(**cfg.model_config).to(
+    #     cfg.train_device)
     optimizer = torch.optim.Adam(train_model.parameters(), lr=cfg.lr)
 
     infer_model = copy.deepcopy(train_model).to(cfg.infer_device)
