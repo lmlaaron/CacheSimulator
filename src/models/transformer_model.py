@@ -51,7 +51,7 @@ class TransformerModel(TorchModelV2, nn.Module):
 
         encoder_layer = nn.TransformerEncoderLayer(d_model=self.hidden_dim,
                                                    nhead=8)
-        self.encoder = nn.TransformerEncoder(encoder_layer, self.num_layers)
+        self.encoder = nn.TransformerEncoder(encoder_layer, self.num_blocks)
 
         self.linear_a = nn.Linear(self.hidden_dim, self.output_dim)
         self.linear_v = nn.Linear(self.hidden_dim, 1)
