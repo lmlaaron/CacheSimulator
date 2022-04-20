@@ -7,7 +7,7 @@ step_reward: -0.01
 
 verbose: 0
 force_victim_hit: false
-flush_inst: true
+flush_inst: false
 allow_victim_multi_access: true
 allow_empty_victim_access: false
 attacker_addr_s: 0

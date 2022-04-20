@@ -86,6 +86,7 @@ def main(cfg):
     params = torch.load(cfg.checkpoint)
     model = CachePPOModel(**cfg.model_config)
     model.load_state_dict(params)
+    model.eval()
 
     # Create agent
     agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)

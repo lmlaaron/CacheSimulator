@@ -51,7 +51,8 @@ class CachePPOTransformerModel(PPOModel):
         #                           self.hidden_dim)
 
         encoder_layer = nn.TransformerEncoderLayer(d_model=self.hidden_dim,
-                                                   nhead=8)
+                                                   nhead=8,
+                                                   dropout=0.0)
         self.encoder = nn.TransformerEncoder(encoder_layer, self.num_layers)
 
         self.linear_a = nn.Linear(self.hidden_dim, self.output_dim)

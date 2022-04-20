@@ -23,6 +23,7 @@ from rlmeta.core.types import Action, TimeStep
 
 from cache_env_wrapper import CacheEnvWrapperFactory
 from cache_ppo_transformer_model import CachePPOTransformerModel
+# from cache_ppo_transformer_model_pe import CachePPOTransformerModel
 from metric_callbacks import MetricCallbacks
 
 
@@ -44,6 +45,7 @@ def main(cfg):
     optimizer = torch.optim.Adam(train_model.parameters(), lr=cfg.lr)
 
     infer_model = copy.deepcopy(train_model).to(cfg.infer_device)
+    infer_model.eval()
 
     ctrl = Controller()
     rb = ReplayBuffer(cfg.replay_buffer_size)
