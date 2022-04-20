@@ -15,6 +15,7 @@ from rlmeta.utils.stats_dict import StatsDict
 
 from cache_env_wrapper import CacheEnvWrapperFactory
 from cache_ppo_model import CachePPOModel
+from cache_ppo_transformer_model import CachePPOTransformerModel
 
 
 def unbatch_action(action: Action) -> Action:
@@ -84,7 +85,8 @@ def main(cfg):
     # Load model
     cfg.model_config["output_dim"] = env.action_space.n
     params = torch.load(cfg.checkpoint)
-    model = CachePPOModel(**cfg.model_config)
+    #model = CachePPOModel(**cfg.model_config)
+    model = CachePPOTransformerModel(**cfg.model_config)
     model.load_state_dict(params)
 
     # Create agent
