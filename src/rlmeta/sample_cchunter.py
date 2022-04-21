@@ -22,6 +22,7 @@ from cache_ppo_model import CachePPOModel
 from cache_ppo_transformer_model import CachePPOTransformerModel
 import matplotlib.pyplot as plt
 import pandas as pd
+from cache_env_wrapper import CacheEnvCCHunterWrapperFactory
 
 
 def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False, change_core=False, **kwds):
@@ -97,7 +98,7 @@ def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False,
     
     return ax
 
-def unbatch_action(action: Action) -> Action:
+def unbatch_action(action: Action) -> Action: 
     act, info = action
     act.squeeze_(0)
     info = nested_utils.map_nested(lambda x: x.squeeze(0), info)
@@ -111,6 +112,7 @@ def run_loop(env: Env, agent: PPOAgent, victim_addr=-1) -> Dict[str, float]:
     num_guess = 1 # FIXME, this is not true when our training is not 100% accuracy
     hit_trace = []
 
+    import pdb; pdb.set_trace()
     if victim_addr == -1:
         timestep = env.reset()
     else:
@@ -162,7 +164,7 @@ def run_loops(env: Env,
     metrics = StatsDict()
     all_num_corr, all_num_guess = 0, 0
     episode_length_total = 0
-    if env.env.allow_empty_victim_access == False:
+    if env.env._env.allow_empty_victim_access == False:
         end_address = env.env.victim_address_max + 1
     else:
         end_address = env.env.victim_address_max + 1 + 1
@@ -174,7 +176,10 @@ def run_loops(env: Env,
         all_num_guess += num_guess
         episode_length_total += cur_metrics["episode_length"]
         metrics.extend(cur_metrics)
-
+        print("Episode number of guess:", num_guess)
+        print("Episode number of corrects:", num_corr)
+        print("correct rate:", num_corr / num_guess)
+        print("bandwidth rate:", num_guess / cur_metrics["episode_length"])
         
 
     # plot\
@@ -201,7 +206,7 @@ def main(cfg):
     global ccenv
     # Create env
     cfg.env_config['verbose'] = 1
-    env_fac = CacheEnvWrapperFactory(cfg.env_config)
+    env_fac = CacheEnvCCHunterWrapperFactory(cfg.env_config)
     env = env_fac(index=0)
     
     # Load model
@@ -214,7 +219,7 @@ def main(cfg):
     model.eval()
 
     # Create agent
-    agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
+    agent = PPOAgent(model, deterministic_policy=False)
 
     # Run loops
     metrics = run_loops(env, agent, cfg.num_episodes, cfg.seed)
