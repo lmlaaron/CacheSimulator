@@ -74,6 +74,7 @@ class CCHunterWrapper(gym.Env):  #TODO(LISA)
         autocorrelogram = []
         # we may also consider a wider range of lags
         # for i in range(self._env.cache_size * 100):
+        import pdb; pdb.set_trace()
         for i in range(self._env.cache_size * self.cc_hunter_episode_scale):
             autocorrelogram.append(
                 self.calculate_autocorrelation_coefficients(x, i))
