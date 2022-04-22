@@ -22,7 +22,7 @@ replay_buffer_size: 65536
 prefetch: 2
 
 batch_size: 512
-lr: 3e-4
+lr: 1e-4
 # learning_starts: 65536
 push_every_n_steps: 10
 
@@ -37,10 +37,10 @@ eval_seed: 456
 table_view: false
 
 defaults:
-  - env_config: config_exp2
+  # - env_config: config_exp2
   # - env_config: config_exp3
   # - env_config: config_exp4
-  # - env_config: config_exp5
+  - env_config: config_exp5
   # - env_config: config_exp6
   # - env_config: config_exp7
   # - env_config: config_exp8
