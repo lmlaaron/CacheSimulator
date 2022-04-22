@@ -219,7 +219,7 @@ def main(cfg):
     model.eval()
 
     # Create agent
-    agent = PPOAgent(model, deterministic_policy=False)
+    agent = PPOAgent(model, deterministic_policy=True)
 
     # Run loops
     metrics = run_loops(env, agent, cfg.num_episodes, cfg.seed)
