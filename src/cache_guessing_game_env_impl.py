@@ -237,7 +237,7 @@ class CacheGuessingGameEnv(gym.Env):
 
   def step(self, action):
     self.vprint('Step...')
-
+    info = {}
     if isinstance(action, np.ndarray):
         action = action.item()
 
@@ -271,6 +271,7 @@ class CacheGuessingGameEnv(gym.Env):
               t = 1 # empty access will be treated as HIT??? does that make sense???
               #t = self.l1.read(str(self.victim_address), self.current_step).time 
           if t > 500:   # for LRU attack, has to force victim access being hit
+            info['victim_latency'] = 2
             self.current_step += 1
             reward = self.victim_miss_reward #-5000
             if self.force_victim_hit == True:
@@ -279,6 +280,7 @@ class CacheGuessingGameEnv(gym.Env):
             else:
               done = False
           else:
+            info['victim_latency'] =1 
             self.current_step += 1
             reward = self.victim_access_reward #-10
             done = False
@@ -336,12 +338,13 @@ class CacheGuessingGameEnv(gym.Env):
           done = False
     #return observation, reward, done, info
     if done == True and is_guess != 0:
+      info["is_guess"] = True
       if reward > 0:
-        info = {"is_guess": True, "guess_correct": True}
+        info["guess_correct"] = True
       else:
-        info = {"is_guess": True, "guess_correct": False}
+        info["guess_correct"] = False
     else:
-      info = {"is_guess": False}
+      info["is_guess"] = False
     # the observation (r.time) in this case 
     # must be consistent with the observation space
     # return observation, reward, done?, info

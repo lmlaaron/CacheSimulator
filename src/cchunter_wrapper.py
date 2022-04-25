@@ -133,7 +133,15 @@ class CCHunterWrapper(gym.Env):  #TODO(LISA)
         # state = [state self._env.calc_correct_rate()]
         cur_step_obs = state[0, :]
         latency = cur_step_obs[0] if self.keep_latency else -1
-        self.cc_hunter_buffer.append((latency, cur_step_obs[2]))
+
+        if latency == -2:
+            address, is_guess, is_victim, is_flsuh, victim_addr = self._env.step(action)
+            if is_victim == 1:  #victim access
+                latency = info['victim_latency']
+                self.cc_hunter_buffer.append((latency, cur_step_obs[2]))
+        else: # attacker access
+            self.cc_hunter_buffer.append((latency, cur_step_obs[2]))
+        
         # import pdb; pdb.set_trace()
 
         # Get the past trace of (latency, addr) appended to the
