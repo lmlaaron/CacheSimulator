@@ -8,18 +8,18 @@ import torch.nn
 import os
 # append system path
 import sys
-sys.path.append("/media/research/yl3469/RLSCA/CacheSimulator/src")
+sys.path.append("/home/mulong/RL_SCA/src/CacheSimulator/src")
 import rlmeta_extension.nested_utils as nested_utils
 import numpy as np
 from rlmeta.agents.ppo.ppo_agent import PPOAgent
 from rlmeta.core.types import Action
 from rlmeta.envs.env import Env
 from rlmeta.utils.stats_dict import StatsDict
-from cache_guessing_game_env_impl import CacheGuessingGameEnv
 from cchunter_wrapper import CCHunterWrapper
 from cache_env_wrapper import CacheEnvWrapperFactory
 from cache_ppo_model import CachePPOModel
 from cache_ppo_transformer_model import CachePPOTransformerModel
+from textbook_attacker import TextbookAgent
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -120,11 +120,10 @@ def run_loop(env: Env, agent: PPOAgent, victim_addr=-1) -> Dict[str, float]:
     while not timestep.done:
         # Model server requires a batch_dim, so unsqueeze here for local runs.
         timestep.observation.unsqueeze_(0)
-        action = agent.act(timestep)
+        action, _ = agent.act(timestep)
         # Unbatch the action.
-        action = unbatch_action(action)
+        #action = unbatch_action(action)
         # import pdb; pdb.set_trace()
-
 
         timestep = env.step(action)
         obs, reward, done, info = timestep
@@ -208,13 +207,14 @@ def main(cfg):
     cfg.model_config["output_dim"] = env.action_space.n
     params = torch.load(cfg.checkpoint)
     #model = CachePPOModel(**cfg.model_config)
-    model = CachePPOTransformerModel(**cfg.model_config)
+    #model = CachePPOTransformerModel(**cfg.model_config)
     # import pdb; pdb.set_trace()
-    model.load_state_dict(params)
-    model.eval()
+    #odel.load_state_dict(params)
+    #model.eval()
 
     # Create agent
-    agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
+    #agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
+    agent = TextbookAgent(cfg.env_config)
 
     # Run loops
     metrics = run_loops(env, agent, cfg.num_episodes, cfg.seed)
