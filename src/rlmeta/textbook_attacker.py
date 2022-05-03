@@ -55,17 +55,20 @@ class TextbookAgent():
             #timestep,state i state
             # timestep.state[0] is [r victim_accessesd original_action self_count]
 
-            self.lat.append(timestep.state[0][0])
+            self.lat.append(timestep.observation[0][0][0])
+            #print(timestep.observation)
             return action, info
 
         elif self.local_step == 2 * self.cache_size + 1: # do guess and terminate
             # timestep is the observation from last step
             # first timestep not useful
-            action = self.cache_size + 1 # default assume that first miss
-            for addr in range(1, self.lat):
-                if self.lat[addr] == 1: # miss
-                    action = addr + self.cache_size + 1
+            action = 2* self.cache_size  # default assume that last is miss
+            for addr in range(1, len(self.lat)):
+                if self.lat[addr].int() == 1: # miss
+                    action = addr + self.cache_size 
+                    break
             self.local_step = 0
+            self.lat=[]
             return action, info
         else:        
             assert(False)

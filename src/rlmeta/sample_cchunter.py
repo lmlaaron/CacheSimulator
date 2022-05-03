@@ -145,7 +145,8 @@ def run_loop(env: Env, agent: PPOAgent, victim_addr=-1) -> Dict[str, float]:
     while not timestep.done:
         # Model server requires a batch_dim, so unsqueeze here for local runs.
         timestep.observation.unsqueeze_(0)
-        action, _ = agent.act(timestep)
+        action, info = agent.act(timestep)
+        action = Action(action, info)
         # Unbatch the action.
         #action = unbatch_action(action)
         # import pdb; pdb.set_trace()
