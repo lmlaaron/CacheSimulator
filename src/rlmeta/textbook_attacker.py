@@ -39,30 +39,29 @@ class TextbookAgent():
     def act(self, timestep):
         info = {}
         # do prime
-        if self.local_step < self.cache_size:
+        if self.local_step < self.cache_size - 1:
             action = self.local_step # do prime 
             self.local_step += 1
             return action, info
 
-        elif self.local_step == self.cache_size: # do victim trigger
-            action = self.local_step
+        elif self.local_step == self.cache_size - 1: # do victim trigger
+            action = self.cache_size # do victim access
             self.local_step += 1
             return action, info
 
-        elif self.local_step < 2 * self.cache_size + 1:# do probe
-            action = self.local_step - ( self.cache_size + 1 )  
+        elif self.local_step < 2 * self.cache_size + 1 - 1 - 1:# do probe
+            action = self.local_step - ( self.cache_size + 1 - 1 )  
             self.local_step += 1
             #timestep,state i state
             # timestep.state[0] is [r victim_accessesd original_action self_count]
-
-            self.lat.append(timestep.observation[0][0][0])
+            #self.lat.append(timestep.observation[0][0][0])
             #print(timestep.observation)
             return action, info
 
-        elif self.local_step == 2 * self.cache_size + 1: # do guess and terminate
+        elif self.local_step == 2 * self.cache_size + 1 - 1 - 1: # do guess and terminate
             # timestep is the observation from last step
             # first timestep not useful
-            action = 2* self.cache_size  # default assume that last is miss
+            action = 2 * self.cache_size # default assume that last is miss
             for addr in range(1, len(self.lat)):
                 if self.lat[addr].int() == 1: # miss
                     action = addr + self.cache_size 
@@ -74,6 +73,9 @@ class TextbookAgent():
             assert(False)
     # is it useful for non-ML agent or not???
     def observe(self, action, timestep):
+        if self.local_step < 2 * self.cache_size + 1 - 1 - 1 + 1 and self.local_step > self.cache_size - 1:
+        ##    self.local_step += 1
+            self.lat.append(timestep.observation[0][0])
         return
 
 
