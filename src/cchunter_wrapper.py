@@ -36,14 +36,14 @@ class CCHunterWrapper(gym.Env):  #TODO(LISA)
         self.cc_hunter_detection_reward = env_config.get(
             "cc_hunter_detection_reward", -1.0)
 
-    def reset(self):
+    def reset(self, victim_address = -1):
         self.action_buffer = []
         self.cc_hunter_length = self._env.cache_size
         self.cc_hunter_buffer = []
         self.validation_env.reset()  # Is this needed?
         # obs = self._env.reset(victim_address=-1,
         #                       if_only_reinitialize_rl_related_variables=True)
-        obs = self._env.reset(victim_address=-1, reset_cache_state=True)
+        obs = self._env.reset(victim_address=victim_address, reset_cache_state=True)
         self.pattern_init_state = (copy.deepcopy(self._env.l1),
                                    self._env.victim_address)
         # print("number of found patterns:" + str(len(self.pattern_buffer)))
@@ -74,6 +74,7 @@ class CCHunterWrapper(gym.Env):  #TODO(LISA)
         autocorrelogram = []
         # we may also consider a wider range of lags
         # for i in range(self._env.cache_size * 100):
+        import pdb; pdb.set_trace()
         for i in range(self._env.cache_size * self.cc_hunter_episode_scale):
             autocorrelogram.append(
                 self.calculate_autocorrelation_coefficients(x, i))

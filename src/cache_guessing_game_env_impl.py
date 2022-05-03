@@ -231,6 +231,7 @@ class CacheGuessingGameEnv(gym.Env):
     self.guess_buffer = [False] * self.guess_buffer_size
     #return
 
+    self.last_state = None
 
   def clear_guess_buffer_history(self):
     self.guess_buffer = [False] * self.guess_buffer_size
@@ -250,6 +251,7 @@ class CacheGuessingGameEnv(gym.Env):
     is_flush = action[3]                                              # check whether to flush
     victim_addr = str(action[4] + self.victim_address_min)            # victim address
     
+    victim_latency = None
     # if self.current_step > self.window_size : # if current_step is too long, terminate
     if self.step_count >= self.window_size - 1:
       r = 2 #
@@ -272,6 +274,7 @@ class CacheGuessingGameEnv(gym.Env):
               #t = self.l1.read(str(self.victim_address), self.current_step).time 
           if t > 500:   # for LRU attack, has to force victim access being hit
             info['victim_latency'] = 2
+            victim_latency = 1
             self.current_step += 1
             reward = self.victim_miss_reward #-5000
             if self.force_victim_hit == True:
@@ -281,6 +284,7 @@ class CacheGuessingGameEnv(gym.Env):
               done = False
           else:
             info['victim_latency'] =1 
+            victim_latency = 0
             self.current_step += 1
             reward = self.victim_access_reward #-10
             done = False
@@ -376,6 +380,27 @@ class CacheGuessingGameEnv(gym.Env):
         done = False                           # fake reset
         self._reset()                          # manually reset
 
+    if victim_latency is not None:
+        info["victim_latency"] = victim_latency
+
+        if self.last_state is None:
+            cache_state_change = None
+        else:
+            cache_state_change = victim_latency ^ self.last_state
+        self.last_state = victim_latency
+
+    else:
+        if r == 2:
+            cache_state_change = 0
+        else:
+            if self.last_state is None:
+                cache_state_change = None
+            else:
+                cache_state_change = r ^ self.last_state
+            self.last_state = r
+
+    info["cache_state_change"] = cache_state_change
+
     return np.array(list(reversed(self.state))), reward, done, info
 
   def reset(self,
@@ -404,6 +429,8 @@ class CacheGuessingGameEnv(gym.Env):
       assert(self.victim_address_min == self.victim_address_max) # for plru_pl cache, only one address is allowed
       self.vprint("[reset] victim access %d locked cache line" % self.victim_address_max)
       self.l1.read(str(self.victim_address_max), self.current_step, replacement_policy.PL_LOCK)
+
+    self.last_state = None
 
     return np.array(list(reversed(self.state)))
 

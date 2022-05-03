@@ -20,8 +20,15 @@ from cache_env_wrapper import CacheEnvWrapperFactory
 from cache_ppo_model import CachePPOModel
 from cache_ppo_transformer_model import CachePPOTransformerModel
 from textbook_attacker import TextbookAgent
+# from cache_guessing_game_env_impl import CacheGuessingGameEnv
+# from cchunter_wrapper import CCHunterWrapper
+from cache_env_wrapper import CacheEnvWrapperFactory
+from cache_ppo_model import CachePPOModel
+from cache_ppo_transformer_model import CachePPOTransformerModel
+from cache_ppo_transformer_periodic_model import CachePPOTransformerPeriodicModel
 import matplotlib.pyplot as plt
 import pandas as pd
+from cache_env_wrapper import CacheEnvCCHunterWrapperFactory
 
 
 def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False, change_core=False, **kwds):
@@ -69,18 +76,33 @@ def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False,
     if not change_core:
       data = np.asarray(series)
       mean = np.mean(data)
-      c0 = np.sum((data - mean) ** 2) / float(n_full)
+      # c0 = np.sum((data - mean) ** 2) / float(n_full)
+      var = np.var(data)
+      norm = np.square(data - mean).sum()
       def r(h):
-          deno = n_full if not change_deno else (n_full - h)
-          return ((data[:n_full - h] - mean) *
-                  (data[h:] - mean)).sum() / float(deno) / c0
+          # deno = n_full if not change_deno else (n_full - h)
+          # return ((data[:n_full - h] - mean) *
+          #         (data[h:] - mean)).sum() / float(deno) / var
+          if h == 0:
+              return 1.0
+          else:
+              # return ((data[:-h] - mean) * (data[h:] - mean)).sum() / norm
+              return ((data[:-h] - mean) * (data[h:] - mean)).mean() / var
+            # a = data[:-h]
+            # b = data[h:]
+            # return ((a - a.mean()) * (b - b.mean())).mean() / (a.std() * b.std())
     else:
       def r(h):
         return series.autocorr(lag=h)
       
-    x = np.arange(n_lags) + 1
+    # x = np.arange(n_lags) + 1
+    x = np.arange(n_lags)
     # y = lmap(r, x)
     y = np.array([r(xi) for xi in x])
+
+    print(f"y = {y}")
+    print(f"y_max = {np.max(y[1:])}")
+
     z95 = 1.959963984540054
     z99 = 2.5758293035489004
     ax.axhline(y=0.95, linestyle='--', color='grey')
@@ -97,7 +119,7 @@ def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False,
     
     return ax
 
-def unbatch_action(action: Action) -> Action:
+def unbatch_action(action: Action) -> Action: 
     act, info = action
     act.squeeze_(0)
     info = nested_utils.map_nested(lambda x: x.squeeze(0), info)
@@ -107,10 +129,13 @@ def unbatch_action(action: Action) -> Action:
 def run_loop(env: Env, agent: PPOAgent, victim_addr=-1) -> Dict[str, float]:
     episode_length = 0
     episode_return = 0.0
-    num_correct = 1
-    num_guess = 1 # FIXME, this is not true when our training is not 100% accuracy
+    # num_correct = 1
+    num_correct = 0
+    # num_guess = 1 # FIXME, this is not true when our training is not 100% accuracy
+    num_guess = 0 # FIXME, this is not true when our training is not 100% accuracy
     hit_trace = []
 
+    # import pdb; pdb.set_trace()
     if victim_addr == -1:
         timestep = env.reset()
     else:
@@ -125,12 +150,13 @@ def run_loop(env: Env, agent: PPOAgent, victim_addr=-1) -> Dict[str, float]:
         #action = unbatch_action(action)
         # import pdb; pdb.set_trace()
 
+        victim_addr = env._env.victim_address
         timestep = env.step(action)
         obs, reward, done, info = timestep
-        if 'correct_guess' in info.keys():
+        if "guess_correct" in info:
             num_guess += 1
-            if info['correct_guess'] == True:
-                print(f"victim_address! {victim_addr} correct guess! {info['correct_guess']}")
+            if info["guess_correct"]:
+                print(f"victim_address! {victim_addr} correct guess! {info['guess_correct']}")
                 num_correct += 1
             else:
                 correct = False
@@ -161,7 +187,7 @@ def run_loops(env: Env,
     metrics = StatsDict()
     all_num_corr, all_num_guess = 0, 0
     episode_length_total = 0
-    if env.env.allow_empty_victim_access == False:
+    if env.env._env.allow_empty_victim_access == False:
         end_address = env.env.victim_address_max + 1
     else:
         end_address = env.env.victim_address_max + 1 + 1
@@ -173,15 +199,20 @@ def run_loops(env: Env,
         all_num_guess += num_guess
         episode_length_total += cur_metrics["episode_length"]
         metrics.extend(cur_metrics)
-
+        print("Episode number of guess:", num_guess)
+        print("Episode number of corrects:", num_corr)
+        print("correct rate:", num_corr / num_guess)
+        print("bandwidth rate:", num_guess / cur_metrics["episode_length"])
         
 
     # plot\
-        hit_trace = [int(i) for i in hit_trace]
+        # hit_trace = [int(i) for i in hit_trace]
+        hit_trace = env._env.cc_hunter_history
         print(hit_trace)
         data = pd.Series(hit_trace)
         plt.figure()
         autocorrelation_plot_forked(data, n_lags=len(data)-2, change_deno=True)
+        # autocorrelation_plot_forked(data, n_lags=len(data)-2, change_deno=True, change_core=True)
         plt.savefig('cchunter_hit_trace_{}_acf.png'.format(victim_addr))
         print("Figure saved as 'cchunter_hit_trace_{}_acf.png".format(victim_addr))
 
@@ -195,19 +226,21 @@ def run_loops(env: Env,
     return metrics
 
 
-@hydra.main(config_path="./config", config_name="sample")
+@hydra.main(config_path="./config", config_name="sample_cchunter")
 def main(cfg):
     global ccenv
     # Create env
     cfg.env_config['verbose'] = 1
-    env_fac = CacheEnvWrapperFactory(cfg.env_config)
+    env_fac = CacheEnvCCHunterWrapperFactory(cfg.env_config)
     env = env_fac(index=0)
     
     # Load model
     cfg.model_config["output_dim"] = env.action_space.n
     params = torch.load(cfg.checkpoint)
-    #model = CachePPOModel(**cfg.model_config)
-    #model = CachePPOTransformerModel(**cfg.model_config)
+    # model = CachePPOModel(**cfg.model_config)
+
+    # model = CachePPOTransformerModel(**cfg.model_config)
+    model = CachePPOTransformerPeriodicModel(**cfg.model_config)
     # import pdb; pdb.set_trace()
     #odel.load_state_dict(params)
     #model.eval()
