@@ -241,7 +241,7 @@ def main(cfg):
     # model = CachePPOModel(**cfg.model_config)
 
     # model = CachePPOTransformerModel(**cfg.model_config)
-    model = CachePPOTransformerPeriodicModel(**cfg.model_config)
+    #model = CachePPOTransformerPeriodicModel(**cfg.model_config)
     # import pdb; pdb.set_trace()
     #odel.load_state_dict(params)
     #model.eval()
