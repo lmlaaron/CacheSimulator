@@ -9,7 +9,7 @@ from rlmeta.envs.gym_wrappers import GymWrapper
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from cache_guessing_game_env_impl import CacheGuessingGameEnv
-from cchunter_wrapper import CCHunterWrapper
+from cc_hunter_wrapper import CCHunterWrapper
 
 
 class CacheEnvWrapperFactory(EnvFactory):
