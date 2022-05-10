@@ -8,13 +8,18 @@ import torch.nn
 import os
 # append system path
 import sys
-sys.path.append("/media/research/yl3469/RLSCA/CacheSimulator/src")
+sys.path.append("/home/mulong/RL_SCA/src/CacheSimulator/src")
 import rlmeta_extension.nested_utils as nested_utils
 import numpy as np
 from rlmeta.agents.ppo.ppo_agent import PPOAgent
 from rlmeta.core.types import Action
 from rlmeta.envs.env import Env
 from rlmeta.utils.stats_dict import StatsDict
+from cchunter_wrapper import CCHunterWrapper
+from cache_env_wrapper import CacheEnvWrapperFactory
+from cache_ppo_model import CachePPOModel
+from cache_ppo_transformer_model import CachePPOTransformerModel
+from textbook_attacker import TextbookAgent
 # from cache_guessing_game_env_impl import CacheGuessingGameEnv
 # from cchunter_wrapper import CCHunterWrapper
 from cache_env_wrapper import CacheEnvWrapperFactory
@@ -52,7 +57,7 @@ def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False,
     # Subtract 2 to keep at least 2 points of intersection,
     # otherwise pandas.Series.autocorr will throw a warning about insufficient
     # degrees of freedom
-    n_maxlags = n_full - 2
+    n_maxlags = n_full #- 2
     
     
     # calculate the actual number of lags
@@ -81,8 +86,9 @@ def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False,
           if h == 0:
               return 1.0
           else:
-              # return ((data[:-h] - mean) * (data[h:] - mean)).sum() / norm
-              return ((data[:-h] - mean) * (data[h:] - mean)).mean() / var
+              return ((data[:-h] - mean) * (data[h:] - mean)).sum() / norm
+              #return ((data[:-h] - mean) * (data[h:] - mean)).mean() / var
+            
             # a = data[:-h]
             # b = data[h:]
             # return ((a - a.mean()) * (b - b.mean())).mean() / (a.std() * b.std())
@@ -140,11 +146,11 @@ def run_loop(env: Env, agent: PPOAgent, victim_addr=-1) -> Dict[str, float]:
     while not timestep.done:
         # Model server requires a batch_dim, so unsqueeze here for local runs.
         timestep.observation.unsqueeze_(0)
-        action = agent.act(timestep)
+        action, info = agent.act(timestep)
+        action = Action(action, info)
         # Unbatch the action.
-        action = unbatch_action(action)
+        #action = unbatch_action(action)
         # import pdb; pdb.set_trace()
-
 
         victim_addr = env._env.victim_address
         timestep = env.step(action)
@@ -178,7 +184,8 @@ def run_loop(env: Env, agent: PPOAgent, victim_addr=-1) -> Dict[str, float]:
 def run_loops(env: Env,
               agent: PPOAgent,
               num_episodes: int,
-              seed: int = 0) -> StatsDict:
+              seed: int = 0,
+              cache_size: int = None) -> StatsDict:
     env.seed(seed)
     metrics = StatsDict()
     all_num_corr, all_num_guess = 0, 0
@@ -207,7 +214,8 @@ def run_loops(env: Env,
         print(hit_trace)
         data = pd.Series(hit_trace)
         plt.figure()
-        autocorrelation_plot_forked(data, n_lags=len(data)-2, change_deno=True)
+
+        autocorrelation_plot_forked(data, n_lags= 4 * cache_size, change_deno=True) #consider removing -2
         # autocorrelation_plot_forked(data, n_lags=len(data)-2, change_deno=True, change_core=True)
         plt.savefig('cchunter_hit_trace_{}_acf.png'.format(victim_addr))
         print("Figure saved as 'cchunter_hit_trace_{}_acf.png".format(victim_addr))
@@ -242,11 +250,11 @@ def main(cfg):
     model.eval()
 
     # Create agent
-    # agent = PPOAgent(model, deterministic_policy=False)
-    agent = PPOAgent(model, deterministic_policy=True)
+    #agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
+    agent = TextbookAgent(cfg.env_config)
 
     # Run loops
-    metrics = run_loops(env, agent, cfg.num_episodes, cfg.seed)
+    metrics = run_loops(env, agent, cfg.num_episodes, cfg.seed, cache_size = cfg.env_config['cache_configs']['cache_1']['blocks'])
     logging.info("\n\n" + metrics.table(info="sample") + "\n")
 
 

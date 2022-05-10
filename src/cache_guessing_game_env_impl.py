@@ -238,7 +238,7 @@ class CacheGuessingGameEnv(gym.Env):
 
   def step(self, action):
     self.vprint('Step...')
-
+    info = {}
     if isinstance(action, np.ndarray):
         action = action.item()
 
@@ -273,6 +273,7 @@ class CacheGuessingGameEnv(gym.Env):
               t = 1 # empty access will be treated as HIT??? does that make sense???
               #t = self.l1.read(str(self.victim_address), self.current_step).time 
           if t > 500:   # for LRU attack, has to force victim access being hit
+            info['victim_latency'] = 2
             victim_latency = 1
             self.current_step += 1
             reward = self.victim_miss_reward #-5000
@@ -282,6 +283,7 @@ class CacheGuessingGameEnv(gym.Env):
             else:
               done = False
           else:
+            info['victim_latency'] =1 
             victim_latency = 0
             self.current_step += 1
             reward = self.victim_access_reward #-10
@@ -340,12 +342,13 @@ class CacheGuessingGameEnv(gym.Env):
           done = False
     #return observation, reward, done, info
     if done == True and is_guess != 0:
+      info["is_guess"] = True
       if reward > 0:
-        info = {"is_guess": True, "guess_correct": True}
+        info["guess_correct"] = True
       else:
-        info = {"is_guess": True, "guess_correct": False}
+        info["guess_correct"] = False
     else:
-      info = {"is_guess": False}
+      info["is_guess"] = False
     # the observation (r.time) in this case 
     # must be consistent with the observation space
     # return observation, reward, done?, info
@@ -475,7 +478,6 @@ class CacheGuessingGameEnv(gym.Env):
         self.victim_address = random.randint(self.victim_address_min, self.victim_address_max)
       else:  # when generating random addr use self.victim_address_max + 1 to represent empty access
         self.victim_address = random.randint(self.victim_address_min, self.victim_address_max + 1) 
-
     else:
       assert(victim_address >= self.victim_address_min)
       if self.allow_empty_victim_access == True:
@@ -484,11 +486,12 @@ class CacheGuessingGameEnv(gym.Env):
         assert(victim_address <= self.victim_address_max ) 
       
       self.victim_address = victim_address
+      self._randomize_cache()
     if self.victim_address <= self.victim_address_max:
       self.vprint("victim address ", self.victim_address)
     else:
       self.vprint("victim has empty access")
-    self._randomize_cache()
+    
 
   def render(self, mode='human'):
     return 
