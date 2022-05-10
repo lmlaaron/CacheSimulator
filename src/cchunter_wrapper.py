@@ -55,7 +55,7 @@ class CCHunterWrapper(gym.Env):
         return ((x[:-p] - mean) * (x[p:] - mean)).mean() / var
 
     def cc_hunter_attack(self, data: Sequence[int]) -> Tuple[float, int]:
-        n = len(data)
+        n = min(len(data), self._env.cache_size * 4) # Mulong: only calculate 4 * size_cache size lag
         # data = pd.Series(data)
         # corr = [data.autocorr(i) for i in range(n)]
         # corr = np.asarray(corr)

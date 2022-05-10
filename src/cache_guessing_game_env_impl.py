@@ -411,6 +411,7 @@ class CacheGuessingGameEnv(gym.Env):
       self.vprint('Reset...(also the cache state)')
       self.hierarchy = build_hierarchy(self.configs, self.logger)
       self.l1 = self.hierarchy['cache_1']
+      self._randomize_cache()
     else:
       self.vprint('Reset...(cache state the same)')
 
@@ -486,7 +487,6 @@ class CacheGuessingGameEnv(gym.Env):
         assert(victim_address <= self.victim_address_max ) 
       
       self.victim_address = victim_address
-      self._randomize_cache()
     if self.victim_address <= self.victim_address_max:
       self.vprint("victim address ", self.victim_address)
     else:
