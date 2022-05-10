@@ -100,13 +100,19 @@ class CCHunterWrapper(gym.Env):
 
         # self.cc_hunter_history.append(latency)
         # self.cc_hunter_history.append(None if latency == 2 else latency)
-        if "victim_latency" in info:
-            self.cc_hunter_history.append(info["victim_latency"])
-        else:
-            # self.cc_hunter_history.append(latency)
-            # self.cc_hunter_history.append(None if is_guess else latency)
-            if not is_guess:
-                self.cc_hunter_history.append(latency)
+
+        #MUlong Luo
+        # change the semantics of cc_hunter_history following the paper
+        # only append when there is a conflict miss (i.e., victim_latency is 1(miss))
+        # then check the action
+        # if the action is attacker access, then it is T->S append 1
+        # else if the action is trigger victim, then it is S->T append 0
+        if "victim_latency" in info and info["victim_latency"] == 1:  
+            self.cc_hunter_history.append(0)
+        elif latency == 1:
+            self.cc_hunter_history.append(1)   
+        
+        
         # self.cc_hunter_history.append(info.get("cache_state_change", None))
 
         if done:

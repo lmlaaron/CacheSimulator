@@ -86,7 +86,7 @@ def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False,
           if h == 0:
               return 1.0
           else:
-              # return ((data[:-h] - mean) * (data[h:] - mean)).sum() / norm
+              #return ((data[:-h] - mean) * (data[h:] - mean)).sum() / norm
               return ((data[:-h] - mean) * (data[h:] - mean)).mean() / var
             # a = data[:-h]
             # b = data[h:]
@@ -212,7 +212,7 @@ def run_loops(env: Env,
         print(hit_trace)
         data = pd.Series(hit_trace)
         plt.figure()
-        autocorrelation_plot_forked(data, n_lags=len(data)-2, change_deno=True)
+        autocorrelation_plot_forked(data, n_lags=len(data)-2, change_deno=True) #consider removing -2
         # autocorrelation_plot_forked(data, n_lags=len(data)-2, change_deno=True, change_core=True)
         plt.savefig('cchunter_hit_trace_{}_acf.png'.format(victim_addr))
         print("Figure saved as 'cchunter_hit_trace_{}_acf.png".format(victim_addr))
@@ -241,10 +241,10 @@ def main(cfg):
     # model = CachePPOModel(**cfg.model_config)
 
     # model = CachePPOTransformerModel(**cfg.model_config)
-    #model = CachePPOTransformerPeriodicModel(**cfg.model_config)
+    model = CachePPOTransformerPeriodicModel(**cfg.model_config)
     # import pdb; pdb.set_trace()
-    #odel.load_state_dict(params)
-    #model.eval()
+    model.load_state_dict(params)
+    model.eval()
 
     # Create agent
     #agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)

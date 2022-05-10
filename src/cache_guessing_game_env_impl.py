@@ -478,7 +478,6 @@ class CacheGuessingGameEnv(gym.Env):
         self.victim_address = random.randint(self.victim_address_min, self.victim_address_max)
       else:  # when generating random addr use self.victim_address_max + 1 to represent empty access
         self.victim_address = random.randint(self.victim_address_min, self.victim_address_max + 1) 
-
     else:
       assert(victim_address >= self.victim_address_min)
       if self.allow_empty_victim_access == True:
@@ -487,11 +486,12 @@ class CacheGuessingGameEnv(gym.Env):
         assert(victim_address <= self.victim_address_max ) 
       
       self.victim_address = victim_address
+      self._randomize_cache()
     if self.victim_address <= self.victim_address_max:
       self.vprint("victim address ", self.victim_address)
     else:
       self.vprint("victim has empty access")
-    self._randomize_cache()
+    
 
   def render(self, mode='human'):
     return 
