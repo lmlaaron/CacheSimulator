@@ -57,7 +57,7 @@ def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False,
     # Subtract 2 to keep at least 2 points of intersection,
     # otherwise pandas.Series.autocorr will throw a warning about insufficient
     # degrees of freedom
-    n_maxlags = n_full - 2
+    n_maxlags = n_full #- 2
     
     
     # calculate the actual number of lags
@@ -86,8 +86,9 @@ def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False,
           if h == 0:
               return 1.0
           else:
-              #return ((data[:-h] - mean) * (data[h:] - mean)).sum() / norm
-              return ((data[:-h] - mean) * (data[h:] - mean)).mean() / var
+              return ((data[:-h] - mean) * (data[h:] - mean)).sum() / norm
+              #return ((data[:-h] - mean) * (data[h:] - mean)).mean() / var
+            
             # a = data[:-h]
             # b = data[h:]
             # return ((a - a.mean()) * (b - b.mean())).mean() / (a.std() * b.std())
@@ -183,7 +184,8 @@ def run_loop(env: Env, agent: PPOAgent, victim_addr=-1) -> Dict[str, float]:
 def run_loops(env: Env,
               agent: PPOAgent,
               num_episodes: int,
-              seed: int = 0) -> StatsDict:
+              seed: int = 0,
+              cache_size: int = None) -> StatsDict:
     env.seed(seed)
     metrics = StatsDict()
     all_num_corr, all_num_guess = 0, 0
@@ -212,7 +214,8 @@ def run_loops(env: Env,
         print(hit_trace)
         data = pd.Series(hit_trace)
         plt.figure()
-        autocorrelation_plot_forked(data, n_lags=len(data)-2, change_deno=True) #consider removing -2
+
+        autocorrelation_plot_forked(data, n_lags= 4 * cache_size, change_deno=True) #consider removing -2
         # autocorrelation_plot_forked(data, n_lags=len(data)-2, change_deno=True, change_core=True)
         plt.savefig('cchunter_hit_trace_{}_acf.png'.format(victim_addr))
         print("Figure saved as 'cchunter_hit_trace_{}_acf.png".format(victim_addr))
@@ -251,7 +254,7 @@ def main(cfg):
     agent = TextbookAgent(cfg.env_config)
 
     # Run loops
-    metrics = run_loops(env, agent, cfg.num_episodes, cfg.seed)
+    metrics = run_loops(env, agent, cfg.num_episodes, cfg.seed, cache_size = cfg.env_config['cache_configs']['cache_1']['blocks'])
     logging.info("\n\n" + metrics.table(info="sample") + "\n")
 
 
