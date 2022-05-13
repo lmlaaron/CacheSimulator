@@ -17,6 +17,7 @@ class CCHunterWrapper(gym.Env):
                  keep_latency: bool = True) -> None:
         env_config["cache_state_reset"] = False
 
+        self.reset_observation = env_config.get("reset_observation", False)
         self.keep_latency = keep_latency
         self.env_config = env_config
         self.episode_length = env_config.get("episode_length", 80)
@@ -24,6 +25,8 @@ class CCHunterWrapper(gym.Env):
         # self.cc_hunter_detection_reward = env_config.get(
         #     "cc_hunter_detection_reward", -1.0)
         self.cc_hunter_coeff = env_config.get("cc_hunter_coeff", 1.0)
+        self.cc_hunter_check_length = env_config.get("cc_hunter_check_length",
+                                                     4)
 
         self._env = CacheGuessingGameEnv(env_config)
         self.validation_env = CacheGuessingGameEnv(env_config)
@@ -55,7 +58,8 @@ class CCHunterWrapper(gym.Env):
         return ((x[:-p] - mean) * (x[p:] - mean)).mean() / var
 
     def cc_hunter_attack(self, data: Sequence[int]) -> Tuple[float, int]:
-        n = min(len(data), self._env.cache_size * 4) # Mulong: only calculate 4 * size_cache size lag
+        n = min(len(data), self._env.cache_size * self.cc_hunter_check_length
+                )  # Mulong: only calculate 4 * size_cache size lag
         # data = pd.Series(data)
         # corr = [data.autocorr(i) for i in range(n)]
         # corr = np.asarray(corr)
@@ -64,16 +68,16 @@ class CCHunterWrapper(gym.Env):
 
         x = np.asarray(data)
         corr = [self.autocorr(x, i) for i in range(n)]
-        corr = np.asarray(corr[1:-1])
+        corr = np.asarray(corr[1:])
         corr = np.nan_to_num(corr)
         mask = corr > self.threshold
 
-        rew = -np.square(corr).mean()
+        rew = -np.square(corr).mean() if len(corr) > 0 else 0.0
 
         # corr_pos = corr[corr > 0]
         # rew = -np.square(corr_pos).mean()
 
-        # rew = -mask.mean()
+        # rew = -mask.mean() if len(mask) > 0 else 0.0
 
         cnt = mask.sum()
 
@@ -94,7 +98,7 @@ class CCHunterWrapper(gym.Env):
         obs, reward, done, info = self._env.step(action)
         self.step_count += 1
 
-        is_guess = (self._env.parse_action(action)[1] == 1)
+        # is_guess = (self._env.parse_action(action)[1] == 1)
         cur_step_obs = obs[0, :]
         latency = cur_step_obs[0] if self.keep_latency else -1
 
@@ -107,24 +111,30 @@ class CCHunterWrapper(gym.Env):
         # then check the action
         # if the action is attacker access, then it is T->S append 1
         # else if the action is trigger victim, then it is S->T append 0
-        if "victim_latency" in info and info["victim_latency"] == 1:  
+        if "victim_latency" in info and info["victim_latency"] == 1:
             self.cc_hunter_history.append(0)
         elif latency == 1:
-            self.cc_hunter_history.append(1)   
-        
-        
+            self.cc_hunter_history.append(1)
+
         # self.cc_hunter_history.append(info.get("cache_state_change", None))
 
         if done:
             obs = self._env.reset(victim_address=-1,
                                   reset_cache_state=False,
-                                  reset_observation=False)
+                                  reset_observation=self.reset_observation)
             self.victim_address = self._env.victim_address
 
-        done = (self.step_count >= self.episode_length)
-        if done:
-            rew, cnt = self.cc_hunter_attack(self.cc_hunter_history)
-            reward += self.cc_hunter_coeff * rew
-            info["cc_hunter_attack"] = cnt
+            if self.step_count < self.episode_length:
+                done = False
+            else:
+                rew, cnt = self.cc_hunter_attack(self.cc_hunter_history)
+                reward += self.cc_hunter_coeff * rew
+                info["cc_hunter_attack"] = cnt
+
+        # done = (self.step_count >= self.episode_length)
+        # if done:
+        #     rew, cnt = self.cc_hunter_attack(self.cc_hunter_history)
+        #     reward += self.cc_hunter_coeff * rew
+        #     info["cc_hunter_attack"] = cnt
 
         return obs, reward, done, info

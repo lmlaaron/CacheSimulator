@@ -7,3 +7,5 @@ deterministic_policy: true
 defaults:
   - env_config: cchunter
   - model_config: transformer_cchunter
+  # - env_config: cchunter_baseline
+  # - model_config: transformer_cchunter_baseline

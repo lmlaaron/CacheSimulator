@@ -6,10 +6,12 @@ import hydra
 import torch
 import torch.nn
 import os
-# append system path
 import sys
-sys.path.append("/home/mulong/RL_SCA/src/CacheSimulator/src")
-import rlmeta_extension.nested_utils as nested_utils
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# sys.path.append("/home/mulong/RL_SCA/src/CacheSimulator/src")
+
+import rlmeta.utils.nested_utils as nested_utils
 import numpy as np
 from rlmeta.agents.ppo.ppo_agent import PPOAgent
 from rlmeta.core.types import Action
@@ -87,7 +89,7 @@ def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False,
               return 1.0
           else:
               return ((data[:-h] - mean) * (data[h:] - mean)).sum() / norm
-              #return ((data[:-h] - mean) * (data[h:] - mean)).mean() / var
+              # return ((data[:-h] - mean) * (data[h:] - mean)).mean() / var
             
             # a = data[:-h]
             # b = data[h:]
@@ -215,8 +217,9 @@ def run_loops(env: Env,
         data = pd.Series(hit_trace)
         plt.figure()
 
-        autocorrelation_plot_forked(data, n_lags= 4 * cache_size, change_deno=True) #consider removing -2
-        # autocorrelation_plot_forked(data, n_lags=len(data)-2, change_deno=True, change_core=True)
+        # autocorrelation_plot_forked(data, n_lags= 4 * cache_size, change_deno=True) #consider removing -2
+        autocorrelation_plot_forked(data, n_lags= 8 * cache_size, change_deno=True) #consider removing -2
+        # autocorrelation_plot_forked(data, n_lags=len(data)-2, change_deno=True)
         plt.savefig('cchunter_hit_trace_{}_acf.png'.format(victim_addr))
         print("Figure saved as 'cchunter_hit_trace_{}_acf.png".format(victim_addr))
 
@@ -243,15 +246,15 @@ def main(cfg):
     params = torch.load(cfg.checkpoint)
     # model = CachePPOModel(**cfg.model_config)
 
-    # model = CachePPOTransformerModel(**cfg.model_config)
-    model = CachePPOTransformerPeriodicModel(**cfg.model_config)
+    model = CachePPOTransformerModel(**cfg.model_config)
+    # model = CachePPOTransformerPeriodicModel(**cfg.model_config)
     # import pdb; pdb.set_trace()
     model.load_state_dict(params)
     model.eval()
 
     # Create agent
-    #agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
-    agent = TextbookAgent(cfg.env_config)
+    agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
+    # agent = TextbookAgent(cfg.env_config)
 
     # Run loops
     metrics = run_loops(env, agent, cfg.num_episodes, cfg.seed, cache_size = cfg.env_config['cache_configs']['cache_1']['blocks'])
