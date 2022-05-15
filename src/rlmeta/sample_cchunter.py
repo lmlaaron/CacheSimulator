@@ -61,7 +61,6 @@ def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False,
     # degrees of freedom
     n_maxlags = n_full #- 2
     
-    
     # calculate the actual number of lags
     if n_lags is None:
       # Choosing a reasonable number of lags varies between datasets,
@@ -167,8 +166,6 @@ def run_loop(env: Env, agent: PPOAgent, victim_addr=-1) -> Dict[str, float]:
         hit =  obs[0][0]
         hit_trace.append(hit)
         # add, is_guess, is_victim, is_flush, _ = env._env.parse_action(action)
-        
-        
             
         agent.observe(action, timestep)
 
@@ -254,7 +251,7 @@ def main(cfg):
 
     # Create agent
     agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
-    # agent = TextbookAgent(cfg.env_config)
+    #agent = TextbookAgent(cfg.env_config)
 
     # Run loops
     metrics = run_loops(env, agent, cfg.num_episodes, cfg.seed, cache_size = cfg.env_config['cache_configs']['cache_1']['blocks'])
