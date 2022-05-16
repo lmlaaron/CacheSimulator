@@ -74,7 +74,7 @@ def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False,
         raise ValueError("n_lags should be < %i (i.e. len(series)-2)"%n_maxlags)
     
     if ax is None:
-        ax = plt.gca(xlim=(0, n_lags), ylim=(-1.0, 1.0))
+        ax = plt.gca(xlim=(0, n_lags), ylim=(-1.0, 2.0))
 
     if not change_core:
       data = np.asarray(series)
@@ -122,7 +122,8 @@ def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False,
 
 
 def main():
-    plt.figure()
+    plt.figure(num=None, figsize=(3.5, 2.5), dpi=300, facecolor='w')
+    plt.subplots_adjust(right = 0.98, top =0.97, bottom=0.21,left=0.12,wspace=0, hspace=0.2)  
     series_human = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
     series_baseline = [1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
     series_l2 = [0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1]
@@ -132,11 +133,11 @@ def main():
     series_l2 = series_l2[0:50]
     ax = plt.subplot(111)
     ax.set_xlim([0, 50] )
-    ax.set_ylim([-0.1,1.3])
+    ax.set_ylim([-0.1, 2.2])
     plt.yticks(color='w')
     plt.tick_params(left=False)
-    plt.text(-5, 0, 'A -> V')
-    plt.text(-5, 1, 'V -> A')   
+    plt.text(-6, 0, 'A->V')
+    plt.text(-6, 1, 'V->A')   
     #ax.set_xlim([0, 60])
     ax.plot(series_human, linewidth=4 )
     ax.plot(series_baseline)
@@ -152,8 +153,9 @@ def main():
     data_l2 = pd.Series(series_l2)
     cache_size = 4
 
-    plt.figure()
-
+    plt.figure(num=None, figsize=(3.5, 2.5), dpi=300, facecolor='w')
+    plt.subplots_adjust(right = 0.98, top =0.97, bottom=0.21,left=0.2,wspace=0, hspace=0.2)  
+ 
     autocorrelation_plot_forked(data_human, n_lags= 8 * cache_size, change_deno=True) #consider removing -2
     autocorrelation_plot_forked(data_baseline, n_lags= 8 * cache_size, change_deno=True) #consider removing -2
     autocorrelation_plot_forked(data_l2, n_lags= 8 * cache_size, change_deno=True) #consider removing -2

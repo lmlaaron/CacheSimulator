@@ -194,17 +194,18 @@ def run_loops(env: Env,
     else:
         end_address = env.env.victim_address_max + 1 + 1
 
-    for victim_addr in range(env.env.victim_address_min, end_address):
-        cur_metrics, hit_trace, (num_corr, num_guess) = run_loop(env, agent, victim_addr=victim_addr)
-        # import pdb; pdb.set_trace()
-        all_num_corr += num_corr
-        all_num_guess += num_guess
-        episode_length_total += cur_metrics["episode_length"]
-        metrics.extend(cur_metrics)
-        print("Episode number of guess:", num_guess)
-        print("Episode number of corrects:", num_corr)
-        print("correct rate:", num_corr / num_guess)
-        print("bandwidth rate:", num_guess / cur_metrics["episode_length"])
+    for i in range(0, 1):
+        for victim_addr in range(env.env.victim_address_min, end_address):
+            cur_metrics, hit_trace, (num_corr, num_guess) = run_loop(env, agent, victim_addr=victim_addr)
+            # import pdb; pdb.set_trace()
+            all_num_corr += num_corr
+            all_num_guess += num_guess
+            episode_length_total += cur_metrics["episode_length"]
+            metrics.extend(cur_metrics)
+            print("Episode number of guess:", num_guess)
+            print("Episode number of corrects:", num_corr)
+            print("correct rate:", num_corr / num_guess)
+            print("bandwidth rate:", num_guess / cur_metrics["episode_length"])
         
 
     # plot\
