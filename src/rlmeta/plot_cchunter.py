@@ -33,6 +33,24 @@ from cache_ppo_transformer_periodic_model import CachePPOTransformerPeriodicMode
 import matplotlib.pyplot as plt
 import pandas as pd
 from cache_env_wrapper import CacheEnvCCHunterWrapperFactory
+import matplotlib.font_manager as font_manager
+
+fontaxes = {
+    'family': 'Arial',
+     #   'color':  'black',
+        'weight': 'bold',
+        #'size': 6,
+}
+fontaxes_title = {
+    'family': 'Arial',
+ #       'color':  'black',
+        'weight': 'bold',
+      #  'size': 9,
+}
+
+font = font_manager.FontProperties(family='Arial',
+                                   weight='bold',
+                                   style='normal')
 
 
 def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False, change_core=False, **kwds):
@@ -74,7 +92,7 @@ def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False,
         raise ValueError("n_lags should be < %i (i.e. len(series)-2)"%n_maxlags)
     
     if ax is None:
-        ax = plt.gca(xlim=(0, n_lags), ylim=(-1.0, 2.0))
+        ax = plt.gca(xlim=(0, n_lags), ylim=(-1.1, 1.6))
 
     if not change_core:
       data = np.asarray(series)
@@ -112,8 +130,8 @@ def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False,
 
     # ax.axhline(y=-z95 / np.sqrt(n_full), color='grey')
     # ax.axhline(y=-z99 / np.sqrt(n_full), linestyle='--', color='grey')
-    ax.set_xlabel("Lag")
-    ax.set_ylabel("Autocorrelation Coefficient")
+    ax.set_xlabel("Lag (p)", fontdict = fontaxes)
+    ax.set_ylabel("Autocorrelation \n Coefficient", fontdict = fontaxes)
     ax.plot(x, y, **kwds)
     if 'label' in kwds:
         ax.legend()
@@ -122,29 +140,39 @@ def autocorrelation_plot_forked(series, ax=None, n_lags=None, change_deno=False,
 
 
 def main():
-    plt.figure(num=None, figsize=(3.5, 2.5), dpi=300, facecolor='w')
-    plt.subplots_adjust(right = 0.98, top =0.97, bottom=0.21,left=0.12,wspace=0, hspace=0.2)  
+    plt.figure(num=None, figsize=(5, 2), dpi=300, facecolor='w')
+    plt.subplots_adjust(right = 0.98, top =0.97, bottom=0.24,left=0.1,wspace=0, hspace=0.2)  
     series_human = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
     series_baseline = [1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
     series_l2 = [0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1]
+
+    for i in range(0, len(series_baseline)):
+      series_baseline[i] += 1.2
+
+    for i in range(0, len(series_l2)):
+      series_l2[i] += 2.4
 
     series_human = series_human[0:50]
     series_baseline = series_baseline[0:50]
     series_l2 = series_l2[0:50]
     ax = plt.subplot(111)
-    ax.set_xlim([0, 50] )
-    ax.set_ylim([-0.1, 2.2])
+    ax.set_xlim([0, 48] )
+    ax.set_ylim([-0.1, 4.7])
     plt.yticks(color='w')
     plt.tick_params(left=False)
-    plt.text(-6, 0, 'A->V')
-    plt.text(-6, 1, 'V->A')   
+    plt.text(-5, 0.15, 'A->V', fontproperties=font)
+    plt.text(-5, 0.85, 'V->A', fontproperties=font)  
+    plt.text(-5, 0.15+1.2, 'A->V',fontproperties=font)
+    plt.text(-5, 0.85+1.2, 'V->A',fontproperties=font)  
+    plt.text(-5, 0.15+2.4, 'A->V', fontproperties=font)
+    plt.text(-5, 0.85+2.4, 'V->A',fontproperties=font)   
     #ax.set_xlim([0, 60])
-    ax.plot(series_human, linewidth=4 )
+    ax.plot(series_human)#, linewidth=4 )
     ax.plot(series_baseline)
     ax.plot(series_l2)
-    ax.set_xlabel("Number of cache conflicts")
-    ax.legend(prop={'size': 6})
-    ax.legend(['textbook', 'RL_baseline', 'RL_L2'], loc="best")
+    ax.set_xlabel("Number of cache conflicts", fontdict = fontaxes)
+    ax.legend(prop={'size': 6, 'family': 'Arial', 'weight':'bold'})
+    ax.legend(['textbook', 'RL_baseline', 'RL_autocor'], ncol=3,loc="best", prop=font)
     plt.savefig('event_train.pdf')
     plt.savefig('event_train.png')
 
@@ -153,13 +181,13 @@ def main():
     data_l2 = pd.Series(series_l2)
     cache_size = 4
 
-    plt.figure(num=None, figsize=(3.5, 2.5), dpi=300, facecolor='w')
-    plt.subplots_adjust(right = 0.98, top =0.97, bottom=0.21,left=0.2,wspace=0, hspace=0.2)  
+    plt.figure(num=None, figsize=(5.2, 2), dpi=300, facecolor='w')
+    plt.subplots_adjust(right = 0.98, top =0.97, bottom=0.24,left=0.13,wspace=0, hspace=0.2)  
  
     autocorrelation_plot_forked(data_human, n_lags= 8 * cache_size, change_deno=True) #consider removing -2
     autocorrelation_plot_forked(data_baseline, n_lags= 8 * cache_size, change_deno=True) #consider removing -2
     autocorrelation_plot_forked(data_l2, n_lags= 8 * cache_size, change_deno=True) #consider removing -2
-    plt.legend(['textbook', 'RL_baseline', 'RL_L2'])
+    plt.legend(['textbook', 'RL_baseline', 'RL_autocor'], ncol=3, prop=font)
     plt.axhline(y=0.75, linestyle='--', color='grey')
     # ax.axhline(y=z95 / np.sqrt(n_full), color='grey')
     plt.axhline(y=0.0, color='black')
