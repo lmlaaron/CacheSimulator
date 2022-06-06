@@ -19,9 +19,16 @@ from random import random
 from cache_guessing_game_env_impl import *
 import sys
 import signal
+from sklearn import svm
+from sklearn.model_selection import cross_val_score
 
 class CacheSimulatorP1Wrapper(gym.Env):
     def __init__(self, env_config):
+        # for offline training, the environment returns filler observations and zero reward 
+        # until the guess
+        # the step reward is also temporarily accumulated until the end
+        self.offline_training = True
+        self.copy = 1
         self.env_list = []
         self.env_config = env_config
         self.cache_state_reset = False # has to force no reset
@@ -34,7 +41,7 @@ class CacheSimulatorP1Wrapper(gym.Env):
         self.feature_size = self.env.feature_size
        
         # expand the observation space
-        self.observation_space = spaces.Box(low=-1, high=self.max_box_value, shape=(self.window_size, self.feature_size * self.secret_size))
+        self.observation_space = spaces.Box(low=-1, high=self.max_box_value, shape=(self.window_size, self.feature_size * self.secret_size * self.copy))
         
         # merge all guessing into one action
         self.action_space_size = (self.env.action_space.n - self.secret_size+1)
@@ -45,13 +52,13 @@ class CacheSimulatorP1Wrapper(gym.Env):
         # instantiate the environment
         self.env_list.append(CacheGuessingGameEnv(env_config))
         self.env_config['verbose'] = False
-        for _ in range(1,self.secret_size):
+        for _ in range(1,self.secret_size * self.copy):
             self.env_list.append(CacheGuessingGameEnv(env_config))
 
         # instantiate the latency_buffer
         # for each permuted secret, latency_buffer stores the latency
         self.latency_buffer = []
-        for i in range(0, self.secret_size):
+        for i in range(0, self.secret_size * self.copy):
             self.latency_buffer.append([])
 
         #permute the victim addresses
@@ -65,30 +72,40 @@ class CacheSimulatorP1Wrapper(gym.Env):
         self.env_list[0].reset(self.victim_addr_arr[0])
         self.env_config['verbose'] = False
         self.reset_state = np.array([[]] * self.window_size)
-        seed = random.randint(1, 1000000)
-        for i in range(0, len(self.victim_addr_arr)):
-            state = self.env_list[i].reset(victim_address = self.victim_addr_arr[i], seed= seed)
-            self.reset_state = np.concatenate((self.reset_state, state), axis=1)  
+
+        # initialize the offline_state as filler state if we use offline training
+        if self.offline_training == True:
+            self.offline_state = self.env.reset(seed=-1)
+            self.offline_reward = 0
+
+        for cp in range(0, self.copy):
+            seed = -1#random.randint(1, 1000000)
+            for i in range(0, len(self.victim_addr_arr)):
+                state = self.env_list[i + cp * len(self.victim_addr_arr)].reset(victim_address = self.victim_addr_arr[i], seed= seed)
+                self.reset_state = np.concatenate((self.reset_state, state), axis=1)  
             # same seed esure the initial state are teh same
     
     def reset(self):
         # permute the victim addresses
-        self.victim_addr_arr = np.random.permutation(range(self.env.victim_address_min, self.env.victim_address_max+1))
+        #self.victim_addr_arr = np.random.permutation(range(self.env.victim_address_min, self.env.victim_address_max+1))
         self.victim_addr_arr = []
         for i in range(self.victim_address_min, self.victim_address_max+1):
             self.victim_addr_arr.append(i)
  
         # restore the total state
         #total_state = np.array([[]] * self.window_size)
-        seed = random.randint(1, 1000000)
         for i in range(len(self.env_list)):
+            seed = -1#random.randint(1, 1000000)
             env = self.env_list[i]
-            state = env.reset(victim_address = self.victim_addr_arr[i], seed = seed)
+            state = env.reset(victim_address = self.victim_addr_arr[i % len(self.victim_addr_arr)], seed = seed)
             #total_state = np.concatenate((total_state, state), axis=1) 
+            
+            if self.offline_training:
+                state = self.offline_state 
 
         # reset the latency_buffer
         self.latency_buffer = []
-        for i in range(0, self.secret_size):
+        for i in range(0, self.secret_size * self.copy):
             self.latency_buffer.append([])
 
         #return total_state
@@ -109,22 +126,48 @@ class CacheSimulatorP1Wrapper(gym.Env):
                 state, reward, done, info = env.step(action)
             total_state = self.reset_state 
             total_reward = self.P2oracle() 
+
+            # for offline training the total_reward needs to include the history reward
+            if self.offline_training == True:
+               total_reward += self.offline_reward
+               self.offline_reward = 0 
+
             total_done = True
         else:   # use the action and collect and concatenate observation
             i = 0
             for env in self.env_list:
                 state, reward, done, info = env.step(action)
+                latency = state[0][0]
+                
+                # for offline RL, we need to mask the state and accumulate reward
+                if self.offline_training == True:
+                    
+                    # state is a n * 4 matrix
+                    # r, victim_accesesd, original_action, self.step_count
+                    # we only need to mask the r
+                    #state[:,0] = self.offline_state[:, 0]
+                    #print(state)
+                    self.offline_reward += reward
+                    reward = 0
+                
+                # length violation or other type of violation
                 if done == True:
                     env.reset()
+                    
+                    # for offline training with stopping in the middle
+                    # we still need to return the reward
+                    if self.offline_training == True:
+                        reward = self.offline_reward
+                        self.offline_reward = 0
                     total_done = True
-                latency = state[0][0]
+
                 self.latency_buffer[i].append(latency) #
                 total_reward += reward
                 total_state = np.concatenate((total_state, state), axis=1) 
                 i += 1
 
         info = {}   
-        total_reward = total_reward * 1.0 / self.secret_size
+        total_reward = total_reward * 1.0 / len(self.env_list)#self.secret_size
         return total_state, total_reward, total_done, info     
 
     # given the existing sequence, calculate the P2 oracle reward
@@ -137,8 +180,29 @@ class CacheSimulatorP1Wrapper(gym.Env):
         for i in range(0, len(self.latency_buffer)):
             latency_dict[tuple(self.latency_buffer[i])] = 1
         score = 1.0 * len(latency_dict) / len(self.latency_buffer)
+        print(' P2oracle score %f'% score)
         return score  * self.env.correct_reward + ( 1 - score ) * self.env.wrong_reward
 
+    # use SVM to evaluate the guessability (oracle guessing correctness rate)
+    def P2SVMOracle(self):
+        if len(self.latency_buffer[0]) == 0:
+            score = 0
+        else:
+            X = self.latency_buffer
+            y = []
+            for cp in range(0, self.copy):
+                for sec in range(0, len(self.victim_addr_arr)):
+                    y.append(self.victim_addr_arr[sec])
+            clf = svm.SVC(random_state=0)
+            print(len(X))
+            print(len(y))
+            #print(X)
+            #print(y)
+            ans = cross_val_score(clf, X, y, cv=4, scoring='accuracy')
+            score = ans.mean()
+        print("P2 SVM accuracy %f" % score)
+        return score * self.env.correct_reward + ( 1 - score ) * self.env.wrong_reward
+        
 
 if __name__ == "__main__":
     from ray.rllib.agents.ppo import PPOTrainer
