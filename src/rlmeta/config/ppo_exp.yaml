@@ -17,14 +17,16 @@ num_eval_rollouts: 2
 num_eval_workers: 2
 
 # replay_buffer_size: 262144
-# replay_buffer_size: 131072
-replay_buffer_size: 65536
+replay_buffer_size: 131072
+# replay_buffer_size: 65536
 prefetch: 2
 
 batch_size: 512
 lr: 1e-4
 # learning_starts: 65536
 push_every_n_steps: 10
+
+entropy_coeff: 0.02
 
 num_epochs: 3000
 steps_per_epoch: 3000
@@ -39,8 +41,8 @@ table_view: false
 defaults:
   # - env_config: config_exp2
   # - env_config: config_exp3
-  # - env_config: config_exp4
-  - env_config: config_exp5
+  - env_config: config_exp4
+  # - env_config: config_exp5
   # - env_config: config_exp6
   # - env_config: config_exp7
   # - env_config: config_exp8

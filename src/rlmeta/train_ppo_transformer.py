@@ -31,8 +31,8 @@ from metric_callbacks import MetricCallbacks
 # @hydra.main(config_path="./config", config_name="ppo_2way_2set")
 # @hydra.main(config_path="./config", config_name="ppo_4way_4set")
 # @hydra.main(config_path="./config", config_name="ppo_8way_8set")
-# @hydra.main(config_path="./config", config_name="ppo_exp")
-@hydra.main(config_path="./config", config_name="ppo_cchunter_baseline")
+@hydra.main(config_path="./config", config_name="ppo_exp")
+# @hydra.main(config_path="./config", config_name="ppo_cchunter_baseline")
 def main(cfg):
     my_callbacks = MetricCallbacks()
     logging.info(hydra_utils.config_to_json(cfg))
@@ -76,6 +76,7 @@ def main(cfg):
                      optimizer=optimizer,
                      batch_size=cfg.batch_size,
                      learning_starts=cfg.get("learning_starts", None),
+                     entropy_coeff=cfg.get("entropy_coeff", 0.01),
                      push_every_n_steps=cfg.push_every_n_steps)
     t_agent_fac = AgentFactory(PPOAgent, t_model, replay_buffer=t_rb)
     e_agent_fac = AgentFactory(PPOAgent, e_model, deterministic_policy=True)

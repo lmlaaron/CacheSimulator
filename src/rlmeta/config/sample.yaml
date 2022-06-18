@@ -5,5 +5,5 @@ checkpoint: ""
 deterministic_policy: true
 
 defaults:
-  - env_config: cchunter
+  - env_config: config_exp4
   - model_config: experiments

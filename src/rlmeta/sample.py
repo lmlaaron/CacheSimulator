@@ -6,7 +6,7 @@ import hydra
 import torch
 import torch.nn
 
-import rlmeta_extension.nested_utils as nested_utils
+import rlmeta.utils.nested_utils as nested_utils
 
 from rlmeta.agents.ppo.ppo_agent import PPOAgent
 from rlmeta.core.types import Action
