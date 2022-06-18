@@ -406,12 +406,16 @@ class CacheGuessingGameEnv(gym.Env):
   def reset(self,
             victim_address=-1,
             reset_cache_state=False,
-            reset_observation=True):
-    if self.cache_state_reset or reset_cache_state:
+            reset_observation=True,
+            seed = -1):
+    if self.cache_state_reset or reset_cache_state or seed != -1:
       self.vprint('Reset...(also the cache state)')
       self.hierarchy = build_hierarchy(self.configs, self.logger)
       self.l1 = self.hierarchy['cache_1']
-      self._randomize_cache()
+      if seed == -1:
+        self._randomize_cache()
+      else:
+        self.seed_randomization(seed)
     else:
       self.vprint('Reset...(cache state the same)')
 
@@ -499,7 +503,15 @@ class CacheGuessingGameEnv(gym.Env):
   def close(self):
     return
 
-  def _randomize_cache(self, mode = "union"):
+  def seed_randomization(self, seed=-1):    
+    return self._randomize_cache(mode="union", seed= seed)
+
+
+  def _randomize_cache(self, mode = "union", seed=-1):
+    
+    # use seed so that we can get identical initialization states
+    if seed != -1:
+      random.seed(seed)
   # def _randomize_cache(self, mode = "attacker"):
     if mode == "attacker":
       self.l1.read(str(0), -2)
