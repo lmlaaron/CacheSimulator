@@ -223,7 +223,7 @@ class CacheGuessingGameEnv(gym.Env):
     if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
       assert(self.victim_address_min == self.victim_address_max) # for plru_pl cache, only one address is allowed
       self.vprint("[init] victim access %d locked cache line" % self.victim_address_max)
-      self.l1.read(str(self.victim_address_max), self.current_step, replacement_policy.PL_LOCK)
+      self.l1.read(hex(self.victim_address_max)[2:], self.current_step, replacement_policy.PL_LOCK)
 
     # internal guessing buffer
     # does not change after reset
@@ -245,11 +245,11 @@ class CacheGuessingGameEnv(gym.Env):
     original_action = action
     action = self.parse_action(original_action) #, self.flush_inst)
 
-    address = str(action[0]+self.attacker_address_min)                # attacker address in attacker_address_space
+    address = hex(action[0]+self.attacker_address_min)[2:]             # attacker address in attacker_address_space
     is_guess = action[1]                                              # check whether to guess or not
     is_victim = action[2]                                             # check whether to invoke victim
     is_flush = action[3]                                              # check whether to flush
-    victim_addr = str(action[4] + self.victim_address_min)            # victim address
+    victim_addr = hex(action[4] + self.victim_address_min)[2:]            # victim address
     
     victim_latency = None
     # if self.current_step > self.window_size : # if current_step is too long, terminate
@@ -267,7 +267,7 @@ class CacheGuessingGameEnv(gym.Env):
           if True: #self.configs['cache_1']["rep_policy"] == "plru_pl": no need to distinuish pl and normal rep_policy
             if self.victim_address <= self.victim_address_max:
               self.vprint("victim access %d " % self.victim_address)
-              t = self.l1.read(str(self.victim_address), self.current_step).time # do not need to lock again
+              t = self.l1.read(hex(self.victim_address)[2:], self.current_step).time # do not need to lock again
             else:
               self.vprint("victim make a empty access!") # do not need to actually do something
               t = 1 # empty access will be treated as HIT??? does that make sense???
@@ -433,7 +433,7 @@ class CacheGuessingGameEnv(gym.Env):
     if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
       assert(self.victim_address_min == self.victim_address_max) # for plru_pl cache, only one address is allowed
       self.vprint("[reset] victim access %d locked cache line" % self.victim_address_max)
-      self.l1.read(str(self.victim_address_max), self.current_step, replacement_policy.PL_LOCK)
+      self.l1.read(hex(self.victim_address_max)[2:], self.current_step, replacement_policy.PL_LOCK)
 
     self.last_state = None
 
@@ -514,8 +514,8 @@ class CacheGuessingGameEnv(gym.Env):
       random.seed(seed)
   # def _randomize_cache(self, mode = "attacker"):
     if mode == "attacker":
-      self.l1.read(str(0), -2)
-      self.l1.read(str(1), -1)
+      self.l1.read(hex(0)[2:], -2)
+      self.l1.read(hex(1)[2:], -1)
       return
     
     if mode == "none":
@@ -540,7 +540,7 @@ class CacheGuessingGameEnv(gym.Env):
         addr = random.randint(0, sys.maxsize)
       else:
         raise RuntimeError from None
-      self.l1.read(str(addr), self.current_step)
+      self.l1.read(hex(addr)[2:], self.current_step)
       self.current_step += 1
 
   def get_obs_space_dim(self):
