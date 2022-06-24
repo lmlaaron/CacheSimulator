@@ -23,7 +23,7 @@ cache_configs:
     write_back: true
   cache_1:
     blocks: 8
-    associativity: 2
+    associativity: 8
     hit_time: 1
     rep_policy: "lru"
   mem:
