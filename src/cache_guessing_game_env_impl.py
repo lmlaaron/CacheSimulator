@@ -9,6 +9,7 @@ import os
 import yaml, logging
 import sys
 import replacement_policy
+from itertools import permutations
 
 import gym
 from gym import spaces
@@ -85,6 +86,9 @@ class CacheGuessingGameEnv(gym.Env):
     }
   }
 ):
+    # remapping function for randomized cache
+    self.rerandomize_victim = env_config["rerandomize_victim"] if "rerandomize_victim" in env_config else False
+
     self.allow_empty_victim_access = env_config["allow_empty_victim_access"] if "allow_empty_victim_access" in env_config else False
     self.force_victim_hit =env_config["force_victim_hit"] if "force_victim_hit" in env_config else False
     self.length_violation_reward = env_config["length_violation_reward"] if "length_violation_reward" in env_config else -10000
@@ -150,6 +154,16 @@ class CacheGuessingGameEnv(gym.Env):
     self.victim_address_max = victim_addr_e
     self.victim_address_space = range(self.victim_address_min,
                                 self.victim_address_max + 1)  #
+
+    # for randomized mapping rerandomization
+    perm = permutations(list(range(self.victim_address_min, self.victim_address_max + 1 )))
+    self.perm = list(perm)
+    # keeping track of the victim remap length
+    self.victim_access_count = 0
+    self.victim_remap_period = 20000
+    self.mapping_func = lambda addr : addr
+    self.remap()
+
     self.flush_inst = flush_inst
     self.reset_time = 0
     # action step contains four values
@@ -236,6 +250,25 @@ class CacheGuessingGameEnv(gym.Env):
   def clear_guess_buffer_history(self):
     self.guess_buffer = [False] * self.guess_buffer_size
 
+
+  # remap the victim address range
+  def remap(self):
+    if self.rerandomize_victim == False:
+      self.mapping_func = lambda addr : addr
+    else:
+      self.vprint("doing remapping!")
+      key = random.randint(0, len(self.perm) - 1)
+      self.mapping_func = lambda addr : self.perm[key][addr - self.victim_address_min]
+
+
+  # victim remapping
+  # addr is integer not string
+  def victim_mapping(self, addr):
+    if self.rerandomize_victim == False:
+      return addr
+    else:
+      return self.mapping_func(addr)
+
   def step(self, action):
     self.vprint('Step...')
     info = {}
@@ -267,7 +300,8 @@ class CacheGuessingGameEnv(gym.Env):
           if True: #self.configs['cache_1']["rep_policy"] == "plru_pl": no need to distinuish pl and normal rep_policy
             if self.victim_address <= self.victim_address_max:
               self.vprint("victim access %d " % self.victim_address)
-              t = self.l1.read(hex(self.victim_address)[2:], self.current_step).time # do not need to lock again
+              t = self.l1.read(hex(self.victim_mapping(self.victim_address))[2:], self.current_step).time # do not need to lock again
+              self.victim_access_count += 1
             else:
               self.vprint("victim make a empty access!") # do not need to actually do something
               t = 1 # empty access will be treated as HIT??? does that make sense???
@@ -408,6 +442,10 @@ class CacheGuessingGameEnv(gym.Env):
             reset_cache_state=False,
             reset_observation=True,
             seed = -1):
+    if self.victim_access_count > self.victim_remap_period:
+      self.remap() # do the remap, generating a new mapping function if remap is set true
+      self.victim_access_count = 0
+
     if self.cache_state_reset or reset_cache_state or seed != -1:
       self.vprint('Reset...(also the cache state)')
       self.hierarchy = build_hierarchy(self.configs, self.logger)
