@@ -99,10 +99,11 @@ if __name__ == "__main__":
             "force_victim_hit": False,
             'flush_inst': False,
             "allow_victim_multi_access": True,#False,
-            "attacker_addr_s": 4,
-            "attacker_addr_e": 7,
+            "allow_empty_victim_access": True,
+            "attacker_addr_s": 1,
+            "attacker_addr_e": 4,#8,#4,#11,#15,
             "victim_addr_s": 0,
-            "victim_addr_e": 3,
+            "victim_addr_e": 0,#7,
             "reset_limit": 1,
             "cache_configs": {
                 # YAML config file for cache simulaton
@@ -112,8 +113,8 @@ if __name__ == "__main__":
                   "write_back": True
                 },
                 "cache_1": {#required
-                  "blocks": 4, 
-                  "associativity": 1,  
+                  "blocks": 4,#8,#4, 
+                  "associativity": 2,  
                   "hit_time": 1 #cycles
                 },
                 "mem": {#required

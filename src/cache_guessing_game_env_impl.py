@@ -88,7 +88,7 @@ class CacheGuessingGameEnv(gym.Env):
 ):
     # remapping function for randomized cache
     self.rerandomize_victim = env_config["rerandomize_victim"] if "rerandomize_victim" in env_config else False
-
+    self.ceaser_remap_period = env_config["ceaser_remap_period"] if "ceaser_remap_period" in env_config else 200000
     self.allow_empty_victim_access = env_config["allow_empty_victim_access"] if "allow_empty_victim_access" in env_config else False
     self.force_victim_hit =env_config["force_victim_hit"] if "force_victim_hit" in env_config else False
     self.length_violation_reward = env_config["length_violation_reward"] if "length_violation_reward" in env_config else -10000
@@ -134,7 +134,8 @@ class CacheGuessingGameEnv(gym.Env):
       self.configs['cache_1']['rep_policy'] = 'lru'
     
     if window_size == 0:
-      self.window_size = self.cache_size * 4 + 8 #10 
+      self.window_size = self.cache_size * 8 + 8 #10 
+      #self.window_size = self.cache_size * 4 + 8 #10 
     else:
       self.window_size = window_size
     self.feature_size = 4
@@ -156,11 +157,12 @@ class CacheGuessingGameEnv(gym.Env):
                                 self.victim_address_max + 1)  #
 
     # for randomized mapping rerandomization
-    perm = permutations(list(range(self.victim_address_min, self.victim_address_max + 1 )))
+    #perm = permutations(list(range(self.victim_address_min, self.victim_address_max + 1 )))
+    perm = permutations(list(range(min(self.victim_address_min, self.attacker_address_min), max(self.victim_address_max, self.attacker_address_max) + 1 )))
+    
     self.perm = list(perm)
     # keeping track of the victim remap length
-    self.victim_access_count = 0
-    self.victim_remap_period = 20000
+    self.ceaser_access_count = 0
     self.mapping_func = lambda addr : addr
     self.remap()
 
@@ -237,7 +239,7 @@ class CacheGuessingGameEnv(gym.Env):
     if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
       assert(self.victim_address_min == self.victim_address_max) # for plru_pl cache, only one address is allowed
       self.vprint("[init] victim access %d locked cache line" % self.victim_address_max)
-      self.l1.read(hex(self.victim_address_max)[2:], self.current_step, replacement_policy.PL_LOCK)
+      self.l1.read(hex(self.ceaser_mapping(self.victim_address_max))[2:], self.current_step, replacement_policy.PL_LOCK)
 
     # internal guessing buffer
     # does not change after reset
@@ -250,7 +252,6 @@ class CacheGuessingGameEnv(gym.Env):
   def clear_guess_buffer_history(self):
     self.guess_buffer = [False] * self.guess_buffer_size
 
-
   # remap the victim address range
   def remap(self):
     if self.rerandomize_victim == False:
@@ -258,15 +259,15 @@ class CacheGuessingGameEnv(gym.Env):
     else:
       self.vprint("doing remapping!")
       key = random.randint(0, len(self.perm) - 1)
-      self.mapping_func = lambda addr : self.perm[key][addr - self.victim_address_min]
+      self.mapping_func = lambda addr : self.perm[key][addr - min(self.victim_address_min, self.attacker_address_min)]
 
-
-  # victim remapping
+  # ceasar remapping
   # addr is integer not string
-  def victim_mapping(self, addr):
+  def ceaser_mapping(self, addr):
     if self.rerandomize_victim == False:
       return addr
     else:
+      self.ceaser_access_count += 1
       return self.mapping_func(addr)
 
   def step(self, action):
@@ -300,8 +301,7 @@ class CacheGuessingGameEnv(gym.Env):
           if True: #self.configs['cache_1']["rep_policy"] == "plru_pl": no need to distinuish pl and normal rep_policy
             if self.victim_address <= self.victim_address_max:
               self.vprint("victim access %d " % self.victim_address)
-              t = self.l1.read(hex(self.victim_mapping(self.victim_address))[2:], self.current_step).time # do not need to lock again
-              self.victim_access_count += 1
+              t = self.l1.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step).time # do not need to lock again
             else:
               self.vprint("victim make a empty access!") # do not need to actually do something
               t = 1 # empty access will be treated as HIT??? does that make sense???
@@ -357,7 +357,7 @@ class CacheGuessingGameEnv(gym.Env):
               reward = self.wrong_reward #-9999
               done = True
         elif is_flush == False or self.flush_inst == False:
-          if self.l1.read(address, self.current_step).time > 500: # measure the access latency
+          if self.l1.read(hex(self.ceaser_mapping(int('0x' + address, 16))), self.current_step).time > 500: # measure the access latency
             self.vprint("acceee " + address + " miss")
             r = 1 # cache miss
           else:
@@ -442,9 +442,9 @@ class CacheGuessingGameEnv(gym.Env):
             reset_cache_state=False,
             reset_observation=True,
             seed = -1):
-    if self.victim_access_count > self.victim_remap_period:
+    if self.ceaser_access_count > self.ceaser_remap_period:
       self.remap() # do the remap, generating a new mapping function if remap is set true
-      self.victim_access_count = 0
+      self.ceaser_access_count = 0
 
     if self.cache_state_reset or reset_cache_state or seed != -1:
       self.vprint('Reset...(also the cache state)')
@@ -471,7 +471,7 @@ class CacheGuessingGameEnv(gym.Env):
     if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
       assert(self.victim_address_min == self.victim_address_max) # for plru_pl cache, only one address is allowed
       self.vprint("[reset] victim access %d locked cache line" % self.victim_address_max)
-      self.l1.read(hex(self.victim_address_max)[2:], self.current_step, replacement_policy.PL_LOCK)
+      self.l1.read(hex(self.ceaser_mapping(self.victim_address_max))[2:], self.current_step, replacement_policy.PL_LOCK)
 
     self.last_state = None
 
@@ -552,8 +552,8 @@ class CacheGuessingGameEnv(gym.Env):
       random.seed(seed)
   # def _randomize_cache(self, mode = "attacker"):
     if mode == "attacker":
-      self.l1.read(hex(0)[2:], -2)
-      self.l1.read(hex(1)[2:], -1)
+      self.l1.read(hex(self.ceaser_mapping(0))[2:], -2)
+      self.l1.read(hex(self.ceaser_mapping(1))[2:], -1)
       return
     
     if mode == "none":
@@ -578,7 +578,7 @@ class CacheGuessingGameEnv(gym.Env):
         addr = random.randint(0, sys.maxsize)
       else:
         raise RuntimeError from None
-      self.l1.read(hex(addr)[2:], self.current_step)
+      self.l1.read(hex(self.ceaser_mapping(addr))[2:], self.current_step)
       self.current_step += 1
 
   def get_obs_space_dim(self):
