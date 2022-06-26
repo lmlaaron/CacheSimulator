@@ -158,9 +158,10 @@ class CacheGuessingGameEnv(gym.Env):
 
     # for randomized mapping rerandomization
     #perm = permutations(list(range(self.victim_address_min, self.victim_address_max + 1 )))
-    perm = permutations(list(range(min(self.victim_address_min, self.attacker_address_min), max(self.victim_address_max, self.attacker_address_max) + 1 )))
+    if self.rerandomize_victim == True:
+      perm = permutations(list(range(min(self.victim_address_min, self.attacker_address_min), max(self.victim_address_max, self.attacker_address_max) + 1 )))
+      self.perm = list(perm)
     
-    self.perm = list(perm)
     # keeping track of the victim remap length
     self.ceaser_access_count = 0
     self.mapping_func = lambda addr : addr
