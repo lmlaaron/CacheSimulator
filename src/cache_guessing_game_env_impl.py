@@ -240,7 +240,7 @@ class CacheGuessingGameEnv(gym.Env):
     if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
       assert(self.victim_address_min == self.victim_address_max) # for plru_pl cache, only one address is allowed
       self.vprint("[init] victim access %d locked cache line" % self.victim_address_max)
-      self.l1.read(hex(self.ceaser_mapping(self.victim_address_max))[2:], self.current_step, replacement_policy.PL_LOCK)
+      self.l1.read(hex(self.ceaser_mapping(self.victim_address_max))[2:], self.current_step, replacement_policy.PL_LOCK, domain_id='v')
 
     # internal guessing buffer
     # does not change after reset
@@ -272,6 +272,10 @@ class CacheGuessingGameEnv(gym.Env):
       return self.mapping_func(addr)
 
   def step(self, action):
+
+    cyclic_set_index = -1
+    cyclic_way_index = -1
+
     self.vprint('Step...')
     info = {}
     if isinstance(action, np.ndarray):
@@ -302,7 +306,8 @@ class CacheGuessingGameEnv(gym.Env):
           if True: #self.configs['cache_1']["rep_policy"] == "plru_pl": no need to distinuish pl and normal rep_policy
             if self.victim_address <= self.victim_address_max:
               self.vprint("victim access %d " % self.victim_address)
-              t = self.l1.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step).time # do not need to lock again
+              t, cyclic_set_index, cyclic_way_index = self.l1.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='v')
+              t = t.time # do not need to lock again
             else:
               self.vprint("victim make a empty access!") # do not need to actually do something
               t = 1 # empty access will be treated as HIT??? does that make sense???
@@ -358,7 +363,9 @@ class CacheGuessingGameEnv(gym.Env):
               reward = self.wrong_reward #-9999
               done = True
         elif is_flush == False or self.flush_inst == False:
-          if self.l1.read(hex(self.ceaser_mapping(int('0x' + address, 16))), self.current_step).time > 500: # measure the access latency
+          lat, cyclic_set_index, cyclic_way_index = self.l1.read(hex(self.ceaser_mapping(int('0x' + address, 16))), self.current_step, domain_id='a')
+          lat = lat.time # measure the access latency
+          if lat > 500:
             self.vprint("acceee " + address + " miss")
             r = 1 # cache miss
           else:
@@ -368,7 +375,7 @@ class CacheGuessingGameEnv(gym.Env):
           reward = self.step_reward #-1 
           done = False
         else:    # is_flush == True
-          self.l1.cflush(address, self.current_step)
+          self.l1.cflush(address, self.current_step, domain_id='X')
           #cflush = 1
           self.vprint("cflush " + address )
           r = 2
@@ -436,6 +443,9 @@ class CacheGuessingGameEnv(gym.Env):
 
     info["cache_state_change"] = cache_state_change
 
+    info["cyclic_way_index"] = cyclic_way_index
+    info["cyclic_set_index"] = cyclic_set_index
+
     return np.array(list(reversed(self.state))), reward, done, info
 
   def reset(self,
@@ -472,7 +482,7 @@ class CacheGuessingGameEnv(gym.Env):
     if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
       assert(self.victim_address_min == self.victim_address_max) # for plru_pl cache, only one address is allowed
       self.vprint("[reset] victim access %d locked cache line" % self.victim_address_max)
-      self.l1.read(hex(self.ceaser_mapping(self.victim_address_max))[2:], self.current_step, replacement_policy.PL_LOCK)
+      lat, cyclic_set_index, cyclic_way_index = self.l1.read(hex(self.ceaser_mapping(self.victim_address_max))[2:], self.current_step, replacement_policy.PL_LOCK, domain_id='v')
 
     self.last_state = None
 
@@ -553,8 +563,8 @@ class CacheGuessingGameEnv(gym.Env):
       random.seed(seed)
   # def _randomize_cache(self, mode = "attacker"):
     if mode == "attacker":
-      self.l1.read(hex(self.ceaser_mapping(0))[2:], -2)
-      self.l1.read(hex(self.ceaser_mapping(1))[2:], -1)
+      self.l1.read(hex(self.ceaser_mapping(0))[2:], -2, domain_id='X')
+      self.l1.read(hex(self.ceaser_mapping(1))[2:], -1, domain_id='X')
       return
     
     if mode == "none":
@@ -579,7 +589,7 @@ class CacheGuessingGameEnv(gym.Env):
         addr = random.randint(0, sys.maxsize)
       else:
         raise RuntimeError from None
-      self.l1.read(hex(self.ceaser_mapping(addr))[2:], self.current_step)
+      self.l1.read(hex(self.ceaser_mapping(addr))[2:], self.current_step, domain_id='X')
       self.current_step += 1
 
   def get_obs_space_dim(self):

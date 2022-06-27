@@ -47,7 +47,8 @@ class Cache:
         #Dictionary that holds the actual cache data
         self.data = {}
         self.set = {}
-        
+        self.domain_id_tags = {} # for cyclone
+
         #Pointer to the next lowest level of memory
         #Main memory gets the default None value
         self.next_level = next_level
@@ -64,9 +65,12 @@ class Cache:
                     index = '0'
                 #self.data[index] = {}   #Create a dictionary of blocks for each set
                 self.data[index] = []    # use array instead
+                self.domain_id_tags[index] = [] # for cyclone
                 for j in range(associativity):
                     # isntantiate with empty tags
                     self.data[index].append((INVALID_TAG, block.Block(self.block_size, 0, False, 'x')))
+                    self.domain_id_tags[index].append(('X','X')) # for cyclone
+
                 self.set_rep_policy[index] = self.rep_policy(associativity, block_size) 
 
     def vprint(self, *args):
@@ -75,6 +79,9 @@ class Cache:
 
     # flush the cache line that contains the address from all cache hierachy
     def cflush(self, address, current_step):
+        # cyclone
+        cyclic_set_index = -1
+        cyclic_way_index = -1
         #r = None
         r = response.Response({self.name:True}, self.cflush_time) #flush regardless 
         #Parse our address to look through this cache
@@ -113,13 +120,16 @@ class Cache:
         if self.next_level != None and self.next_level.name != "mem":
             self.next_level.cflush(address, current_step)
 
-        return r
+        return r, cyclic_set_index, cyclic_way_index
 
     # pl_opt: indicates the PL cache option
     # pl_opt = -1: normal read
     # pl_opt = PL_LOCK: lock the cache line
     # pl_opt = PL_UNLOCK: unlock the cache line
-    def read(self, address, current_step, pl_opt= -1):
+    def read(self, address, current_step, pl_opt= -1, domain_id = 'X'):
+        # cyclone
+        cyclic_set_index = -1
+        cyclic_way_index = -1
         #print('pl_opt ' + str(pl_opt))
         r = None
         #Check if this is main memory
@@ -139,7 +149,6 @@ class Cache:
             for i in range( 0, len(self.data[index]) ):
                 if self.data[index][i][0] != INVALID_TAG:#'x':
                     in_cache.append(self.data[index][i][0])
-
             #print(index)
             #print(self.data[index])
             #print(self.data[index].keys())
@@ -152,6 +161,11 @@ class Cache:
                 for i in range( 0, len(self.data[index])):
                     if self.data[index][i][0] == tag: 
                         self.data[index][i][1].read(current_step)
+                        if domain_id != 'X':
+                            if domain_id == self.domain_id_tags[index][i][1] and self.domain_id_tags[index][i][1] != self.domain_id_tags[index][i][0]:
+                                cyclic_set_index = index  
+                                cyclic_way_index = i
+                            self.domain_id_tags[index][i] = (domain_id, self.domain_id_tags[index][i][0])
                         break
                 #self.data[index][tag].read(current_step)
                 self.set_rep_policy[index].touch(tag, current_step)
@@ -162,13 +176,18 @@ class Cache:
                 r = response.Response({self.name:True}, self.hit_time)
             else:
                 #Read from the next level of memory
-                r = self.next_level.read(address, current_step, pl_opt)
+                r, cyclic_set_index, cyclic_way_index = self.next_level.read(address, current_step, pl_opt)
                 r.deepen(self.write_time, self.name)
 
                 #If there's space in this set, add this block to it
                 if len(in_cache) < self.associativity:
                     for i in range( 0, len(self.data[index])):
                         if self.data[index][i][0] == INVALID_TAG:#'x':
+                            if domain_id != 'X':
+                                if domain_id == self.domain_id_tags[index][i][1] and self.domain_id_tags[index][i][1] != self.domain_id_tags[index][i][0]:
+                                    cyclic_set_index = index  
+                                    cyclic_way_index = i  
+                                self.domain_id_tags[index][i] = (domain_id, self.domain_id_tags[index][i][0])
                             self.data[index][i] = (tag, block.Block(self.block_size, current_step, False, address))
                             break
                             #self.data[index][tag] = block.Block(self.block_size, current_step, False, address)
@@ -208,6 +227,11 @@ class Cache:
                         for i in range( 0, len(self.data[index])):
                             if self.data[index][i][0] == victim_tag:
                                 #del self.data[index][i][1]
+                                if domain_id != 'X':
+                                    if domain_id == self.domain_id_tags[index][i][1] and self.domain_id_tags[index][i][1] != self.domain_id_tags[index][i][0]:
+                                        cyclic_set_index = index  
+                                        cyclic_way_index = i
+                                    self.domain_id_tags[index][i] = (domain_id, self.domain_id_tags[index][i][0])
                                 self.data[index][i] = (tag, block.Block(self.block_size, current_step, False, address))
                                 break
                         #del self.data[index][victim_tag]
@@ -216,13 +240,16 @@ class Cache:
                         self.set_rep_policy[index].instantiate_entry(tag, current_step)
                         if pl_opt != -1:
                             self.set_rep_policy[index].setlock(tag, pl_opt)
-        return r
+        return r, cyclic_set_index, cyclic_way_index
 
     # pl_opt: indicates the PL cache option
     # pl_opt = -1: normal read
     # pl_opt = 1: lock the cache line
     # pl_opt = 2: unlock the cache line
-    def write(self, address, from_cpu, current_step, pl_opt = -1):
+    def write(self, address, from_cpu, current_step, pl_opt = -1, domain_id = 'X'):
+        # cyclcone
+        cyclic_set_index = -1
+        cyclic_way_index = -1
         #wat is cache pls
         r = None
         if not self.next_level:
@@ -241,7 +268,12 @@ class Cache:
 
                 #self.data[index][tag].write(current_step)
                 for i in range( 0, len(self.data[index])):
-                    if self.data[index][i][0] == tag: 
+                    if self.data[index][i][0] == tag:
+                        if domain_id != 'X':
+                            if domain_id == self.domain_id_tags[index][i][1] and self.domain_id_tags[index][i][1] != self.domain_id_tags[index][i][0]:
+                                cyclic_set_index = index  
+                                cyclic_way_index = i
+                            self.domain_id_tags[index][i] = (domain_id, self.domain_id_tags[index][i][0])
                         self.data[index][i][1].write(current_step)
                         break
 
@@ -263,6 +295,11 @@ class Cache:
                 #self.data[index][tag] = block.Block(self.block_size, current_step, from_cpu, address)
                 for i in range( 0, len(self.data[index])):
                     if self.data[index][i][0] == INVALID_TAG:#'x':
+                        if domain_id != 'X':
+                            if domain_id == self.domain_id_tags[index][i][1] and self.domain_id_tags[index][i][1] != self.domain_id_tags[index][i][0]:
+                                cyclic_set_index = index  
+                                cyclic_way_index = i
+                            self.domain_id_tags[index][i] = (domain_id, self.domain_id_tags[index][i][0])
                         self.data[index][i] = (tag, block.Block(self.block_size, current_step, False, address))
                         break
                 
@@ -295,12 +332,17 @@ class Cache:
                                     break
                     else:
                         self.logger.info('\tWriting through block ' + address + ' to ' + self.next_level.name)
-                        r = self.next_level.write(address, from_cpu, current_step)
+                        r, cyclic_set_index, cyclic_way_index = self.next_level.write(address, from_cpu, current_step)
                         r.deepen(self.write_time, self.name)
 
                     for i in range( 0, len(self.data[index])):
                         if self.data[index][i][0] == victim_tag:
                             #del self.data[index][i][1]
+                            if domain_id != 'X':
+                                if domain_id == self.domain_id_tags[index][i][1] and self.domain_id_tags[index][i][1] != self.domain_id_tags[index][i][0]:
+                                    cyclic_set_index = index  
+                                    cyclic_way_index = i
+                                self.domain_id_tags[index][i] = (domain_id, self.domain_id_tags[index][i][0])
                             self.data[index][i] = (tag, block.Block(self.block_size, current_step, False, address))
                             break
                     #del self.data[index][victim_tag]
@@ -314,7 +356,7 @@ class Cache:
                 if not r:
                     r = response.Response({self.name:False}, self.write_time)
 
-        return r
+        return r, cyclic_set_index, cyclic_way_index
 
     def parse_address(self, address):
         #Calculate our address length and convert the address to binary string

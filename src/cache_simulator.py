@@ -137,31 +137,31 @@ def simulate(hierarchy, trace, logger, result_file=''):
         #Call read for this address on our memory hierarchy
         if op == 'R':
             logger.info(str(current_step) + ':\tReading ' + address)
-            r = l1.read(address, current_step)
+            r, _, _ = l1.read(address, current_step)
             logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')
             responses.append(r)
         elif op == 'RL':      # pl cache lock cacheline
             assert(l1.rep_policy == plru_pl_policy) # must be pl cache 
             logger.info(str(current_step) + ':\tReading ' + address)
-            r = l1.read(address, current_step, pl_opt = PL_LOCK )
+            r, _, _ = l1.read(address, current_step, pl_opt = PL_LOCK )
             logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')
             responses.append(r)
         elif op == 'RU':      # pl cache unlock cacheline
             assert(l1.rep_policy == plru_pl_policy)
             logger.info(str(current_step) + ':\tReading ' + address)
-            r = l1.read(address, current_step, pl_opt = PL_UNLOCK )
+            r, _, _ = l1.read(address, current_step, pl_opt = PL_UNLOCK )
             logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')
             responses.append(r)
         #Call write
         elif op == 'W':
             logger.info(str(current_step) + ':\tWriting ' + address)
-            r = l1.write(address, True, current_step)
+            r, _, _ = l1.write(address, True, current_step)
             logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')
             responses.append(r)
         #Call cflush
         elif op == 'F':
             logger.info(str(current_step) + ':\tFlushing ' + address)
-            r = l1.cflush(address, current_step)
+            r, _, _ = l1.cflush(address, current_step)
             #logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')            
         else:
             raise InvalidOpError
