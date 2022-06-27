@@ -10,15 +10,15 @@ c_server_addr: "127.0.0.1:4413"
 train_device: "cuda:0"
 infer_device: "cuda:1"
 
-num_train_rollouts: 24
-num_train_workers: 24
+num_train_rollouts: 1
+num_train_workers: 1
 
-num_eval_rollouts: 2
-num_eval_workers: 2
+num_eval_rollouts: 1
+num_eval_workers: 1
 
 # replay_buffer_size: 262144
-replay_buffer_size: 131072
-# replay_buffer_size: 65536
+# replay_buffer_size: 131072
+replay_buffer_size: 65536
 prefetch: 2
 
 batch_size: 512
