@@ -62,7 +62,11 @@ class Cache:
                 index = str(bin(i))[2:].zfill(self.index_size)
                 if index == '':
                     index = '0'
-                self.data[index] = {}   #Create a dictionary of blocks for each set
+                #self.data[index] = {}   #Create a dictionary of blocks for each set
+                self.data[index] = []    # use array instead
+                for j in range(associativity):
+                    # isntantiate with empty tags
+                    self.data[index].append((INVALID_TAG, block.Block(self.block_size, 0, False, 'x')))
                 self.set_rep_policy[index] = self.rep_policy(associativity, block_size) 
 
     def vprint(self, *args):
@@ -80,7 +84,11 @@ class Cache:
         #print(tag)
 
         #Get the tags in this set
-        in_cache = list(self.data[index].keys())
+        #in_cache = list(self.data[index].keys())
+        in_cache = []
+        for i in range( 0, len(self.data[index]) ):
+            if self.data[index][i][0] != INVALID_TAG:#'x':
+                in_cache.append(self.data[index][i][0])
 
         #print(index)
         #print(self.data[index])
@@ -93,7 +101,12 @@ class Cache:
             #    print('false')
             
             #Delete the old block and write the new one
-            del self.data[index][tag] 
+            #del self.data[index][tag] 
+            #self.data[index][tag].write(current_step)
+            for i in range( 0, len(self.data[index])):
+                if self.data[index][i][0] == tag: 
+                    self.data[index][i] = (INVALID_TAG, block.Block(self.block_size, current_step, False, address))
+                    break
             self.set_rep_policy[index].invalidate(tag)
 
         # clflush from the next level of memory
@@ -121,7 +134,11 @@ class Cache:
             #print(tag)
 
             #Get the tags in this set
-            in_cache = list(self.data[index].keys())
+            #in_cache = list(self.data[index].keys())
+            in_cache = []
+            for i in range( 0, len(self.data[index]) ):
+                if self.data[index][i][0] != INVALID_TAG:#'x':
+                    in_cache.append(self.data[index][i][0])
 
             #print(index)
             #print(self.data[index])
@@ -132,7 +149,11 @@ class Cache:
             if tag in in_cache:
                 #if len(tag) == 0:
                 #    print('false')
-                self.data[index][tag].read(current_step)
+                for i in range( 0, len(self.data[index])):
+                    if self.data[index][i][0] == tag: 
+                        self.data[index][i][1].read(current_step)
+                        break
+                #self.data[index][tag].read(current_step)
                 self.set_rep_policy[index].touch(tag, current_step)
                 
                 # pl cache
@@ -146,7 +167,12 @@ class Cache:
 
                 #If there's space in this set, add this block to it
                 if len(in_cache) < self.associativity:
-                    self.data[index][tag] = block.Block(self.block_size, current_step, False, address)
+                    for i in range( 0, len(self.data[index])):
+                        if self.data[index][i][0] == INVALID_TAG:#'x':
+                            self.data[index][i] = (tag, block.Block(self.block_size, current_step, False, address))
+                            break
+                            #self.data[index][tag] = block.Block(self.block_size, current_step, False, address)
+                
                     self.set_rep_policy[index].instantiate_entry(tag, current_step)
                     
                     ###if inst_victim_tag != INVALID_TAG: #instantiated entry sometimes does not replace an empty tag
@@ -170,14 +196,23 @@ class Cache:
                         if self.write_back:
                             #print( self.set_rep_policy[index].candidate_tags  )
                             #print( self.set_rep_policy[index].plrutree )
-                            if self.data[index][victim_tag].is_dirty():
-                                self.logger.info('\tWriting back block ' + address + ' to ' + self.next_level.name)
-                                temp = self.next_level.write(self.data[index][victim_tag].address, True, current_step)
-                                r.time += temp.time
+                            for i in range( 0, len(self.data[index])):
+                                if self.data[index][i][0] == victim_tag:
+                                    if self.data[index][i][1].is_dirty():  
+                            #if self.data[index][victim_tag].is_dirty():
+                                        self.logger.info('\tWriting back block ' + address + ' to ' + self.next_level.name)
+                                        temp = self.next_level.write(self.data[index][i][1].address, True, current_step)
+                                        r.time += temp.time
+                                        break
                         # Delete the old block and write the new one
-                        del self.data[index][victim_tag]
+                        for i in range( 0, len(self.data[index])):
+                            if self.data[index][i][0] == victim_tag:
+                                #del self.data[index][i][1]
+                                self.data[index][i] = (tag, block.Block(self.block_size, current_step, False, address))
+                                break
+                        #del self.data[index][victim_tag]
                         self.set_rep_policy[index].invalidate(victim_tag)
-                        self.data[index][tag] = block.Block(self.block_size, current_step, False, address)
+                        #self.data[index][tag] = block.Block(self.block_size, current_step, False, address)
                         self.set_rep_policy[index].instantiate_entry(tag, current_step)
                         if pl_opt != -1:
                             self.set_rep_policy[index].setlock(tag, pl_opt)
@@ -194,12 +229,22 @@ class Cache:
             r = response.Response({self.name:True}, self.write_time)
         else:
             block_offset, index, tag = self.parse_address(address)
-            in_cache = list(self.data[index].keys())
+            
+            #in_cache = list(self.data[index].keys())
+            in_cache = []
+            for i in range( 0, len(self.data[index]) ):
+                if self.data[index][i][0] != INVALID_TAG:#'x':
+                    in_cache.append(self.data[index][i][0])
 
             if tag in in_cache:
                 #Set dirty bit to true if this block was in cache
 
-                self.data[index][tag].write(current_step)
+                #self.data[index][tag].write(current_step)
+                for i in range( 0, len(self.data[index])):
+                    if self.data[index][i][0] == tag: 
+                        self.data[index][i][1].write(current_step)
+                        break
+
                 self.set_rep_policy[index].touch(tag, current_step) # touch in the replacement policy
                 
                 if pl_opt != -1:
@@ -215,7 +260,12 @@ class Cache:
             
             elif len(in_cache) < self.associativity:
                 #If there is space in this set, create a new block and set its dirty bit to true if this write is coming from the CPU
-                self.data[index][tag] = block.Block(self.block_size, current_step, from_cpu, address)
+                #self.data[index][tag] = block.Block(self.block_size, current_step, from_cpu, address)
+                for i in range( 0, len(self.data[index])):
+                    if self.data[index][i][0] == INVALID_TAG:#'x':
+                        self.data[index][i] = (tag, block.Block(self.block_size, current_step, False, address))
+                        break
+                
                 self.set_rep_policy[index].instantiate_entry(tag, current_step)
                 if self.write_back:
                     r = response.Response({self.name:False}, self.write_time)
@@ -235,19 +285,27 @@ class Cache:
                 # the Pl cache condition for write is not tested
                 if victim_tag != INVALID_TAG: 
                     if self.write_back:
-                        if self.data[index][victim_tag].is_dirty():
-                            self.logger.info('\tWriting back block ' + address + ' to ' + self.next_level.name)
- 
-                            r = self.next_level.write(self.data[index][victim_tag].address, from_cpu, current_step)
-                            r.deepen(self.write_time, self.name)
+                        for i in range( 0, len(self.data[index])):
+                            if self.data[index][i][0] == victim_tag:
+                                if self.data[index][i][1].is_dirty():  
+                        #if self.data[index][victim_tag].is_dirty():
+                                    self.logger.info('\tWriting back block ' + address + ' to ' + self.next_level.name)
+                                    r = self.next_level.write(self.data[index][i][1].address, from_cpu, current_step)
+                                    r.deepen(self.write_time, self.name)
+                                    break
                     else:
                         self.logger.info('\tWriting through block ' + address + ' to ' + self.next_level.name)
                         r = self.next_level.write(address, from_cpu, current_step)
                         r.deepen(self.write_time, self.name)
 
-                    del self.data[index][victim_tag]
+                    for i in range( 0, len(self.data[index])):
+                        if self.data[index][i][0] == victim_tag:
+                            #del self.data[index][i][1]
+                            self.data[index][i] = (tag, block.Block(self.block_size, current_step, False, address))
+                            break
+                    #del self.data[index][victim_tag]
                     self.set_rep_policy[index].invalidate(victim_tag)
-                    self.data[index][tag] = block.Block(self.block_size, current_step, from_cpu, address)
+                    #self.data[index][tag] = block.Block(self.block_size, current_step, from_cpu, address)
                     self.set_rep_policy[index].instantiate_entry(tag, current_step)
                     # pl cache
                     if pl_opt != -1:
