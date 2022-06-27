@@ -9,7 +9,7 @@ verbose: 0
 force_victim_hit: false
 flush_inst: false
 allow_victim_multi_access: true
-allow_empty_victim_access: false
+allow_empty_victim_access: true
 attacker_addr_s: 1
 attacker_addr_e: 16
 victim_addr_s: 0

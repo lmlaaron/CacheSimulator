@@ -41,9 +41,9 @@ table_view: false
 defaults:
   # - env_config: config_exp2
   # - env_config: config_exp3
-  - env_config: config_exp4
+  # - env_config: config_exp4
   # - env_config: config_exp5
-  # - env_config: config_exp6
+  - env_config: config_exp6
   # - env_config: config_exp7
   # - env_config: config_exp8
   # - env_config: config_exp9
