@@ -86,10 +86,12 @@ def print_cache(cache):
         sets.append(ways)
         if len(set_indexes) > table_size + 4 - 1:
             for s in range(min(table_size, len(set_indexes) - 4)):
-                set_ways = cache.data[set_indexes[s]].keys()
+                #set_ways = cache.data[set_indexes[s]].keys()
                 temp_way = ["Set " + str(s)]
-                for w in set_ways:
-                    temp_way.append(cache.data[set_indexes[s]][w].address)
+                #for w in set_ways:
+                #    temp_way.append(cache.data[set_indexes[s]][w].address)
+                for w in range(0, cache.associativity):
+                    temp_way.append(cache.data[set_indexes[s]][w][1].address)
                 sets.append(temp_way)
             
             for i in range(3):
@@ -100,15 +102,17 @@ def print_cache(cache):
             
             set_ways = cache.data[set_indexes[len(set_indexes) - 1]].keys()
             temp_way = ['Set ' + str(len(set_indexes) - 1)]
-            for w in set_ways:
-                temp_way.append(cache.data[set_indexes[len(set_indexes) - 1]][w].address)
+            for w in range(0, cache.associativity):
+                temp_way.append(cache.data[set_indexes[len(set_indexes) - 1]][w][1].address)
+            #for w in set_ways:
+            #    temp_way.append(cache.data[set_indexes[len(set_indexes) - 1]][w].address)
             sets.append(temp_way)
         else: 
             for s in range(len(set_indexes)):
-                set_ways = cache.data[set_indexes[s]].keys()
+                #set_ways = cache.data[set_indexes[s]].keys()
                 temp_way = ["Set " + str(s)]
-                for w in set_ways:
-                    temp_way.append(cache.data[set_indexes[s]][w].address)
+                for w in range(0, cache.associativity):
+                    temp_way.append(cache.data[set_indexes[s]][w][1].address)
                 sets.append(temp_way)
 
         table = UnixTable(sets)
@@ -133,31 +137,31 @@ def simulate(hierarchy, trace, logger, result_file=''):
         #Call read for this address on our memory hierarchy
         if op == 'R':
             logger.info(str(current_step) + ':\tReading ' + address)
-            r = l1.read(address, current_step)
+            r, _, _ = l1.read(address, current_step)
             logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')
             responses.append(r)
         elif op == 'RL':      # pl cache lock cacheline
             assert(l1.rep_policy == plru_pl_policy) # must be pl cache 
             logger.info(str(current_step) + ':\tReading ' + address)
-            r = l1.read(address, current_step, pl_opt = PL_LOCK )
+            r, _, _ = l1.read(address, current_step, pl_opt = PL_LOCK )
             logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')
             responses.append(r)
         elif op == 'RU':      # pl cache unlock cacheline
             assert(l1.rep_policy == plru_pl_policy)
             logger.info(str(current_step) + ':\tReading ' + address)
-            r = l1.read(address, current_step, pl_opt = PL_UNLOCK )
+            r, _, _ = l1.read(address, current_step, pl_opt = PL_UNLOCK )
             logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')
             responses.append(r)
         #Call write
         elif op == 'W':
             logger.info(str(current_step) + ':\tWriting ' + address)
-            r = l1.write(address, True, current_step)
+            r, _, _ = l1.write(address, True, current_step)
             logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')
             responses.append(r)
         #Call cflush
         elif op == 'F':
             logger.info(str(current_step) + ':\tFlushing ' + address)
-            r = l1.cflush(address, current_step)
+            r, _, _ = l1.cflush(address, current_step)
             #logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')            
         else:
             raise InvalidOpError
