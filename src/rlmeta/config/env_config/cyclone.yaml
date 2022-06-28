@@ -39,13 +39,16 @@ cache_configs:
 # cc_hunter_check_length: 4
 
 window_size: 164
-episode_length: 80
+episode_length: 160
 cc_hunter_check_length: 8
+
+cyclone_collect_data: true
+cyclone_malicious_trace: false
 
 threshold: 0.5
 # cc_hunter_coeff: 20.0
 # cc_hunter_coeff: 30.0
 # cc_hunter_coeff: 50.0
 # cc_hunter_coeff: 80.0
-cc_hunter_coeff: 100.0
+cyclone_coeff: 100.0
 # cc_hunter_coeff: 0.0

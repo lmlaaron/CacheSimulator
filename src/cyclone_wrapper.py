@@ -28,13 +28,17 @@ class CycloneWrapper(gym.Env):
         self.reset_observation = env_config.get("reset_observation", False)
         self.keep_latency = keep_latency
         self.env_config = env_config
-        self.episode_length = env_config.get("episode_length", 80)
+        self.episode_length = env_config.get("episode_length", 160)
         #self.threshold = env_config.get("threshold", 0.8)
         
         self.cyclone_window_size = env_config.get("cyclone_window_size", 4)
-        self.cyclone_interval_size = env_config.get("cyclone_interval_size", 20)
-        self.cyclone_num_buckets = env_config.get("cyclone_num_buckets", 1)
+        self.cyclone_interval_size = env_config.get("cyclone_interval_size", 40)
+        self.cyclone_num_buckets = env_config.get("cyclone_num_buckets", 4)
         self.cyclone_bucket_size = self.env_config.cache_configs.cache_1.blocks / self.cyclone_num_buckets
+        self.cyclone_collect_data = env_config.get("cyclone_collect_data", False)
+        self.cyclone_malicious_trace = env_config.get("cyclone_malicious_trace", False)
+        self.X = []
+        self.Y = []
 
         #self.cyclone_counters = [[0]* self.cyclone_num_buckets ] * self.cyclone_window_size
         self.cyclone_counters = []
@@ -66,7 +70,19 @@ class CycloneWrapper(gym.Env):
         self.step_count = 0
         #self.cc_hunter_history = []
 
-    def reset(self, victim_address=-1):
+    def save_svm_data(self):
+        fp = open('/home/mulong/cyclone_svm_data.txt', 'w')
+        for i in range(len(self.X)):
+            str1 = ' '.join(str(e) for e in self.X[i])
+            str1 = str(self.Y[i]) + ' ' + str1 + '\n'
+            fp.write(str1)
+        fp.close()
+
+    # if save_data==True, sa
+    def reset(self, victim_address=-1, save_data=False):
+        if save_data == True:
+            self.save_svm_data()
+
         # reset cyclone counter
         #self.cyclone_counters = [[0]* self.cyclone_num_buckets ] * self.cyclone_window_size
         self.cyclone_counters = []
@@ -92,6 +108,17 @@ class CycloneWrapper(gym.Env):
     ####    return ((x[:-p] - mean) * (x[p:] - mean)).mean() / var
 
     def cyclone_attack(self, cyclone_counters):
+
+        # collect data to train svm
+        if self.cyclone_collect_data == True:
+            x = np.array(cyclone_counters).reshape(-1)
+            if self.cyclone_malicious_trace == True:
+                y = 1
+            else:
+                y = 0
+            self.X.append(x)
+            self.Y.append(y)
+
         x = np.array(cyclone_counters).reshape(-1)
         print(x)
         x_mod = np.array(cyclone_counters).reshape(-1)
