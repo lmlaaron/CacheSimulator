@@ -341,8 +341,8 @@ class CacheGuessingGameEnv(gym.Env):
           # 1. normal scenario
           # 2. empty victim access scenario: victim_addr parsed is victim_addr_e, 
           # and self.victim_address is also victim_addr_e + 1
-          if self.victim_accessed and victim_addr == str(self.victim_address):
-              if victim_addr != str(self.victim_address_max + 1): 
+          if self.victim_accessed and victim_addr == hex(self.victim_address)[2:]:
+              if victim_addr != hex(self.victim_address_max + 1)[2:]: 
                 self.vprint("correct guess " + victim_addr)
               else:
                 self.vprint("correct guess empty access!")
@@ -352,7 +352,7 @@ class CacheGuessingGameEnv(gym.Env):
               reward = self.correct_reward # 200
               done = True
           else:
-              if victim_addr != str(self.victim_address_max + 1):
+              if victim_addr != hex(self.victim_address_max + 1)[2:]:
                 self.vprint("wrong guess " + victim_addr )
               else:
                 self.vprint("wrong guess empty access!")
