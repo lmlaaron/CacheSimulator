@@ -163,7 +163,7 @@ class Cache:
                         self.data[index][i][1].read(current_step)
                         if domain_id != 'X':
                             if domain_id == self.domain_id_tags[index][i][1] and self.domain_id_tags[index][i][1] != self.domain_id_tags[index][i][0]:
-                                cyclic_set_index = index  
+                                cyclic_set_index = int(index,2)  
                                 cyclic_way_index = i
                             self.domain_id_tags[index][i] = (domain_id, self.domain_id_tags[index][i][0])
                         break
@@ -185,7 +185,7 @@ class Cache:
                         if self.data[index][i][0] == INVALID_TAG:#'x':
                             if domain_id != 'X':
                                 if domain_id == self.domain_id_tags[index][i][1] and self.domain_id_tags[index][i][1] != self.domain_id_tags[index][i][0]:
-                                    cyclic_set_index = index  
+                                    cyclic_set_index = int(index, 2)  
                                     cyclic_way_index = i  
                                 self.domain_id_tags[index][i] = (domain_id, self.domain_id_tags[index][i][0])
                             self.data[index][i] = (tag, block.Block(self.block_size, current_step, False, address))
@@ -229,7 +229,7 @@ class Cache:
                                 #del self.data[index][i][1]
                                 if domain_id != 'X':
                                     if domain_id == self.domain_id_tags[index][i][1] and self.domain_id_tags[index][i][1] != self.domain_id_tags[index][i][0]:
-                                        cyclic_set_index = index  
+                                        cyclic_set_index = int(index, 2)  
                                         cyclic_way_index = i
                                     self.domain_id_tags[index][i] = (domain_id, self.domain_id_tags[index][i][0])
                                 self.data[index][i] = (tag, block.Block(self.block_size, current_step, False, address))
@@ -271,7 +271,7 @@ class Cache:
                     if self.data[index][i][0] == tag:
                         if domain_id != 'X':
                             if domain_id == self.domain_id_tags[index][i][1] and self.domain_id_tags[index][i][1] != self.domain_id_tags[index][i][0]:
-                                cyclic_set_index = index  
+                                cyclic_set_index = int(index, 2)  
                                 cyclic_way_index = i
                             self.domain_id_tags[index][i] = (domain_id, self.domain_id_tags[index][i][0])
                         self.data[index][i][1].write(current_step)
@@ -297,7 +297,7 @@ class Cache:
                     if self.data[index][i][0] == INVALID_TAG:#'x':
                         if domain_id != 'X':
                             if domain_id == self.domain_id_tags[index][i][1] and self.domain_id_tags[index][i][1] != self.domain_id_tags[index][i][0]:
-                                cyclic_set_index = index  
+                                cyclic_set_index = int(index,2)  
                                 cyclic_way_index = i
                             self.domain_id_tags[index][i] = (domain_id, self.domain_id_tags[index][i][0])
                         self.data[index][i] = (tag, block.Block(self.block_size, current_step, False, address))
@@ -340,7 +340,7 @@ class Cache:
                             #del self.data[index][i][1]
                             if domain_id != 'X':
                                 if domain_id == self.domain_id_tags[index][i][1] and self.domain_id_tags[index][i][1] != self.domain_id_tags[index][i][0]:
-                                    cyclic_set_index = index  
+                                    cyclic_set_index = int(index,2)  
                                     cyclic_way_index = i
                                 self.domain_id_tags[index][i] = (domain_id, self.domain_id_tags[index][i][0])
                             self.data[index][i] = (tag, block.Block(self.block_size, current_step, False, address))
