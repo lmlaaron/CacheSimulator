@@ -1,0 +1,11 @@
+num_episodes: 10
+seed: 1234
+
+checkpoint: ""
+deterministic_policy: true
+
+defaults:
+  - env_config: cyclone
+  - model_config: transformer_cchunter
+  # - env_config: cchunter_baseline
+  # - model_config: transformer_cchunter_baseline

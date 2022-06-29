@@ -40,6 +40,7 @@ class CacheEnvCCHunterWrapperFactory(EnvFactory):
         env = GymWrapper(env)
         return env
 
+
 class CacheEnvCycloneWrapperFactory(EnvFactory):
     def __init__(self, env_config: Dict[str, Any]) -> None:
         self._env_config = env_config
