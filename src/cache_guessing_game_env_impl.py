@@ -159,8 +159,10 @@ class CacheGuessingGameEnv(gym.Env):
     # for randomized mapping rerandomization
     #perm = permutations(list(range(self.victim_address_min, self.victim_address_max + 1 )))
     if self.rerandomize_victim == True:
-      perm = permutations(list(range(min(self.victim_address_min, self.attacker_address_min), max(self.victim_address_max, self.attacker_address_max) + 1 )))
-      self.perm = list(perm)
+      # perm = permutations(list(range(min(self.victim_address_min, self.attacker_address_min), max(self.victim_address_max, self.attacker_address_max) + 1 )))
+      # self.perm = list(perm)
+      addr_space = max(self.victim_address_max, self.attacker_address_max) + 1
+      self.perm = [i for i in range(addr_space)]
     
     # keeping track of the victim remap length
     self.ceaser_access_count = 0
@@ -259,8 +261,7 @@ class CacheGuessingGameEnv(gym.Env):
       self.mapping_func = lambda addr : addr
     else:
       self.vprint("doing remapping!")
-      key = random.randint(0, len(self.perm) - 1)
-      self.mapping_func = lambda addr : self.perm[key][addr - min(self.victim_address_min, self.attacker_address_min)]
+      random.shuffle(self.perm)
 
   # ceasar remapping
   # addr is integer not string
@@ -269,7 +270,8 @@ class CacheGuessingGameEnv(gym.Env):
       return addr
     else:
       self.ceaser_access_count += 1
-      return self.mapping_func(addr)
+      # return self.mapping_func(addr)
+      return self.perm[addr]
 
   def step(self, action):
 
@@ -341,6 +343,7 @@ class CacheGuessingGameEnv(gym.Env):
           # 1. normal scenario
           # 2. empty victim access scenario: victim_addr parsed is victim_addr_e, 
           # and self.victim_address is also victim_addr_e + 1
+
           if self.victim_accessed and victim_addr == hex(self.victim_address)[2:]:
               if victim_addr != hex(self.victim_address_max + 1)[2:]: 
                 self.vprint("correct guess " + victim_addr)
@@ -348,7 +351,7 @@ class CacheGuessingGameEnv(gym.Env):
                 self.vprint("correct guess empty access!")
               # update the guess buffer 
               self.guess_buffer.append(True)
-              self.guess_buffer.pop(0) 
+              self.guess_buffer.pop(0)
               reward = self.correct_reward # 200
               done = True
           else:
@@ -359,11 +362,11 @@ class CacheGuessingGameEnv(gym.Env):
 
               # update the guess buffer 
               self.guess_buffer.append(False)
-              self.guess_buffer.pop(0) 
+              self.guess_buffer.pop(0)
               reward = self.wrong_reward #-9999
               done = True
         elif is_flush == False or self.flush_inst == False:
-          lat, cyclic_set_index, cyclic_way_index = self.l1.read(hex(self.ceaser_mapping(int('0x' + address, 16))), self.current_step, domain_id='a')
+          lat, cyclic_set_index, cyclic_way_index = self.l1.read(hex(self.ceaser_mapping(int('0x' + address, 16)))[2:], self.current_step, domain_id='a')
           lat = lat.time # measure the access latency
           if lat > 500:
             self.vprint("acceee " + address + " miss")

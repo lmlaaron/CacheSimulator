@@ -31,8 +31,8 @@ from metric_callbacks import MetricCallbacks
 # @hydra.main(config_path="./config", config_name="ppo_2way_2set")
 # @hydra.main(config_path="./config", config_name="ppo_4way_4set")
 # @hydra.main(config_path="./config", config_name="ppo_8way_8set")
-# @hydra.main(config_path="./config", config_name="ppo_exp")
-@hydra.main(config_path="./config", config_name="ppo_exp_ceaser")
+@hydra.main(config_path="./config", config_name="ppo_exp")
+# @hydra.main(config_path="./config", config_name="ppo_exp_ceaser")
 # @hydra.main(config_path="./config", config_name="ppo_cchunter_baseline")
 def main(cfg):
     my_callbacks = MetricCallbacks()
