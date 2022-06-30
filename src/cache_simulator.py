@@ -275,10 +275,10 @@ def build_hierarchy(configs, logger):
     return hierarchy
 
 def build_cache(configs, name, next_level_cache, logger):
-    if name == 'cache_1':
-        print(configs[name])
-        print(name)
-        print(configs[name]['prefetcher'] )
+    #if name == 'cache_1':
+        #print(configs[name])
+        #print(name)
+        #print(configs[name]['prefetcher'] )
         #assert(False)
     return cache.Cache(name,
                 configs['architecture']['word_size'],
