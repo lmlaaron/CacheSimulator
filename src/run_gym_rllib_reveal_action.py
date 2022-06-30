@@ -95,7 +95,8 @@ if __name__ == "__main__":
         'env': 'cache_guessing_game_env_fix', #'cache_simulator_diversity_wrapper',
         'env_config': {
             'verbose': 1,
-            "rerandomize_victim": True,
+            "prefetcher":"stream",#"nextline",
+            "rerandomize_victim": False,
             "force_victim_hit": False,
             'flush_inst': False,
             "allow_victim_multi_access": True,#False,
