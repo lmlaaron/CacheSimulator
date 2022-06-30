@@ -17,8 +17,8 @@ import gym
 from sklearn import svm
 from sklearn.model_selection import cross_val_score
 from cache_guessing_game_env_impl import CacheGuessingGameEnv
-
-
+import pickle
+import os
 class CycloneWrapper(gym.Env):
     def __init__(self,
                  env_config: Dict[str, Any],
@@ -31,7 +31,8 @@ class CycloneWrapper(gym.Env):
         self.env_config = env_config
         self.episode_length = env_config.get("episode_length", 160)
         #self.threshold = env_config.get("threshold", 0.8)
-        
+        path = os.getcwdb().decode('utf-8') + '/../../../svm.txt'
+        self.clf = pickle.load(open(path, 'rb'))
         self.cyclone_window_size = env_config.get("cyclone_window_size", 4)
         self.cyclone_interval_size = env_config.get("cyclone_interval_size", 40)
         self.cyclone_num_buckets = env_config.get("cyclone_num_buckets", 4)
@@ -71,6 +72,14 @@ class CycloneWrapper(gym.Env):
         self.cnt = 0
         self.step_count = 0
         #self.cc_hunter_history = []
+
+    def load_svm_model(self):
+        from numpy import loadtxt
+        data = loadtxt('all.txt.svm.txt')
+        X = data[:,1:]
+        Y = data[:,0]
+        clf = svm.SVC(random_state=0)
+        clf.fit(X, Y)
 
     def set_victim(self, victim_addr):
         self._env.victim_address = victim_addr
@@ -129,16 +138,16 @@ class CycloneWrapper(gym.Env):
             self.Y.append(y)
 
         x = np.array(cyclone_counters).reshape(-1)
-        print(x)
-        x_mod = np.array(cyclone_counters).reshape(-1)
-        x_mod[0] = 0
-        y = 1
-        y_mod = 0
-        X = [x, x_mod]
-        Y= [y, y_mod]
-        clf = svm.SVC(random_state=0)
-        clf.fit(X,Y)
-        y = clf.predict([x])[0]
+        ######print(x)
+        ######x_mod = np.array(cyclone_counters).reshape(-1)
+        ######x_mod[0] = 0
+        ######y = 1
+        ######y_mod = 0
+        ######X = [x, x_mod]
+        ######Y= [y, y_mod]
+        ######clf = svm.SVC(random_state=0)
+        ######clf.fit(X,Y)
+        y = self.clf.predict([x])[0]
         rew = y
         return rew
 

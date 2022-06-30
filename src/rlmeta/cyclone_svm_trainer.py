@@ -38,7 +38,7 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 class SpecAgent():
-    def __init__(self, env_config):
+    def __init__(self, env_config, trace_file):
         self.local_step = 0
         self.lat = []
         self.no_prime = False # set to true after first prime
@@ -61,8 +61,9 @@ class SpecAgent():
             assert( ( attacker_addr_e + 1 == victim_addr_s ) or ( victim_addr_e + 1 == attacker_addr_s ) )
             assert(self.allow_empty_victim_access == False)
 
+        self.trace_file = trace_file
         # load the data SPEC bengin traces
-        self.fp = open('/home/mulong/mix_cut.txt')
+        self.fp = open(self.trace_file)
         line = self.fp.readline().split()
         self.domain_id_0 = line[0]
         self.domain_id_1 = line[0]
@@ -74,11 +75,17 @@ class SpecAgent():
             line = self.fp.readline().split()
  
         self.fp.close()
-        self.fp = open('/home/mulong/mix_cut.txt')
+        self.fp = open(self.trace_file)
     
     def act(self, timestep):
         info = {}
         line = self.fp.readline().split()
+        if len(line) == 0:
+            action = self.cache_size
+            addr = 0#addr % self.cache_size
+            info={"file_done" : True}
+            return action, info
+
         domain_id = line[0]
         addr = int( int(line[3], 16) / 4 )
         
@@ -95,8 +102,9 @@ class SpecAgent():
 
 @hydra.main(config_path="./config", config_name="sample_cyclone")
 def main(cfg):
-    repeat = 10
-    svm_data_path = '/home/mulong/cyclone_svm_data.txt'
+    repeat = 80000
+    trace_file = '/home/mulong/remix3.txt'
+    svm_data_path = 'autocat.svm.txt' #trace_file + '.svm.txt'
     #create env
     cfg.env_config['verbose'] = 1
 
@@ -108,7 +116,7 @@ def main(cfg):
     env.svm_data_path = svm_data_path
     fp = open(svm_data_path,'w')
     fp.close()
-    agent = TextbookAgent(cfg.env_config)
+    agent = TextbookAgent(cfg.env_config) 
     episode_length = 0
     episode_return = 0.0
 
@@ -140,28 +148,35 @@ def main(cfg):
 
     env.reset(save_data=True) # save data to file
     # generate benign traces
-
+'''
     cfg.env_config['cyclone_collect_data'] = True
     cfg.env_config['cyclone_malicious_trace'] = False
     env_fac = CacheEnvCycloneWrapperFactory(cfg.env_config)
     env = env_fac(index=0)
     print("mix.txt opened!")
 
-    agent = SpecAgent(cfg.env_config)
+    agent = SpecAgent(cfg.env_config, trace_file)
     episode_length = 0
     episode_return = 0.0
     
+    file_done = False
     # generate dataset for benign traces
-    for i in range(repeat):
+    iter = 0
+    while not file_done:
+    #for i in range(repeat):
         timestep = env.reset()
         num_guess = 0
         num_correct = 0
         done = False
         count = 0
+        iter += 1
         while not done:
             # Model server requires a batch_dim, so unsqueeze here for local runs.
             timestep.observation.unsqueeze_(0)
             action, info = agent.act(timestep)
+            if "file_done" in info:
+                file_done = True
+                break
             if "victim_addr"  in info:
                 print(info["victim_addr"])
                 #env.set_victim(info["victim_addr"])
@@ -199,7 +214,7 @@ def main(cfg):
             episode_return += timestep.reward
 
     env.reset(save_data=True) # save data to file
-
+'''
     #cfg.env_config['cyclone_malicious_trace'] = False
     #env_fac = CacheEnvCCHunterWrapperFactory(cfg.env_config)
     #env = env_fac(index=0)
