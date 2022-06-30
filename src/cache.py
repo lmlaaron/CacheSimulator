@@ -3,7 +3,7 @@ import pprint
 from replacement_policy import * 
 
 class Cache:
-    def __init__(self, name, word_size, block_size, n_blocks, associativity, hit_time, write_time, write_back, logger, next_level=None, rep_policy='', verbose=False):
+    def __init__(self, name, word_size, block_size, n_blocks, associativity, hit_time, write_time, write_back, logger, next_level=None, rep_policy='', prefetcher="none", verbose=False):
         #Parameters configured by the user
         self.name = name
         self.word_size = word_size
@@ -40,6 +40,17 @@ class Cache:
                 self.vprint("no rep_policy specified or policy specified not exist")
                 self.vprint("use lru_policy")
                 #assert(False)
+
+        self.vprint("use " + prefetcher + "  prefetcher")
+
+        # prefetcher == "none" "nextline" "stream"
+        self.prefetcher = prefetcher
+        if self.prefetcher == "stream":
+            self.prefetcher_table =[]
+            self.num_prefetcher_entry = 2
+            for i in range(self.num_prefetcher_entry):
+                temp = {"first": -1, "second": -1}
+                self.prefetcher_table.append(temp)
 
         #Total number of sets in the cache
         self.n_sets =int( n_blocks / associativity )
@@ -122,11 +133,59 @@ class Cache:
 
         return r, cyclic_set_index, cyclic_way_index
 
+    # read with prefetcher
+    def read(self, address, current_step, pl_opt= -1, domain_id = 'X'):
+        if self.prefetcher == "none":
+            
+            #assert(False)
+            return self.read_no_prefetch(address, current_step, pl_opt, domain_id)
+        elif self.prefetcher == "nextline":
+            ret = self.read_no_prefetch(hex(int(address, 16) + 1)[2:], current_step, pl_opt, domain_id)
+            # prefetch the next line
+            print("nextline prefetech "+ hex(int(address, 16) + 1)[2:] )
+            self.read_no_prefetch(address, current_step, pl_opt, domain_id)
+            return ret 
+        elif self.prefetcher == "stream":
+            ret = self.read_no_prefetch(address, current_step, pl_opt, domain_id)
+
+            # {"first": -1, "second": -1}
+            # first search if it is next expected
+            found= False
+            for i in range(len(self.prefetcher_table)):
+                entry=self.prefetcher_table[i]
+                if int(address, 16) + entry["first"] == entry["second"] * 2 and entry["first"] != -1 and entry["second"] != -1 :
+                    found = True
+                    pref_addr = entry["second"] + int(address, 16) - entry["first"]
+                    # do prefetch
+                    if pref_addr >= 0:
+                        print("stream prefetech "+ hex(pref_addr)[2:])
+                        self.read_no_prefetch(hex(pref_addr)[2:], current_step, pl_opt, domain_id) 
+                        # update the table
+                        self.prefetcher_table[i] = {"first": entry["second"], "second":pref_addr}
+
+
+                elif int(address, 16) == entry["first"] + 1 or int(address, 16) == entry["first"] -1 and entry["first"] != -1:
+                    # second search if it is second access
+                    self.prefetcher_table[i]["second"] = int(address, 16)
+                    found = True
+                elif entry["first"] == int(address, 16):
+                    found = True
+                # then search if it is in first access
+
+            # random evict a entry 
+            if found == False:
+                i = random.randint(0, self.num_prefetcher_entry-1)
+                self.prefetcher_table[i] = {"first": int(address, 16), "second":-1}
+            return ret
+        else:
+            # prefetchter not known
+            assert(False)
+
     # pl_opt: indicates the PL cache option
     # pl_opt = -1: normal read
     # pl_opt = PL_LOCK: lock the cache line
     # pl_opt = PL_UNLOCK: unlock the cache line
-    def read(self, address, current_step, pl_opt= -1, domain_id = 'X'):
+    def read_no_prefetch(self, address, current_step, pl_opt= -1, domain_id = 'X'):
         # cyclone
         cyclic_set_index = -1
         cyclic_way_index = -1

@@ -86,6 +86,11 @@ class CacheGuessingGameEnv(gym.Env):
     }
   }
 ):
+    # prefetcher
+    # pretetcher: "none" "nextline" "stream"
+    # cf https://my.eng.utah.edu/~cs7810/pres/14-7810-13-pref.pdf
+    self.prefetcher = env_config["prefetcher"] if "prefetcher" in env_config else "none"
+
     # remapping function for randomized cache
     self.rerandomize_victim = env_config["rerandomize_victim"] if "rerandomize_victim" in env_config else False
     self.ceaser_remap_period = env_config["ceaser_remap_period"] if "ceaser_remap_period" in env_config else 200000
@@ -132,7 +137,11 @@ class CacheGuessingGameEnv(gym.Env):
     
     if "rep_policy" not in self.configs['cache_1']:
       self.configs['cache_1']['rep_policy'] = 'lru'
-    
+
+    self.configs['cache_1']['prefetcher'] = self.prefetcher
+    print(self.prefetcher)
+    #assert(False)
+
     if window_size == 0:
       self.window_size = self.cache_size * 8 + 8 #10 
       #self.window_size = self.cache_size * 4 + 8 #10 

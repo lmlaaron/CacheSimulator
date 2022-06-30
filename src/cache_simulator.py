@@ -275,6 +275,11 @@ def build_hierarchy(configs, logger):
     return hierarchy
 
 def build_cache(configs, name, next_level_cache, logger):
+    if name == 'cache_1':
+        print(configs[name])
+        print(name)
+        print(configs[name]['prefetcher'] )
+        #assert(False)
     return cache.Cache(name,
                 configs['architecture']['word_size'],
                 configs['architecture']['block_size'],
@@ -286,6 +291,7 @@ def build_cache(configs, name, next_level_cache, logger):
                 logger,
                 next_level_cache,
                 rep_policy = configs[name]['rep_policy'] if 'rep_policy' in configs[name] else '',
+                prefetcher = configs[name]['prefetcher'] if 'prefetcher' in configs[name] else "none",
                 verbose = configs['verbose'] if 'verbose' in configs else 'False' )
 
 
