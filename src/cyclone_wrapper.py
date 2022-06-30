@@ -22,6 +22,7 @@ from cache_guessing_game_env_impl import CacheGuessingGameEnv
 class CycloneWrapper(gym.Env):
     def __init__(self,
                  env_config: Dict[str, Any],
+                 svm_data_path='/home/mulong/cyclone_svm_data.txt',
                  keep_latency: bool = True) -> None:
         env_config["cache_state_reset"] = False
 
@@ -66,12 +67,16 @@ class CycloneWrapper(gym.Env):
         self.attacker_address_min = self._env.attacker_address_min
         self.victim_address = self._env.victim_address
 
+        self.svm_data_path = svm_data_path
         self.cnt = 0
         self.step_count = 0
         #self.cc_hunter_history = []
 
+    def set_victim(self, victim_addr):
+        self._env.victim_address = victim_addr
+
     def save_svm_data(self):
-        fp = open('/home/mulong/cyclone_svm_data.txt', 'w')
+        fp = open(self.svm_data_path, 'a')
         for i in range(len(self.X)):
             str1 = ' '.join(str(e) for e in self.X[i])
             str1 = str(self.Y[i]) + ' ' + str1 + '\n'
@@ -79,9 +84,14 @@ class CycloneWrapper(gym.Env):
         fp.close()
 
     # if save_data==True, sa
-    def reset(self, victim_address=-1, save_data=False):
+    def reset(self, victim_address=-1, save_data=False, set_victim=False):
         if save_data == True:
             self.save_svm_data()
+
+        if set_victim == True and victim_address != -1:
+            obs = self._env.reset(victim_address=victim_address,
+                              reset_cache_state=False)
+            return obs
 
         # reset cyclone counter
         #self.cyclone_counters = [[0]* self.cyclone_num_buckets ] * self.cyclone_window_size
@@ -108,7 +118,6 @@ class CycloneWrapper(gym.Env):
     ####    return ((x[:-p] - mean) * (x[p:] - mean)).mean() / var
 
     def cyclone_attack(self, cyclone_counters):
-
         # collect data to train svm
         if self.cyclone_collect_data == True:
             x = np.array(cyclone_counters).reshape(-1)

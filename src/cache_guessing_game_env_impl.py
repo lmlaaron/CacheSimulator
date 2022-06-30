@@ -523,6 +523,9 @@ class CacheGuessingGameEnv(gym.Env):
           self.correct_guess += 1
     return self.correct_guess / self.total_guess
 
+  def set_victim(self, victim_address=-1):
+    self.victim_address = victim_address
+
   # fake reset, just set a new victim addr 
   def _reset(self, victim_address=-1):
     self.current_step = 0
