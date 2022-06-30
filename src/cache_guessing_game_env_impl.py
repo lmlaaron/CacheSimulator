@@ -14,6 +14,8 @@ from itertools import permutations
 import gym
 from gym import spaces
 
+from omegaconf.omegaconf import open_dict
+
 from cache_simulator import *
 
 class CacheGuessingGameEnv(gym.Env):
@@ -138,7 +140,8 @@ class CacheGuessingGameEnv(gym.Env):
     if "rep_policy" not in self.configs['cache_1']:
       self.configs['cache_1']['rep_policy'] = 'lru'
 
-    self.configs['cache_1']['prefetcher'] = self.prefetcher
+    with open_dict(self.configs):
+        self.configs['cache_1']['prefetcher'] = self.prefetcher
     print(self.prefetcher)
     #assert(False)
 
