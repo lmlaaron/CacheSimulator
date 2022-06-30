@@ -50,5 +50,10 @@ threshold: 0.5
 # cc_hunter_coeff: 30.0
 # cc_hunter_coeff: 50.0
 # cc_hunter_coeff: 80.0
-cyclone_coeff: 100.0
 # cc_hunter_coeff: 0.0
+#
+cyclone_coeff: 0.0
+# cyclone_coeff: 10.0
+# cyclone_coeff: 20.0
+# cyclone_coeff: 50.0
+# cyclone_coeff: 100.0

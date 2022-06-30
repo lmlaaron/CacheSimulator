@@ -148,7 +148,8 @@ class CycloneWrapper(gym.Env):
         ######clf = svm.SVC(random_state=0)
         ######clf.fit(X,Y)
         y = self.clf.predict([x])[0]
-        rew = y
+        rew = -y
+
         return rew
 
     def step(self, action):
@@ -184,7 +185,7 @@ class CycloneWrapper(gym.Env):
                 #rew, cnt = self.cc_hunter_attack(self.cc_hunter_history)
                 rew = self.cyclone_attack(self.cyclone_counters)
                 reward += self.cyclone_coeff * rew
-                info["cyclone_attack"] = rew #self.cnt
+                info["cyclone_attack"] = (rew != 0.0) #self.cnt
 
         # done = (self.step_count >= self.episode_length)
         # if done:

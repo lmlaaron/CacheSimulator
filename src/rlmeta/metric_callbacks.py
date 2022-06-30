@@ -61,7 +61,7 @@ class CycloneMetricCallbacks(EpisodeCallbacks):
                 self._custom_metrics[
                     "correct_rate"] = self.acc_guess / self.tot_guess
 
-        if "cc_hunter_attack" in info:
-            self._custom_metrics["cc_hunter_attack"] = float(
-                info["cc_hunter_attack"])
+        if "cyclone_attack" in info:
+            self._custom_metrics["cyclone_attack"] = float(
+                info["cyclone_attack"])
 
