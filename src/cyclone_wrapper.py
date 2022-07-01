@@ -11,7 +11,7 @@ from typing import Any, Dict, Sequence, Tuple
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-
+import seaborn as sns
 import gym
 
 from sklearn import svm
@@ -50,6 +50,8 @@ class CycloneWrapper(gym.Env):
                 temp.append(0)
             self.cyclone_counters.append(temp)
         self.cyclone_coeff = env_config.get("cyclone_coeff", 1.0)
+
+        self.cyclone_heatmap = [[], [], [], []]
 
         # self.cc_hunter_detection_reward = env_config.get(
         #     "cc_hunter_detection_reward", -1.0)
@@ -97,6 +99,17 @@ class CycloneWrapper(gym.Env):
         if save_data == True:
             self.save_svm_data()
 
+            # drwa figure
+            print(self.cyclone_heatmap)
+            #p=sns.heatmap(self.cyclone_heatmap, vmin=0, vmax=20)
+            #p.set_xlabel('Time intervals (40 cycles)')
+            #p.set_ylabel('Set index')
+            #fig= p.get_figure()
+            #fig.set_size_inches(3, 3)
+            #fig_path ='/home/mulong/RL_SCA/src/CacheSimulator/src/heatmap.png'
+            ##fig_path = os.getcwdb().decode('utf-8') + '/../heatmap.png'
+            #fig.savefig(fig_path)
+
         if set_victim == True and victim_address != -1:
             obs = self._env.reset(victim_address=victim_address,
                               reset_cache_state=False)
@@ -128,6 +141,11 @@ class CycloneWrapper(gym.Env):
 
     def cyclone_attack(self, cyclone_counters):
         # collect data to train svm
+        #print(cyclone_counters)
+        
+        for i in range(len(cyclone_counters)):
+            self.cyclone_heatmap[i] += cyclone_counters[i]
+        
         if self.cyclone_collect_data == True:
             x = np.array(cyclone_counters).reshape(-1)
             if self.cyclone_malicious_trace == True:
@@ -136,8 +154,8 @@ class CycloneWrapper(gym.Env):
                 y = 0
             self.X.append(x)
             self.Y.append(y)
-
         x = np.array(cyclone_counters).reshape(-1)
+        #print(x)
         ######print(x)
         ######x_mod = np.array(cyclone_counters).reshape(-1)
         ######x_mod[0] = 0
