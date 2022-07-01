@@ -6,5 +6,8 @@ deterministic_policy: true
 
 defaults:
   # - env_config: config_exp4
-  - env_config: config_exp_ceaser
+  - env_config: config_exp9
+  # - env_config: config_exp9_nextline
+  # - env_config: config_exp9_stream
+  # - env_config: config_exp_ceaser
   - model_config: experiments

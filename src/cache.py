@@ -142,7 +142,7 @@ class Cache:
         elif self.prefetcher == "nextline":
             ret = self.read_no_prefetch(hex(int(address, 16) + 1)[2:], current_step, pl_opt, domain_id)
             # prefetch the next line
-            print("nextline prefetech "+ hex(int(address, 16) + 1)[2:] )
+            # print("nextline prefetech "+ hex(int(address, 16) + 1)[2:] )
             self.read_no_prefetch(address, current_step, pl_opt, domain_id)
             return ret 
         elif self.prefetcher == "stream":
@@ -158,7 +158,7 @@ class Cache:
                     pref_addr = entry["second"] + int(address, 16) - entry["first"]
                     # do prefetch
                     if pref_addr >= 0:
-                        print("stream prefetech "+ hex(pref_addr)[2:])
+                        # print("stream prefetech "+ hex(pref_addr)[2:])
                         self.read_no_prefetch(hex(pref_addr)[2:], current_step, pl_opt, domain_id) 
                         # update the table
                         self.prefetcher_table[i] = {"first": entry["second"], "second":pref_addr}

@@ -47,10 +47,12 @@ defaults:
   # - env_config: config_exp7
   # - env_config: config_exp8
   # - env_config: config_exp9
+  # - env_config: config_exp9_nextline
+  - env_config: config_exp9_stream
   # - env_config: config_exp10
   # - env_config: config_exp11
   # - env_config: config_exp12
   # - env_config: config_exp_remap_baseline
   # - env_config: config_exp_remap_baseline2
-  - env_config: config_exp_ceaser_distributed
+  # - env_config: config_exp_ceaser_distributed
   - model_config: experiments

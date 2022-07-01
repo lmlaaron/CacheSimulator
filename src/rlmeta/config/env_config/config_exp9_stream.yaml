@@ -16,6 +16,8 @@ victim_addr_s: 0
 victim_addr_e: 0
 reset_limit: 1
 
+prefetcher: "stream"
+
 cache_configs:
   architecture:
     word_size: 1
@@ -26,7 +28,6 @@ cache_configs:
     associativity: 8
     hit_time: 1
     rep_policy: "lru"
-    prefetcher: "stream"
   mem:
     hit_time: 1000
 
