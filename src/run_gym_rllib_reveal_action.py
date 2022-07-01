@@ -95,13 +95,13 @@ if __name__ == "__main__":
         'env': 'cache_guessing_game_env_fix', #'cache_simulator_diversity_wrapper',
         'env_config': {
             'verbose': 1,
-            "prefetcher":"stream",#"nextline",
+            "prefetcher": "nextline",
             "rerandomize_victim": False,
             "force_victim_hit": False,
             'flush_inst': False,
             "allow_victim_multi_access": True,#False,
             "allow_empty_victim_access": True,
-            "attacker_addr_s": 1,
+            "attacker_addr_s": 0,
             "attacker_addr_e": 8,#4,#11,#15,
             "victim_addr_s": 0,
             "victim_addr_e": 0,#7,
@@ -114,8 +114,8 @@ if __name__ == "__main__":
                   "write_back": True
                 },
                 "cache_1": {#required
-                  "blocks": 8,#4, 
-                  "associativity": 2,  
+                  "blocks": 4,#4, 
+                  "associativity": 4,  
                   "hit_time": 1 #cycles
                 },
                 "mem": {#required
