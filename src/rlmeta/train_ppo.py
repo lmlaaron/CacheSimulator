@@ -26,11 +26,10 @@ from cache_ppo_model import CachePPOModel
 from metric_callbacks import MetricCallbacks
 
 
-@hydra.main(config_path="./config", config_name="ppo")
-# @hydra.main(config_path="./config", config_name="ppo_2way_2set")
-# @hydra.main(config_path="./config", config_name="ppo_4way_4set")
-# @hydra.main(config_path="./config", config_name="ppo_8way_8set")
+
+@hydra.main(config_path="./config", config_name="ppo_lru_8way")
 def main(cfg):
+    my_callbacks = MetricCallbacks()
     logging.info(hydra_utils.config_to_json(cfg))
 
     metric_callbacks = MetricCallbacks()
@@ -84,7 +83,8 @@ def main(cfg):
                           num_rollouts=cfg.num_train_rollouts,
                           num_workers=cfg.num_train_workers,
                           seed=cfg.train_seed,
-                          episode_callbacks=metric_callbacks)
+                          episode_callbacks=my_callbacks)
+
     e_loop = ParallelLoop(env_fac,
                           e_agent_fac,
                           e_ctrl,
@@ -93,7 +93,8 @@ def main(cfg):
                           num_rollouts=cfg.num_eval_rollouts,
                           num_workers=cfg.num_eval_workers,
                           seed=cfg.eval_seed,
-                          episode_callbacks=metric_callbacks)
+                          episode_callbacks=my_callbacks)
+
     loops = LoopList([t_loop, e_loop])
 
     servers.start()

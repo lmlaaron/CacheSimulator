@@ -5,5 +5,13 @@ checkpoint: ""
 deterministic_policy: true
 
 defaults:
-  - env_config: lru_8way
-  - model_config: resnet
+  # - env_config: config_exp4
+  # - env_config: config_exp9
+  # - env_config: config_exp9_nextline
+  # - env_config: config_exp9_stream
+  # - env_config: config_exp_ceaser
+  # - env_config: config_exp_13
+  # - env_config: config_exp_13_nextline
+  - env_config: config_exp_14
+  # - env_config: config_exp_14_nextline
+  - model_config: experiments

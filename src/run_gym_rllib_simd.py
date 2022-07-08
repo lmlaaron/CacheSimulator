@@ -62,6 +62,7 @@ class CacheSimulatorSIMDWrapper(gym.Env):
         info = {}    
         return total_state, total_reward, total_done, info 
 
+
 # multiple initialization
 # multiple secret
 class CacheSimulatorMultiGuessWrapper(gym.Env):
