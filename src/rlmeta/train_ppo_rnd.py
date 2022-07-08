@@ -12,17 +12,15 @@ import rlmeta.utils.hydra_utils as hydra_utils
 import rlmeta.utils.remote_utils as remote_utils
 
 from rlmeta.agents.agent import AgentFactory
-from rlmeta.agents.ppo.ppo_agent import PPOAgent
+from rlmeta.agents.ppo.ppo_rnd_agent import PPORNDAgent
 from rlmeta.core.controller import Phase, Controller
 from rlmeta.core.loop import LoopList, ParallelLoop
 from rlmeta.core.model import wrap_downstream_model
 from rlmeta.core.replay_buffer import ReplayBuffer, make_remote_replay_buffer
 from rlmeta.core.server import Server, ServerList
-from rlmeta.core.callbacks import EpisodeCallbacks
-from rlmeta.core.types import Action, TimeStep
 
 from cache_env_wrapper import CacheEnvWrapperFactory
-from cache_ppo_model import CachePPOModel
+from cache_ppo_rnd_model import CachePPORNDModel
 from metric_callbacks import MetricCallbacks
 
 
@@ -39,7 +37,7 @@ def main(cfg):
     cfg.model_config["window_size"] = cfg.env_config.window_size
     cfg.model_config["output_dim"] = env.action_space.n
 
-    train_model = CachePPOModel(**cfg.model_config).to(cfg.train_device)
+    train_model = CachePPORNDModel(**cfg.model_config).to(cfg.train_device)
     optimizer = torch.optim.Adam(train_model.parameters(), lr=cfg.lr)
 
     infer_model = copy.deepcopy(train_model).to(cfg.infer_device)
@@ -66,15 +64,16 @@ def main(cfg):
     a_rb = make_remote_replay_buffer(rb, r_server, prefetch=cfg.prefetch)
     t_rb = make_remote_replay_buffer(rb, r_server)
 
-    agent = PPOAgent(a_model,
-                     replay_buffer=a_rb,
-                     controller=a_ctrl,
-                     optimizer=optimizer,
-                     batch_size=cfg.batch_size,
-                     learning_starts=cfg.get("learning_starts", None),
-                     push_every_n_steps=cfg.push_every_n_steps)
-    t_agent_fac = AgentFactory(PPOAgent, t_model, replay_buffer=t_rb)
-    e_agent_fac = AgentFactory(PPOAgent, e_model, deterministic_policy=True)
+    agent = PPORNDAgent(a_model,
+                        replay_buffer=a_rb,
+                        controller=a_ctrl,
+                        optimizer=optimizer,
+                        batch_size=cfg.batch_size,
+                        entropy_coeff=cfg.get("entropy_coeff", 1e-2),
+                        learning_starts=cfg.get("learning_starts", None),
+                        push_every_n_steps=cfg.push_every_n_steps)
+    t_agent_fac = AgentFactory(PPORNDAgent, t_model, replay_buffer=t_rb)
+    e_agent_fac = AgentFactory(PPORNDAgent, e_model, deterministic_policy=True)
 
     t_loop = ParallelLoop(env_fac,
                           t_agent_fac,
