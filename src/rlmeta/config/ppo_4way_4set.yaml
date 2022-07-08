@@ -24,6 +24,7 @@ prefetch: 2
 batch_size: 512
 lr: 3e-4
 # learning_starts: 65536
+
 push_every_n_steps: 10
 
 num_epochs: 3000
@@ -39,3 +40,4 @@ table_view: false
 defaults:
   - env_config: 4way_4set
   - model_config: transformer_4way_4set
+

@@ -18,6 +18,8 @@ from omegaconf.omegaconf import open_dict
 
 from cache_simulator import *
 
+import time
+
 class CacheGuessingGameEnv(gym.Env):
   """
   Description:
@@ -151,12 +153,16 @@ class CacheGuessingGameEnv(gym.Env):
     else:
       self.window_size = window_size
     self.feature_size = 4
+
     self.hierarchy = build_hierarchy(self.configs, self.logger)
+
     #self.state = [0, self.cache_size, 0, 0] * self.window_size
     # self.state = [-1, -1, -1, -1] * self.window_size # Xiaomeng
     #self.state = [0, self.cache_size, 0, 0, 0] * self.window_size
 
+
     self.state = deque([[-1, -1, -1, -1]] * self.window_size)
+
     self.step_count = 0
 
     self.attacker_address_min = attacker_addr_s
@@ -304,9 +310,11 @@ class CacheGuessingGameEnv(gym.Env):
     is_flush = action[3]                                              # check whether to flush
     victim_addr = hex(action[4] + self.victim_address_min)[2:]            # victim address
     
+
     victim_latency = None
     # if self.current_step > self.window_size : # if current_step is too long, terminate
     if self.step_count >= self.window_size - 1:
+
       r = 2 #
       self.vprint("length violation!")
       reward = self.length_violation_reward #-10000 
@@ -422,6 +430,7 @@ class CacheGuessingGameEnv(gym.Env):
     # self.state = self.state[0:len(self.state)-4]
     self.state.append([r, victim_accessed, original_action, self.step_count])
     self.state.popleft()
+
     self.step_count += 1
     
     '''
@@ -437,6 +446,7 @@ class CacheGuessingGameEnv(gym.Env):
         done = False                           # fake reset
         self._reset()                          # manually reset
 
+
     if victim_latency is not None:
         info["victim_latency"] = victim_latency
 
@@ -445,7 +455,6 @@ class CacheGuessingGameEnv(gym.Env):
         else:
             cache_state_change = victim_latency ^ self.last_state
         self.last_state = victim_latency
-
     else:
         if r == 2:
             cache_state_change = 0

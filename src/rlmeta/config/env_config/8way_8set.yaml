@@ -6,6 +6,7 @@ correct_reward: 1.0
 wrong_reward: -1.0
 step_reward: -0.01
 
+
 verbose: 0
 force_victim_hit: false,
 flush_inst: false,
@@ -32,3 +33,4 @@ cache_configs:
     hit_time: 1000 
 
 window_size: 256
+
