@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "run_gym_lstm.py", line 11, in <module>
-    os.environ["WANDB_MODE"] = "offline"
-NameError: name 'os' is not defined
