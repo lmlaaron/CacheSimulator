@@ -8,3 +8,8 @@ log
 temp.txt
 *.png
 *.zip
+__pycache__
+*.png
+*.old
+*.pth
+*.pdf
