@@ -1,16 +1,34 @@
 '''
-Add one reveal action so that the agent has to explicit reveal the secret,
+Author: Mulong Luo
+Date: 2022.7.10
+Function: Add one reveal action so that the agent has to explicit reveal the secret,
 once the secret is revealed, it must make a guess immediately
 '''
 from random import random
-from cache_guessing_game_env_impl import *
 import sys
+import os
+import gym
+
+###sys.path.append('../src')
+from ray.rllib.agents.ppo import PPOTrainer
+import ray
+import ray.tune as tune
+import gym
+from gym import spaces
+
 import signal
 from sklearn import svm
 from sklearn.model_selection import cross_val_score
+import numpy as np
+#tune.register_env("cache_guessing_game_env", CacheGuessingGameEnv)#CacheGuessingGameWithRevealEnv)
+from cache_guessing_game_env_wrapper import CacheGuessingGameEnvWrapper
 
 class CacheGuessingGameWithRevealEnv(gym.Env):
     def __init__(self, env_config):
+
+        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from cache_guessing_game_env_impl import CacheGuessingGameEnv
+
         self.env = CacheGuessingGameEnv(env_config)   
 
         self.action_space_size = self.env.action_space.n + 1 # increase the action space by one
@@ -83,16 +101,12 @@ class CacheGuessingGameWithRevealEnv(gym.Env):
 
 
 if __name__ == "__main__":
-    from ray.rllib.agents.ppo import PPOTrainer
-    import ray
-    import ray.tune as tune
-    ray.init(include_dashboard=False, ignore_reinit_error=True, num_gpus=1)
+    ray.init(include_dashboard=False, ignore_reinit_error=True, num_gpus=1, local_mode=True)
     if ray.is_initialized():
         ray.shutdown()
-    #tune.register_env("cache_guessing_game_env_fix", CacheSimulatorSIMDWrapper)#
-    tune.register_env("cache_guessing_game_env_fix", CacheGuessingGameEnv)#CacheGuessingGameWithRevealEnv)
+    tune.register_env("cache_guessing_game_env", CacheGuessingGameEnvWrapper)#CacheGuessingGameWithRevealEnv)
     config = {
-        'env': 'cache_guessing_game_env_fix', #'cache_simulator_diversity_wrapper',
+        'env': 'cache_guessing_game_env', #'cache_simulator_diversity_wrapper',
         'env_config': {
             'verbose': 1,
             "prefetcher": "nextline",
