@@ -34,7 +34,7 @@ import sys
 import math
 sys.path.append("../src")
 torch, nn = try_import_torch()
-from cache_guessing_game_env_impl import *
+from cache_guessing_game_env_wrapper import CacheGuessingGameEnvWrapper as CacheGuessingGameEnv
 from categorization_parser import *
 
 def custom_init(policy: Policy, obs_space: gym.spaces.Space, 
@@ -477,18 +477,18 @@ config = {
     #'num_sgd_iter': 5, 
     #'vf_loss_coeff': 1e-05, 
     'model': {
-        'custom_model': 'dnn_model',#'rnn', 
-        'custom_model_config': {
-            'window_size': 40, #16, #need to match
-            'latency_dim': 3,
-            'victim_acc_dim': 2,
-            'action_dim': 200, # need to be precise
-            'step_dim': 80,#40,   # need to be precise
-            'action_embed_dim': 32,#,8, # can be increased 32
-            'step_embed_dim': 6,#4, # can be increased less than 16
-            'hidden_dim': 32,
-            'num_blocks': 1
-        }
+    ###    'custom_model': 'dnn_model',#'rnn', 
+    ###    'custom_model_config': {
+    ###        'window_size': 40, #16, #need to match
+    ###        'latency_dim': 3,
+    ###        'victim_acc_dim': 2,
+    ###        'action_dim': 200, # need to be precise
+    ###        'step_dim': 80,#40,   # need to be precise
+    ###        'action_embed_dim': 32,#,8, # can be increased 32
+    ###        'step_embed_dim': 6,#4, # can be increased less than 16
+    ###        'hidden_dim': 32,
+    ###        'num_blocks': 1
+    ###    }
     }, 
     'framework': 'torch',
 }

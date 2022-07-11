@@ -20,14 +20,12 @@ import signal
 from sklearn import svm
 from sklearn.model_selection import cross_val_score
 import numpy as np
-#tune.register_env("cache_guessing_game_env", CacheGuessingGameEnv)#CacheGuessingGameWithRevealEnv)
-from cache_guessing_game_env_wrapper import CacheGuessingGameEnvWrapper
 
 class CacheGuessingGameWithRevealEnv(gym.Env):
     def __init__(self, env_config):
 
-        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        from cache_guessing_game_env_impl import CacheGuessingGameEnv
+        #sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from cache_guessing_game_env_wrapper import CacheGuessingGameEnvWrapper as CacheGuessingGameEnv
 
         self.env = CacheGuessingGameEnv(env_config)   
 
@@ -104,7 +102,7 @@ if __name__ == "__main__":
     ray.init(include_dashboard=False, ignore_reinit_error=True, num_gpus=1, local_mode=True)
     if ray.is_initialized():
         ray.shutdown()
-    tune.register_env("cache_guessing_game_env", CacheGuessingGameEnvWrapper)#CacheGuessingGameWithRevealEnv)
+    tune.register_env("cache_guessing_game_env", CacheGuessingGameWithRevealEnv)
     config = {
         'env': 'cache_guessing_game_env', #'cache_simulator_diversity_wrapper',
         'env_config': {

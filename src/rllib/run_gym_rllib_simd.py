@@ -4,7 +4,13 @@ wraps multiple environment with different initialization into a single env
 '''
 #from msilib.schema import DuplicateFile
 from random import random
-from cache_guessing_game_env_impl import *
+import sys
+import os
+import gym
+from gym import spaces
+
+from cache_guessing_game_env_wrapper import CacheGuessingGameEnvWrapper as CacheGuessingGameEnv
+#from cache_guessing_game_env_impl import *
 import pdb
 import sys
 import signal

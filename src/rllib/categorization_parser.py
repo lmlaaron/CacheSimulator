@@ -1,6 +1,6 @@
 import sys
 import pandas as pd
-from cache_guessing_game_env_impl import CacheGuessingGameEnv
+from cache_guessing_game_env_wrapper import CacheGuessingGameEnvWrapper as CacheGuessingGameEnv
 from pandas.core.arrays import numeric
 
 class CategorizationParser:

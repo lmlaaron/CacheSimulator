@@ -1,4 +1,8 @@
 '''
+Author: Mulong Luo
+Date: 2022.7.10
+Description:
+
  split the agent into two different agent
  P1: just generate the sequence but not the guess
  P2: just make the guess, given the memory access sequence and observations
@@ -16,14 +20,21 @@
  reward becomes agregated reward
 '''
 from random import random
-from cache_guessing_game_env_impl import *
 import sys
+import os
+import gym
+import sys
+import numpy as np
+from gym import spaces
 import signal
 from sklearn import svm
 from sklearn.model_selection import cross_val_score
 
 class CacheSimulatorP1Wrapper(gym.Env):
     def __init__(self, env_config):
+        #sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from cache_guessing_game_env_wrapper import CacheGuessingGameEnvWrapper as CacheGuessingGameEnv
+
         # for offline training, the environment returns filler observations and zero reward 
         # until the guess
         # the step reward is also temporarily accumulated until the end
