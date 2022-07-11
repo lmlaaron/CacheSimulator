@@ -1,3 +1,9 @@
+'''
+Author: Mulong Luo
+Date: 2022.4.1
+Usage: defines various replacement policy to be used in AutoCAT
+'''
+
 import block
 import random
 INVALID_TAG = '--------'

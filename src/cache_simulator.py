@@ -24,7 +24,6 @@ def main():
     result_file = ''
     if arguments['result_file']:
         result_file = arguments['result_file']
-    #print(result_file)
 
     with open(result_file, 'w'):
         pass
@@ -86,10 +85,7 @@ def print_cache(cache):
         sets.append(ways)
         if len(set_indexes) > table_size + 4 - 1:
             for s in range(min(table_size, len(set_indexes) - 4)):
-                #set_ways = cache.data[set_indexes[s]].keys()
                 temp_way = ["Set " + str(s)]
-                #for w in set_ways:
-                #    temp_way.append(cache.data[set_indexes[s]][w].address)
                 for w in range(0, cache.associativity):
                     temp_way.append(cache.data[set_indexes[s]][w][1].address)
                 sets.append(temp_way)
@@ -104,12 +100,9 @@ def print_cache(cache):
             temp_way = ['Set ' + str(len(set_indexes) - 1)]
             for w in range(0, cache.associativity):
                 temp_way.append(cache.data[set_indexes[len(set_indexes) - 1]][w][1].address)
-            #for w in set_ways:
-            #    temp_way.append(cache.data[set_indexes[len(set_indexes) - 1]][w].address)
             sets.append(temp_way)
         else: 
             for s in range(len(set_indexes)):
-                #set_ways = cache.data[set_indexes[s]].keys()
                 temp_way = ["Set " + str(s)]
                 for w in range(0, cache.associativity):
                     temp_way.append(cache.data[set_indexes[s]][w][1].address)
@@ -118,7 +111,6 @@ def print_cache(cache):
         table = UnixTable(sets)
         table.title = cache.name
         table.inner_row_border = True
-        #print("\n")
         print(table.table)
 
 #Loop through the instructions in the tracefile and use
@@ -127,7 +119,6 @@ def simulate(hierarchy, trace, logger, result_file=''):
     responses = []
     if result_file != '':
         f = open(result_file, 'w')
-    #print(result_file)
     #We only interface directly with L1. Reads and writes will automatically
     #interact with lower levels of the hierarchy
     l1 = hierarchy['cache_1']
@@ -175,40 +166,6 @@ def simulate(hierarchy, trace, logger, result_file=''):
     
     logger.info('Simulation complete')
     analyze_results(hierarchy, responses, logger)
-
-#Loop through the instructions in the tracefile and use
-#the given memory hierarchy to find AMAT
-def interactive_simulate(hierarchy, logger):
-    return
-    #responses = []
-    ##We only interface directly with L1. Reads and writes will automatically
-    ##interact with lower levels of the hierarchy
-    #l1 = hierarchy['cache_1']
-    #for current_step in range(len(trace)):
-    #    instruction = trace[current_step]
-    #    address, op = instruction.split()
-    #    #Call read for this address on our memory hierarchy
-    #    if op == 'R':
-    #        logger.info(str(current_step) + ':\tReading ' + address)
-    #        r = l1.read(address, current_step)
-    #        logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')
-    #        responses.append(r)
-    #    #Call write
-    #    elif op == 'W':
-    #        logger.info(str(current_step) + ':\tWriting ' + address)
-    #        r = l1.write(address, True, current_step)
-    #        logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')
-    #        responses.append(r)
-    #    else:
-    #        raise InvalidOpError
-    #    
-    #    if int(address, 16) >= l1.block_size * l1.n_blocks :   # receiver adress space is larger than the cache size, receiver is able to measure time      
-    #        print('trace ' + address + ' ' + str(r.time) + '\n' ) 
-    #    else:  # senders address space is within the cache size, sender do not measure time
-    #        print('trace ' + address + ' -1\n')
-
-    #logger.info('Simulation complete')
-    #analyze_results(hierarchy, responses, logger)
 
 def analyze_results(hierarchy, responses, logger):
     #Parse all the responses from the simulation
@@ -275,11 +232,6 @@ def build_hierarchy(configs, logger):
     return hierarchy
 
 def build_cache(configs, name, next_level_cache, logger):
-    #if name == 'cache_1':
-        #print(configs[name])
-        #print(name)
-        #print(configs[name]['prefetcher'] )
-        #assert(False)
     return cache.Cache(name,
                 configs['architecture']['word_size'],
                 configs['architecture']['block_size'],
