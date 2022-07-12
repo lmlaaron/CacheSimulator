@@ -7,8 +7,6 @@ once the secret is revealed, it must make a guess immediately
 from random import random
 import sys
 import os
-import gym
-
 ###sys.path.append('../src')
 from ray.rllib.agents.ppo import PPOTrainer
 import ray
@@ -24,9 +22,7 @@ import numpy as np
 class CacheGuessingGameWithRevealEnv(gym.Env):
     def __init__(self, env_config):
 
-        #sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         from cache_guessing_game_env_wrapper import CacheGuessingGameEnvWrapper as CacheGuessingGameEnv
-
         self.env = CacheGuessingGameEnv(env_config)   
 
         self.action_space_size = self.env.action_space.n + 1 # increase the action space by one
@@ -107,7 +103,6 @@ if __name__ == "__main__":
         'env': 'cache_guessing_game_env', #'cache_simulator_diversity_wrapper',
         'env_config': {
             'verbose': 1,
-            "prefetcher": "nextline",
             "rerandomize_victim": False,
             "force_victim_hit": False,
             'flush_inst': False,
@@ -128,7 +123,8 @@ if __name__ == "__main__":
                 "cache_1": {#required
                   "blocks": 4,#4, 
                   "associativity": 4,  
-                  "hit_time": 1 #cycles
+                  "hit_time": 1, #cycles
+                  "prefetcher": "nextline"
                 },
                 "mem": {#required
                   "hit_time": 1000 #cycles

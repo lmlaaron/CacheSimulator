@@ -15,7 +15,6 @@ attacker_addr_e: 7
 victim_addr_s: 0
 victim_addr_e: 3
 reset_limit: 1
-prefetcher: "none"
 
 cache_configs:
   architecture:
@@ -27,6 +26,7 @@ cache_configs:
     associativity: 1
     hit_time: 1
     rep_policy: "lru"
+    prefetcher: "none"
   mem:
     hit_time: 1000
 

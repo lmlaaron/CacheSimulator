@@ -143,6 +143,8 @@ class CacheGuessingGameEnv(gym.Env):
     self.reset_time = 0
     if "rep_policy" not in self.configs['cache_1']:
       self.configs['cache_1']['rep_policy'] = 'lru'
+    
+    #with open_dict(self.configs):
     self.configs['cache_1']['prefetcher'] = self.prefetcher
 
     '''
