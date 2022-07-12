@@ -5,7 +5,7 @@ https://github.com/auxiliary/CacheSimulator
 
 For detailed description of CacheSimulator, see the original repo.
 
-The environment is based on openai [gym](https://github.com/openai/gym). The details of the environment has been described in our [paper](paper_micro.pdf)
+The environment is based on openai [gym](https://github.com/openai/gym). The details of the environment has been described in our [paper](docs/paper_micro.pdf)
 
 ```
 $ pip install gym
@@ -13,7 +13,7 @@ $ pip install gym
 
 The trainer is based on [RLlib](https://www.ray.io/rllib) or [RLMeta](https://github.com/facebookresearch/rlmeta). The environment can be trained on both RLLib and RLMeta, and we have provided some scripts in ```src/rllib``` and ```src/rlmeta``` correspondingly.
 
-### RLLib Setup and Experiments
+## RLLib Setup and Experiments
 
 Here we show how to launch an experiments in RLlib
 
@@ -56,7 +56,7 @@ $ python replay_checkpoint.py <path_to_the_checkpoint>
 
 More documentation can be found at [docs](docs).
 
-### RLMeta Setup and experiments
+## RLMeta Setup and experiments
 
 Please follow setup process on [rlmeta](https://github.com/facebookresearch/rlmeta) for install RLMeta. 
 
@@ -67,7 +67,7 @@ $ cd ${GIT_ROOT}/src/rlmeta
 $ python train_ppo_transformer.py
 ```
 
-### Repo Structure 
+## Repo Structure 
 
 ```
 -configs            # this is the directory for CacheSimulotor configuration
@@ -84,4 +84,6 @@ $ python train_ppo_transformer.py
 -third_party        # position for third-party libraries like 
 -traces             # places for traces of CacheSimulator
 ```
+## Contact
 
+Please direct any questions to Mulong Luo ```ml2558@cornell.edu```.
