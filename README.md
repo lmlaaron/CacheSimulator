@@ -81,6 +81,12 @@ $ python train_ppo_transformer.py
  |--rllib           # scripts for launching RLLib based experiments
  |--rlmeta          # scripts for launching RLMeta-basee experiments
  |--setup_scripts   # some scripts for setup the environment
+ |--cache.py        # the cache logic implementation
+ |--cache_simulator.py              # the interface of the cache simulator
+ |--replacement_policy.py           # define the replacement policy for the cache
+ |--cache_guessing_game_env_impl.py # the gym implementation of the cache
+ |--cchunter_wrapper.py             # the wrapper that implements cchunter attack detector
+ |--cyclone_wrapper.py              # the wrapper that implements cyclone attack detector
 -third_party        # position for third-party libraries like 
 -traces             # places for traces of CacheSimulator
 ```
