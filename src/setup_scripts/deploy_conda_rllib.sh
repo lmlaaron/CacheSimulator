@@ -1,1 +1,2 @@
-conda-env create -n rllib -f=rllib.yml
+conda env create -n rllib -f rllib.yml
+
