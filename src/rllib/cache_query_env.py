@@ -117,18 +117,20 @@ class CacheQueryEnv(gym.Env):
             reward = 0 # reveal action does not cost anything
             self.env.vprint("reveal observation")
             # when doing reveal, launch the actual cachequery
-            answer = self.CQ.command(self.cq_command)
+            #self.CQ.command(self.cq_command)
+            answer = self.CQ.run(self.cq_command)[0]
+            #print(answer)
             if answer != None:
                 lat_cq = answer.split()[answer.split().index('->')+1:]
-                lat_cq_cnt = 0
+                lat_cq_cnt = len(lat_cq) - 1
                 for i in range(len(state)):
-                    if state[i][0] != -1:
+                    if state[i][0] != 2 and lat_cq_cnt >= 0:
                         if int(lat_cq[lat_cq_cnt]) > 50: # hit
                             state[i][0] = 0
                         else:                            # miss
                             state[i][0] = 1
-                        lat_cq_cnt += 1
-
+                        lat_cq_cnt -= 1
+            print(state)
             return state, reward, done, info
 
         elif action < self.action_space_size - 1: # this time the action must be smaller than sction_space_size -1
@@ -181,7 +183,9 @@ class CacheQueryEnv(gym.Env):
 
                     self.last_unmasked_tuple = ( state.copy(), reward, done, info )
                     # mask the state so that nothing is revealed
-                    state[:,0] = np.zeros((state.shape[0],))
+                    state[:,0] = - np.ones((state.shape[0],)) # use -1 as the default (unrevealed value)
+
+                    #print(state)
                     return state, reward, done, info
 
 if __name__ == "__main__":
