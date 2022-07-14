@@ -87,7 +87,8 @@ class SpecAgent():
             return action, info
 
         domain_id = line[0]
-        addr = int( int(line[3], 16) / 4 )
+        cache_line_size = 8
+        addr = int( int(line[3], 16) / cache_line_size )
         
         print(addr)
         
