@@ -340,7 +340,6 @@ class CacheGuessingGameEnv(gym.Env):
               t = 1 # empty access will be treated as HIT??? does that make sense???
               #t = self.l1.read(str(self.victim_address), self.current_step).time 
           if t > 500:   # for LRU attack, has to force victim access being hit
-            info['victim_latency'] = 2
             victim_latency = 1
             self.current_step += 1
             reward = self.victim_miss_reward #-5000
@@ -350,7 +349,6 @@ class CacheGuessingGameEnv(gym.Env):
             else:
               done = False
           else:
-            info['victim_latency'] =1 
             victim_latency = 0
             self.current_step += 1
             reward = self.victim_access_reward #-10
