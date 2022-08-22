@@ -398,8 +398,8 @@ class CacheGuessingGameEnv(gym.Env):
               reward = self.step_reward #-1 
             else:
               self.vprint("acceee " + address + " (miss not observable)")
-              r = 2 # cache miss
-              reward = 0.9 * self.step_reward #-1  
+              r = 1 #2 # cache miss
+              reward = self.step_reward# * 0.9 #-1  
           else:
             if no_measure == 0:
               self.vprint("access " + address + " hit"  )
@@ -407,8 +407,8 @@ class CacheGuessingGameEnv(gym.Env):
               reward = self.step_reward #-1 
             else:
               self.vprint("acceee " + address + " (hit not observable)")
-              r = 2 # cache miss 
-              reward = 0.9 * self.step_reward #-1 
+              r = 0 #2 # cache miss 
+              reward = self.step_reward# * 0.9 #-1 
           self.current_step += 1
           #reward = self.step_reward #-1 
           done = False
