@@ -40,7 +40,7 @@ class CacheSimulatorP1Wrapper(gym.Env):
         # the step reward is also temporarily accumulated until the end
         self.offline_training = True
 
-        self.copy = 1
+        self.copy = 5
         self.env_list = []
         self.env_config = env_config
         self.cache_state_reset = False # has to force no reset
@@ -85,6 +85,9 @@ class CacheSimulatorP1Wrapper(gym.Env):
         self.env_config['verbose'] = False
         self.reset_state = np.array([[]] * self.window_size)
 
+        # flag determine whether measured or not
+        self.measured = False
+
         # initialize the offline_state as filler state if we use offline training
         if self.offline_training == True:
             self.offline_state = self.env.reset(seed=-1)
@@ -105,7 +108,9 @@ class CacheSimulatorP1Wrapper(gym.Env):
         self.victim_addr_arr = []
         for i in range(self.victim_address_min, self.victim_address_max+1):
             self.victim_addr_arr.append(i)
- 
+
+        self.measured = False
+
         # restore the total state
         total_state = np.array([[]] * self.window_size)
         for i in range(len(self.env_list)):
@@ -158,14 +163,19 @@ class CacheSimulatorP1Wrapper(gym.Env):
                 # TODO(MUlong): need to think whether the last observation is needt for the agent
                 total_state = self.reset_state
                 self.offline_action_buffer = []
-                total_reward = self.P2oracle()
+                
+                if self.measured == False: # no measure at all
+                    total_reward = len(self.env_list) * self.env_list[0].wrong_reward
+                else:
+                    total_reward = self.P2SVMOracle()
+
             else:
                 #calculate the reward and terminate          
                 for env in self.env_list:
                     state, reward, done, info = env.step(action)
                     #total_state = np.concatenate((total_state, state), axis=1) 
                 total_state = self.reset_state 
-                total_reward = self.P2oracle() 
+                total_reward = self.P2SVMOracle() 
 
             total_done = True
         else:   # use the action and collect and concatenate observation
@@ -197,7 +207,19 @@ class CacheSimulatorP1Wrapper(gym.Env):
                     print(total_reward)
 
                 original_action = action #self.last_offline_state[0][2]
-                _, _, is_victim, _, _, _ =  self.env.parse_action(action)
+                _, _, is_victim, _, _ , no_measure =  self.env.parse_action(action)
+                if no_measure == 0:
+                    if self.measured == True:
+                        # terminate with huge penalty
+                        # does not allow measure twice
+                        total_reward = self.env_list[0].wrong_reward * len(self.env_list) 
+                        total_state = self.reset_state
+                        total_done = True
+                        info={}
+                        return total_state, total_reward, total_done, info     
+                    else:
+                        self.measured = True
+
                 if is_victim == 1:
                     victim_accessed = 1
                 else:
@@ -272,6 +294,7 @@ class CacheSimulatorP1Wrapper(gym.Env):
             #print(y)
             ans = cross_val_score(clf, X, y, cv=4, scoring='accuracy')
             score = ans.mean()
+        print(self.latency_buffer)
         print("P2 SVM accuracy %f" % score)
         return score * self.env.correct_reward + ( 1 - score ) * self.env.wrong_reward
         
@@ -289,10 +312,11 @@ if __name__ == "__main__":
         'env': 'cache_guessing_game_env_fix', #'cache_simulator_diversity_wrapper',
         'env_config': {
             'verbose': 1,
+            'enable_no_measure_access': True,
             "force_victim_hit": False,
             'flush_inst': False,
             "allow_victim_multi_access": False,
-            "allow_victim_empty_access": False,#True,
+            "allow_victim_empty_access": False,
             "attacker_addr_s": 0,
             "attacker_addr_e": 3,
             "victim_addr_s": 0,
