@@ -40,13 +40,20 @@ class CacheSimulatorP1Wrapper(gym.Env):
         # the step reward is also temporarily accumulated until the end
         self.offline_training = True
 
-        self.copy = 1 
+        self.copy = 5 
         self.env_list = []
         self.env_config = env_config
         ###print(env_config)
         ###print(env_config['allow_empty_victim_access'])
         self.cache_state_reset = False # has to force no reset
         self.env = CacheGuessingGameEnv(env_config)
+
+        # RLCheck related rewards
+        self.unique_reward = 20 #self.env.correct_reward
+        self.valid_reward = 0 #self.env.correct_reward / 5.0
+        self.invalid_reward = -1 #self.env.wrong_reward
+        self.valid_threshold = 0.99
+        self.offline_patterns = set()
         ###print(self.env.allow_empty_victim_access)
         ###exit(0)
 
@@ -117,7 +124,7 @@ class CacheSimulatorP1Wrapper(gym.Env):
             # same seed esure the initial state are teh same
     
     def reset(self):
-
+        print('Number of unique attack patterns ' + str(len(self.offline_patterns)))
         #print("calling reset ")
 
         # permute the victim addresses
@@ -159,7 +166,6 @@ class CacheSimulatorP1Wrapper(gym.Env):
     def step(self, action):
 
         #print('calling step')
-        
         early_done_reward = 0
         total_reward = 0
         total_state = [] 
@@ -194,13 +200,26 @@ class CacheSimulatorP1Wrapper(gym.Env):
                     total_reward = 1.0 * total_reward / len(self.env_list)
                     # TODO(MUlong): need to think whether the last observation is needt for the agent
                     total_state = self.reset_state
-                    self.offline_action_buffer = []
 
                     if self.measured == False : #or self.env_list[0].victim_accessed == False: # no measure at all or victim not accessed
                         total_reward = len(self.env_list) * self.env_list[0].wrong_reward
                     else:
                         print("offline")
                         total_reward = self.check_valid() * (self.env_list[0].correct_reward - self.env_list[0].wrong_reward) + self.env_list[0].wrong_reward 
+
+                    offline_action_buffer_str =  ' '.join(map( str, self.offline_action_buffer))
+                    if self.check_valid() > self.valid_threshold:
+                        if  offline_action_buffer_str not in self.offline_patterns:
+                            self.offline_patterns.add(offline_action_buffer_str)
+                            total_reward = self.unique_reward
+                            print(self.offline_patterns)
+                        else:
+                            total_reward = self.valid_reward
+                    else:
+                        total_reward = self.invalid_reward
+                    # clear the action buffer
+                    self.offline_action_buffer = []
+
                 else:
                     #calculate the reward and terminate          
                     for env in self.env_list:
@@ -208,6 +227,15 @@ class CacheSimulatorP1Wrapper(gym.Env):
                         #total_state = np.concatenate((total_state, state), axis=1) 
                     total_state = self.reset_state 
                     total_reward = self.check_valid() * (self.env_list[0].correct_reward - self.env_list[0].wrong_reward) + self.env_list[0].wrong_reward 
+                    if self.check_valid() > self.valid_threshold:
+                        if  offline_action_buffer_str not in self.offline_patterns:
+                            self.offline_patterns.add(offline_action_buffer_str)
+                            total_reward = self.unique_reward
+                            print(self.offline_patterns)
+                        else:
+                            total_reward = self.valid_reward
+                    else:
+                        total_reward = self.invalid_reward
 
             total_done = True
         else:   # use the action and collect and concatenate observation
