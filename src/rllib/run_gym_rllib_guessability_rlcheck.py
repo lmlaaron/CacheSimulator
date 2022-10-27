@@ -19,7 +19,7 @@ Description:
  observation space becomes concatenated observations
  reward becomes agregated reward
 '''
-from random import random
+from random import randint, random
 import sys
 import os
 import gym
@@ -40,7 +40,7 @@ class CacheSimulatorP1Wrapper(gym.Env):
         # the step reward is also temporarily accumulated until the end
         self.offline_training = True
 
-        self.copy = 5
+        self.copy = 5 
         self.env_list = []
         self.env_config = env_config
         self.cache_state_reset = False # has to force no reset
@@ -78,7 +78,7 @@ class CacheSimulatorP1Wrapper(gym.Env):
         self.victim_addr_arr = []
         for i in range(self.victim_address_min, self.victim_address_max+1):
             self.victim_addr_arr.append(i)
-        
+       
         # reset the addresses
         self.env_config['verbose'] = True
         self.env_list[0].reset(self.victim_addr_arr[0])
@@ -96,13 +96,16 @@ class CacheSimulatorP1Wrapper(gym.Env):
             self.last_offline_state = self.env.reset()
 
         for cp in range(0, self.copy):
-            seed = -1#random.randint(1, 1000000)
+            seed = randint(1, 10000)
             for i in range(0, len(self.victim_addr_arr)):
                 state = self.env_list[i + cp * len(self.victim_addr_arr)].reset(victim_address = self.victim_addr_arr[i], seed= seed)
                 self.reset_state = np.concatenate((self.reset_state, state), axis=1)  
             # same seed esure the initial state are teh same
     
     def reset(self):
+
+        #print("calling reset ")
+
         # permute the victim addresses
         #self.victim_addr_arr = np.random.permutation(range(self.env.victim_address_min, self.env.victim_address_max+1))
         self.victim_addr_arr = []
@@ -113,11 +116,16 @@ class CacheSimulatorP1Wrapper(gym.Env):
 
         # restore the total state
         total_state = np.array([[]] * self.window_size)
-        for i in range(len(self.env_list)):
-            seed = -1#random.randint(1, 1000000)
-            env = self.env_list[i]
-            state = env.reset(victim_address = self.victim_addr_arr[i % len(self.victim_addr_arr)], seed = seed)
-            total_state = np.concatenate((total_state, state), axis=1) 
+        ####for i in range(len(self.env_list)):
+        ####    seed = randint(1, 10000)
+        ####    env = self.env_list[i]
+        ####    state = env.reset(victim_address = self.victim_addr_arr[i % len(self.victim_addr_arr)], seed = seed)
+            
+        for cp in range(0, self.copy):
+            seed = randint(1, 10000)
+            for i in range(0, len(self.victim_addr_arr)):
+                state = self.env_list[i + cp * len(self.victim_addr_arr)].reset(victim_address = self.victim_addr_arr[i], seed= seed)
+                total_state = np.concatenate((total_state, state), axis=1) 
             
             if self.offline_training == True:
                 state = self.offline_state 
@@ -135,6 +143,9 @@ class CacheSimulatorP1Wrapper(gym.Env):
 
     # feed the actions to all subenv with different secret
     def step(self, action):
+
+        #print('calling step')
+        
         early_done_reward = 0
         total_reward = 0
         total_state = [] 
@@ -142,57 +153,20 @@ class CacheSimulatorP1Wrapper(gym.Env):
         done_arr = []
         total_state = np.array([[]] * self.window_size)
         #parsed_orig_action = action #self.env.parse_action(action)
+        _, _, is_victim, _, _ , no_measure =  self.env.parse_action(action)
+        
         if action == self.action_space_size - 1: # guessing action
-
-            info = {}
-            # for offline training the total_reward needs to include the history reward
-            if self.offline_training == True:
-                # just similate all actions here
-                i = 0
-                print(self.offline_action_buffer)
-                for env in self.env_list:
-                    for act in self.offline_action_buffer:                
-                        #print('simulate in offline_action_buffer')
-                        state, reward, done, info = env.step(act)
-                        total_reward += reward
-                        latency = state[0][0]
-                        self.latency_buffer[i].append(latency) #
-                        if done == True:
-                           break
-                    i += 1
-                # TODO(MUlong): need to think whether the last observation is needt for the agent
+            if self.measured == False: # guess without measure
+                info = {}
+                total_reward = len(self.env_list) * self.env_list[0].wrong_reward
                 total_state = self.reset_state
-                self.offline_action_buffer = []
-                
-                if self.measured == False: # no measure at all
-                    total_reward = len(self.env_list) * self.env_list[0].wrong_reward
-                else:
-                    total_reward = self.P2SVMOracle()
-
             else:
-                #calculate the reward and terminate          
-                for env in self.env_list:
-                    state, reward, done, info = env.step(action)
-                    #total_state = np.concatenate((total_state, state), axis=1) 
-                total_state = self.reset_state 
-                total_reward = self.P2SVMOracle() 
-
-            total_done = True
-        else:   # use the action and collect and concatenate observation
-            ### for offline RL, we need to mask the state and accumulate reward
-            # for offline RL, just store the action
-            if self.offline_training == True:
-                total_reward = 0
-                self.offline_action_buffer.append(action)
-
-                # feferining to cahce_gurssing_game_env_impl.py to create an empty next state
-                step_count = 1 + self.last_offline_state[0][3]
-                if step_count == self.env.window_size:
-                    print('length violation!!!')
-                    total_done = True
-                    #total_reward = len(self.env_list) * self.env.length_violation_reward 
+                info = {}
+                # for offline training the total_reward needs to include the history reward
+                if self.offline_training == True:
+                    # just similate all actions here
                     i = 0
-                    #print(self.offline_action_buffer)
+                    print(self.offline_action_buffer)
                     for env in self.env_list:
                         for act in self.offline_action_buffer:                
                             #print('simulate in offline_action_buffer')
@@ -203,64 +177,117 @@ class CacheSimulatorP1Wrapper(gym.Env):
                             if done == True:
                                break
                         i += 1
-                    total_done = done
-                    print(total_reward)
+                    total_reward = 1.0 * total_reward / len(self.env_list)
+                    # TODO(MUlong): need to think whether the last observation is needt for the agent
+                    total_state = self.reset_state
+                    self.offline_action_buffer = []
 
-                original_action = action #self.last_offline_state[0][2]
-                _, _, is_victim, _, _ , no_measure =  self.env.parse_action(action)
-                if no_measure == 0:
-                    if self.measured == True:
-                        # terminate with huge penalty
-                        # does not allow measure twice
-                        total_reward = self.env_list[0].wrong_reward * len(self.env_list) 
-                        total_state = self.reset_state
-                        total_done = True
-                        info={}
-                        return total_state, total_reward, total_done, info     
+                    if self.measured == False : #or self.env_list[0].victim_accessed == False: # no measure at all or victim not accessed
+                        total_reward = len(self.env_list) * self.env_list[0].wrong_reward
                     else:
-                        self.measured = True
-
-                if is_victim == 1:
-                    victim_accessed = 1
+                        print("offline")
+                        total_reward = self.check_valid() * (self.env_list[0].correct_reward - self.env_list[0].wrong_reward) + self.env_list[0].wrong_reward 
                 else:
-                    if self.last_offline_state[0][1] == 1:
-                        victim_accessed = 1
-                    else:
-                        victim_accessed = 0
+                    #calculate the reward and terminate          
+                    for env in self.env_list:
+                        state, reward, done, info = env.step(action)
+                        #total_state = np.concatenate((total_state, state), axis=1) 
+                    total_state = self.reset_state 
+                    total_reward = self.check_valid() * (self.env_list[0].correct_reward - self.env_list[0].wrong_reward) + self.env_list[0].wrong_reward 
 
-                r = self.last_offline_state[0][0]
-                new_obs = np.array([[r, victim_accessed, original_action, step_count]])
-                #del self.last_offline_state[-1]
-                self.last_offline_state = np.concatenate((new_obs, self.last_offline_state[0:-1,]), axis= 0)
-                state = self.last_offline_state 
-                # state is a n * 4 matrix
-                # r, victim_accesesd, original_action, self.step_count
-                # we only need to mask the r
-                state[:,0] = self.offline_state[:, 0]
-                
-                for env in self.env_list:
-                    total_state = np.concatenate((total_state, state), axis=1) 
-                
-                #print(total_state)
-                #print('step')
-                
-                info={} 
+            total_done = True
+        else:   # use the action and collect and concatenate observation
+            ### for offline RL, we need to mask the state and accumulate reward
+            # for offline RL, just store the action
 
-            else: #online RL
-                i = 0
-                for env in self.env_list:
-                    state, reward, done, info = env.step(action)
-                    latency = state[0][0]
-                    # length violation or other type of violation
-                    if done == True:
-                        env.reset()
+            if self.measured == True: # do not guess after measure
+                total_reward = len(self.env_list) * self.env_list[0].wrong_reward
+                total_done = True
+                total_state = self.reset_state
+                info ={} 
+            else:
+                if self.offline_training == True:
+                    total_reward = 0
+                    self.offline_action_buffer.append(action)
+
+                    # feferining to cahce_gurssing_game_env_impl.py to create an empty next state
+                    step_count = 1 + self.last_offline_state[0][3]
+                    if step_count == self.env.window_size:
+                        print('length violation!!!')
                         total_done = True
-                    self.latency_buffer[i].append(latency) #
-                    total_reward += reward
-                    total_state = np.concatenate((total_state, state), axis=1) 
-                    i += 1
-                info = {}   
-                total_reward = total_reward * 1.0 / len(self.env_list)#self.secret_size
+                        #total_reward = len(self.env_list) * self.env.length_violation_reward 
+                        i = 0
+                        #print(self.offline_action_buffer)
+                        for env in self.env_list:
+                            for act in self.offline_action_buffer:                
+                                #print('simulate in offline_action_buffer')
+                                state, reward, done, info = env.step(act)
+                                total_reward += reward
+                                latency = state[0][0]
+                                self.latency_buffer[i].append(latency) #
+                                if done == True:
+                                   break
+                            i += 1
+                        total_done = done
+                        total_reward = 1.0 * total_reward / len(self.env_list)
+                        print(total_reward)
+
+                    original_action = action #self.last_offline_state[0][2]
+                    _, _, is_victim, _, _ , no_measure =  self.env.parse_action(action)
+
+                    if is_victim == 1:
+                        victim_accessed = 1
+                    else:   # is_victim == 0 i.e., not victim access
+                        if no_measure == 0 :
+                            if self.measured == True :#or self.env_list[0].victim_accessed == False:
+                                # terminate with huge penalty
+                                # does not allow measure twice
+                                total_reward = self.env_list[0].wrong_reward #* len(self.env_list) 
+                                total_state = self.reset_state
+                                total_done = True
+                                info={}
+                                return total_state, total_reward, total_done, info     
+                            else:
+                                self.measured = True
+
+                        if self.last_offline_state[0][1] == 1:
+                            victim_accessed = 1
+                        else:
+                            victim_accessed = 0
+
+                    r = self.last_offline_state[0][0]
+                    new_obs = np.array([[r, victim_accessed, original_action, step_count]])
+                    #del self.last_offline_state[-1]
+                    self.last_offline_state = np.concatenate((new_obs, self.last_offline_state[0:-1,]), axis= 0)
+                    state = self.last_offline_state 
+                    # state is a n * 4 matrix
+                    # r, victim_accesesd, original_action, self.step_count
+                    # we only need to mask the r
+                    state[:,0] = self.offline_state[:, 0]
+
+                    for env in self.env_list:
+                        total_state = np.concatenate((total_state, state), axis=1) 
+
+                    #print(total_state)
+                    #print('step')
+
+                    info={} 
+
+                else: #online RL
+                    i = 0
+                    for env in self.env_list:
+                        state, reward, done, info = env.step(action)
+                        latency = state[0][0]
+                        # length violation or other type of violation
+                        if done == True:
+                            env.reset()
+                            total_done = True
+                        self.latency_buffer[i].append(latency) #
+                        total_reward += reward
+                        total_state = np.concatenate((total_state, state), axis=1) 
+                        i += 1
+                    info = {}   
+                    total_reward = total_reward * 1.0 / len(self.env_list)#self.secret_size
         return total_state, total_reward, total_done, info     
 
     # given the existing sequence, calculate the P2 oracle reward
@@ -276,6 +303,43 @@ class CacheSimulatorP1Wrapper(gym.Env):
         print(self.latency_buffer)
         print(' P2oracle score %f'% score)
         return score  * self.env.correct_reward + ( 1 - score ) * self.env.wrong_reward
+
+    # check if the out put is valid
+    def check_valid(self):
+        obs_array=[]
+
+        y = []
+        for cp in range(0, self.copy):
+            for sec in range(0, len(self.victim_addr_arr)):
+                y.append(self.victim_addr_arr[sec])
+
+        # first process the latency_buffer to strip all the N.A. (coded as 2) observations
+        for i in range(0, len(self.latency_buffer)):
+            valid = False
+            for j in range(0, len(self.latency_buffer[i])):
+                if self.latency_buffer[i][j] != 2:
+                    obs_array.append(self.latency_buffer[i][j])
+                    valid = True
+                    break
+            
+            if valid == False:  # if there is no valid distinguishable sequence
+                print(self.latency_buffer)
+                print(obs_array)
+                print(y)
+                print('score =0')
+                return 0
+        
+        #rho = np.corrcoef(obs_array,y)[0][1] * np.corrcoef(obs_array,y)[0][1]
+        rho = abs(np.corrcoef(obs_array,y)[0][1])# * np.corrcoef(obs_array,y)[0][1]
+ 
+        if np.isnan(rho):
+            rho = 0
+        print(self.latency_buffer)
+        print(obs_array)
+        print(y)
+        print('score %f' % rho)
+        return rho 
+
 
     # use SVM to evaluate the guessability (oracle guessing correctness rate)
     def P2SVMOracle(self):
@@ -294,10 +358,10 @@ class CacheSimulatorP1Wrapper(gym.Env):
             #print(y)
             ans = cross_val_score(clf, X, y, cv=4, scoring='accuracy')
             score = ans.mean()
+
         print(self.latency_buffer)
         print("P2 SVM accuracy %f" % score)
         return score * self.env.correct_reward + ( 1 - score ) * self.env.wrong_reward
-        
 
 if __name__ == "__main__":
     from ray.rllib.agents.ppo import PPOTrainer
@@ -312,10 +376,10 @@ if __name__ == "__main__":
         'env': 'cache_guessing_game_env_fix', #'cache_simulator_diversity_wrapper',
         'env_config': {
             'verbose': 1,
-            'enable_no_measure_access': True,
+            'enable_no_measure_access': True, #False,
             "force_victim_hit": False,
             'flush_inst': False,
-            "allow_victim_multi_access": False,
+            "allow_victim_multi_access": False, #True,
             "allow_victim_empty_access": False,
             "attacker_addr_s": 0,
             "attacker_addr_e": 3,
