@@ -40,15 +40,27 @@ class CacheSimulatorP1Wrapper(gym.Env):
         # the step reward is also temporarily accumulated until the end
         self.offline_training = True
 
-        self.copy = 5 
+        self.copy = 1 
         self.env_list = []
         self.env_config = env_config
+        ###print(env_config)
+        ###print(env_config['allow_empty_victim_access'])
         self.cache_state_reset = False # has to force no reset
         self.env = CacheGuessingGameEnv(env_config)
+        ###print(self.env.allow_empty_victim_access)
+        ###exit(0)
+
+        # check if empty access is allowed
+        if self.env.allow_empty_victim_access == False:
+            print('does not allow empty victim access')
+            self.empty_access_addr = 0
+        else:
+            self.empty_access_addr = 1
+
         self.victim_address_min = self.env.victim_address_min
         self.victim_address_max = self.env.victim_address_max
         self.window_size = self.env.window_size
-        self.secret_size = self.victim_address_max - self.victim_address_min + 1
+        self.secret_size = self.victim_address_max - self.victim_address_min + 1 + self.empty_access_addr
         self.max_box_value = self.env.max_box_value
         self.feature_size = self.env.feature_size
        
@@ -74,9 +86,11 @@ class CacheSimulatorP1Wrapper(gym.Env):
             self.latency_buffer.append([])
 
         #permute the victim addresses
-        self.victim_addr_arr = np.random.permutation(range(self.env.victim_address_min, self.env.victim_address_max+1))
+
+        
+        self.victim_addr_arr = np.random.permutation(range(self.env.victim_address_min, self.env.victim_address_max + 1 + self.empty_access_addr))
         self.victim_addr_arr = []
-        for i in range(self.victim_address_min, self.victim_address_max+1):
+        for i in range(self.victim_address_min, self.victim_address_max + 1 + self.empty_access_addr):
             self.victim_addr_arr.append(i)
        
         # reset the addresses
@@ -109,7 +123,7 @@ class CacheSimulatorP1Wrapper(gym.Env):
         # permute the victim addresses
         #self.victim_addr_arr = np.random.permutation(range(self.env.victim_address_min, self.env.victim_address_max+1))
         self.victim_addr_arr = []
-        for i in range(self.victim_address_min, self.victim_address_max+1):
+        for i in range(self.victim_address_min, self.victim_address_max+1 + self.empty_access_addr):
             self.victim_addr_arr.append(i)
 
         self.measured = False
@@ -153,7 +167,7 @@ class CacheSimulatorP1Wrapper(gym.Env):
         done_arr = []
         total_state = np.array([[]] * self.window_size)
         #parsed_orig_action = action #self.env.parse_action(action)
-        _, _, is_victim, _, _ , no_measure =  self.env.parse_action(action)
+        _, _, is_victim, _, _ , no_measure = self.env.parse_action(action)
         
         if action == self.action_space_size - 1: # guessing action
             if self.measured == False: # guess without measure
@@ -380,11 +394,11 @@ if __name__ == "__main__":
             "force_victim_hit": False,
             'flush_inst': False,
             "allow_victim_multi_access": False, #True,
-            "allow_victim_empty_access": False,
+            "allow_empty_victim_access": True,
             "attacker_addr_s": 0,
             "attacker_addr_e": 3,
             "victim_addr_s": 0,
-            "victim_addr_e": 1,
+            "victim_addr_e": 0,
             "reset_limit": 1,
             "cache_configs": {
                 # YAML config file for cache simulaton
