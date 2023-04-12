@@ -321,6 +321,8 @@ class CacheGuessingGameEnv(gym.Env):
     # if self.current_step > self.window_size : # if current_step is too long, terminate
     if self.step_count >= self.window_size - 1:
       r = 2 #
+      self.vprint(self.step_count)
+      self.vprint(self.window_size)
       self.vprint("length violation!")
       reward = self.length_violation_reward #-10000 
       done = True
