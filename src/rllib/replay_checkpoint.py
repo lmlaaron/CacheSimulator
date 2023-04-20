@@ -14,6 +14,7 @@ import json
 from ray import serve
 from test_custom_policy_diversity_works import *
 from cache_simulator import print_cache
+from cache_guessing_game_env_wrapper import CacheGuessingGameEnvWrapper as CacheGuessingGameEnv
 
 #from run_gym_rrllib import * # need this to import the config and PPOtrainer
 
@@ -21,16 +22,13 @@ from cache_simulator import print_cache
 #config["num_envs_per_worker"] = 1
 
 #print(config)
-#tune.register_env("cache_guessing_game_env_fix", CacheGuessingGameEnv)#Fix)
+tune.register_env("cache_guessing_game_env", CacheGuessingGameEnv)#Fix)
 #exit(0)
 
 checkpoint_path = sys.argv[1:][0]
 print(checkpoint_path[0])
 #exit(-1)
 #'/home/ml2558/ray_results/PPO_cache_guessing_game_env_fix_2022-01-24_21-18-203pft9506/checkpoint_000136/checkpoint-136'
-
-
-
 i = checkpoint_path.rfind('/')
 config_path = checkpoint_path[0:i] + '/../params.json'
 

@@ -12,6 +12,7 @@ import ray
 import ray.tune as tune
 import gym
 from gym import spaces
+import json
 
 from cache_guessing_game_env_wrapper import CacheGuessingGameEnvWrapper as CacheGuessingGameEnv
 import signal
@@ -45,10 +46,10 @@ if __name__ == "__main__":
                   "write_back": True
                 },
                 "cache_1": {#required
-                  "blocks": 2,#4, 
-                  "associativity": 2,  
+                  "blocks": 4,#4, 
+                  "associativity": 4,  
                   "hit_time": 1, #cycles
-                  "prefetcher": "nextline"
+                  "rep_policy": "lru",
                 },
                 "mem": {#required
                   "hit_time": 1000 #cycles
@@ -71,8 +72,22 @@ if __name__ == "__main__":
         }, 
         'framework': 'torch',
     }
-    #tune.run(PPOTrainer, config=config)
-    trainer = PPOTrainer(config=config)
+
+    if len(sys.argv) > 1:
+        checkpoint_path = sys.argv[1:][0]
+        print("train from this checkpoint :" + checkpoint_path[0])
+        i = checkpoint_path.rfind('/')
+        #config_path = checkpoint_path[0:i] + '/../params.json'
+        #print(config_path) 
+        #config = json.load(open(config_path))   
+        #config["env_config"]["verbose"] = 1 
+        #print(config)
+        trainer = PPOTrainer(config=config)
+        trainer.restore(checkpoint_path)
+    else:
+        trainer = PPOTrainer(config=config)
+        
+
     def signal_handler(sig, frame):
         print('You pressed Ctrl+C!')
         checkpoint = trainer.save()
@@ -82,3 +97,5 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     while True:
         result = trainer.train() 
+
+

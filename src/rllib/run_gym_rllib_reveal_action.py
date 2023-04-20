@@ -63,7 +63,7 @@ class CacheGuessingGameWithRevealEnv(gym.Env):
             return state, reward, done, info
 
         elif action < self.action_space_size - 1: # this time the action must be smaller than sction_space_size -1
-            _, is_guess, _, _, _ = self.env.parse_action(action)
+            _, is_guess, _, _, _, _ = self.env.parse_action(action)
             # need to check if revealed first
             # if revealed, must make a guess
             # if not revealed can do any thing
