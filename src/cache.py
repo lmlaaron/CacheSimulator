@@ -171,6 +171,7 @@ class Cache:
         r = None
         #Check if this is main memory
         #Main memory is always a hit
+        victim_addr = "-1"
         if not self.next_level:
             r = response.Response({self.name:True}, self.hit_time)
         else:
@@ -202,7 +203,7 @@ class Cache:
                 r = response.Response({self.name:True}, self.hit_time)
             else:
                 #Read from the next level of memory
-                r, cyclic_set_index, cyclic_way_index = self.next_level.read(address, current_step, pl_opt)
+                r, cyclic_set_index, cyclic_way_index, _ = self.next_level.read(address, current_step, pl_opt)
                 r.deepen(self.write_time, self.name)
 
                 #If there's space in this set, add this block to it
@@ -229,7 +230,8 @@ class Cache:
                     #Find the victim block and replace it
                     victim_tag = self.set_rep_policy[index].find_victim(current_step)
                     # pl cache may find the victim that is partition locked
-                    if victim_tag != INVALID_TAG: 
+                    if victim_tag != INVALID_TAG:
+                        victim_addr =  victim_tag + index #+ block_offset block_offset is 0 should not take space  
                         # Write the block back down if it's dirty and we're using write back
                         if self.write_back:
                             for i in range( 0, len(self.data[index])):
@@ -253,7 +255,7 @@ class Cache:
                         self.set_rep_policy[index].instantiate_entry(tag, current_step)
                         if pl_opt != -1:
                             self.set_rep_policy[index].setlock(tag, pl_opt)
-        return r, cyclic_set_index, cyclic_way_index
+        return r, cyclic_set_index, cyclic_way_index, victim_addr
 
     # pl_opt: indicates the PL cache option
     # pl_opt = -1: normal read

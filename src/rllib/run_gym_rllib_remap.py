@@ -43,8 +43,8 @@ class CacheSimulatorP1Wrapper(gym.Env):
 
         self.copy = 1
         self.env_list = []
-        env_config["rerandomize_victim"] = True
-        env_config["ceaser_remap_period"] = 10000000
+        #env_config["rerandomize_victim"] = False#True
+        #env_config["ceaser_remap_period"] = 10000000
         self.env_config = env_config
         self.cache_state_reset = False # has to force no reset
         self.env = CacheGuessingGameEnv(self.env_config)
@@ -297,7 +297,7 @@ if __name__ == "__main__":
     from ray.rllib.agents.ppo import PPOTrainer
     import ray
     import ray.tune as tune
-    ray.init(include_dashboard=False, ignore_reinit_error=True, num_gpus=1)
+    ray.init(include_dashboard=False, ignore_reinit_error=True, num_gpus=2)
     if ray.is_initialized():
         ray.shutdown()
     #tune.register_env("cache_guessing_game_env_fix", CacheSimulatorSIMDWrapper)#
@@ -305,6 +305,8 @@ if __name__ == "__main__":
     config = {
         'env': 'cache_guessing_game_env_fix', #'cache_simulator_diversity_wrapper',
         'env_config': {
+            "rerandomize_victim": False,#True
+            "ceaser_remap_period": 10000000,
             'verbose': 1,
             "force_victim_hit": False,
             'flush_inst': False,
@@ -340,11 +342,16 @@ if __name__ == "__main__":
         #'num_sgd_iter': 5, 
         #'vf_loss_coeff': 1e-05, 
         'model': {
-            #'custom_model': 'test_model',#'rnn', 
-            #'max_seq_len': 20, 
-            #'custom_model_config': {
-            #    'cell_size': 32
-            #   }
+            "use_attention": True,
+            'attention_num_transformer_units': 1,
+            'attention_dim': 32,#128,
+            'attention_num_heads': 4,#8,
+            'attention_head_dim': 128,#2048,
+            ## 'custom_model': 'transformer_model', #'test_model',#'rnn', 
+            ##'max_seq_len': 20, 
+            ##'custom_model_config': {
+            ##    'cell_size': 32
+            ##   }
         }, 
         'framework': 'torch',
     }
