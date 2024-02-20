@@ -41,10 +41,10 @@ class CacheSimulatorP1Wrapper(gym.Env):
         # the step reward is also temporarily accumulated until the end
         self.offline_training = False #True
 
-        self.copy = 4
+        self.copy = 1
         self.env_list = []
-        env_config["rerandomize_victim"] = True #True
-        env_config["ceaser_remap_period"] =20000000
+        env_config["rerandomize_victim"] = True
+        env_config["ceaser_remap_period"] = 10000000
         self.env_config = env_config
         self.cache_state_reset = False # has to force no reset
         self.env = CacheGuessingGameEnv(self.env_config)
@@ -309,9 +309,9 @@ if __name__ == "__main__":
             "force_victim_hit": False,
             'flush_inst': False,
             "allow_victim_multi_access": True,
-            "allow_empty_victim_access": True,
+            "allow_empty_victim_access": False,
             "attacker_addr_s": 2,
-            "attacker_addr_e": 5,
+            "attacker_addr_e": 7,
             "victim_addr_s": 0,
             "victim_addr_e": 0,
             "reset_limit": 1,
@@ -323,8 +323,8 @@ if __name__ == "__main__":
                   "write_back": True
                 },
                 "cache_1": {#required
-                  "blocks": 2, 
-                  "associativity": 1,  
+                  "blocks": 4, 
+                  "associativity": 2,  
                   "hit_time": 1 #cycles
                 },
                 "mem": {#required

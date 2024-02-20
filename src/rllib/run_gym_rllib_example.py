@@ -32,9 +32,9 @@ if __name__ == "__main__":
             "force_victim_hit": False,
             'flush_inst': False,
             "allow_victim_multi_access": True,#False,
-            "allow_empty_victim_access": True,
-            "attacker_addr_s": 0,
-            "attacker_addr_e": 2,#4,#11,#15,
+            "allow_empty_victim_access": False,
+            "attacker_addr_s": 2,
+            "attacker_addr_e": 5,#4,#11,#15,
             "victim_addr_s": 0,
             "victim_addr_e": 0,#7,
             "reset_limit": 1,
@@ -47,7 +47,7 @@ if __name__ == "__main__":
                 },
                 "cache_1": {#required
                   "blocks": 4,#4, 
-                  "associativity": 4,  
+                  "associativity": 2,  
                   "hit_time": 1, #cycles
                   "rep_policy": "lru",
                 },
