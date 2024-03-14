@@ -152,7 +152,7 @@ class CacheGuessingGameEnv(gym.Env):
     check window size
     '''
     if window_size == 0:
-      self.window_size = self.cache_size * 4  + 8 #10 
+      self.window_size = self.cache_size * 4 * 5 + 8 #10 
       #self.window_size = self.cache_size * 4 + 8 #10 
     else:
       self.window_size = window_size
@@ -359,6 +359,9 @@ class CacheGuessingGameEnv(gym.Env):
             self.current_step += 1
             reward = self.victim_access_reward #-10
             done = False
+        
+          # make victims latency available (for eviction set finding)
+          #r = victim_latency
         else:
           r = 2
           self.vprint("does not allow multi victim access in this config, terminate!")
@@ -401,7 +404,7 @@ class CacheGuessingGameEnv(gym.Env):
           lat = lat.time # measure the access latency
           if lat > 500:
             if no_measure == 0:
-              self.vprint("acceee " + address + " miss")
+              self.vprint("access " + address + " miss")
               r = 1 # cache miss
               reward = self.step_reward #-1 
             else:
@@ -426,11 +429,16 @@ class CacheGuessingGameEnv(gym.Env):
           if the evicted
           '''
           if evicted_addr != "-1":
-            self.vprint('evicted_addr is ' + str(int(evicted_addr,2)) +' victim address is ' + str(self.victim_address) + ' mapped victim address is ' + str(self.ceaser_mapping(self.victim_address)) )
+            self.vprint('evicted_addr (mapped) is ' + str(int(evicted_addr,2)) +' victim address is ' + str(self.victim_address) + ' mapped victim address is ' + str(self.ceaser_mapping(self.victim_address)) )
           if int(evicted_addr,2) == self.ceaser_mapping(self.victim_address):
+          
+            # if the target is evicted, considering change the response to 3
+            #r = 3 # 0 hit, 1 miss, 2 not observable, 3 victim evicted
+            
             reward = self.correct_reward
+          
             self.evict_count += 1
-            if self.evict_count == 1:
+            if self.evict_count == 5:
               self.evict_count = 0
               done = True
               self.vprint('victim address evicted, Done')

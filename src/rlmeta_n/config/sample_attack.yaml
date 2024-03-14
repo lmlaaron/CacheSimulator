@@ -1,0 +1,10 @@
+num_episodes: -1 
+seed: null
+reset_cache_state: False
+
+checkpoint: "/home/ml55339/AutoCAT-randc/AutoCAT/src/rlmeta_n/outputs/2024-03-13/18-29-58/ppo_agent-33.pth"
+deterministic_policy: True 
+
+defaults:
+  - env_config: hpca_ae_exp_4_1
+  - model_config: transformer
