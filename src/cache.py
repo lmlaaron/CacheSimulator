@@ -180,6 +180,11 @@ class Cache:
 
             #Get the tags in this set
             in_cache = []
+            #print(self.data)
+            #####print(address)            
+            #####print(block_offset)
+            #####print(index)
+            #####print(tag)
             for i in range( 0, len(self.data[index]) ):
                 if self.data[index][i][0] != INVALID_TAG:#'x':
                     in_cache.append(self.data[index][i][0])
@@ -367,7 +372,7 @@ class Cache:
 
     def parse_address(self, address):
         #Calculate our address length and convert the address to binary string
-        address_size = len(address) * 4
+        address_size = 16 #len(address) * 4
         binary_address = bin(int(address, 16))[2:].zfill(address_size)
 
         if self.block_offset_size > 0:

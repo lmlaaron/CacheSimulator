@@ -359,14 +359,30 @@ class CacheGuessingGameEnv(gym.Env):
             self.current_step += 1
             reward = self.victim_access_reward #-10
             done = False
-        
+
+
+          if victim_latency == 1:
+            reward = self.correct_reward
+            self.evict_count += 1
+            if self.evict_count == 5:
+              self.evict_count = 0
+              done = True
+              self.vprint('victim access miss, Done')
+            else:
+              done = False
+              self.vprint('victim access miss, self.evict_count ' + str(self.evict_count))
+          else:
+              reward =  3 * self.step_reward
+              self.vprint('victim access hit')
+
           # make victims latency available (for eviction set finding)
-          #r = victim_latency
+          r = victim_latency
         else:
           r = 2
           self.vprint("does not allow multi victim access in this config, terminate!")
           self.current_step += 1
           reward = self.double_victim_access_reward # -10000
+
           done = True
       else:
         if False: #is_guess == True:
@@ -421,6 +437,7 @@ class CacheGuessingGameEnv(gym.Env):
               r = 2 # cache miss 
               reward = self.step_reward# * 0.9 #-1 
           self.current_step += 1
+          done = False
           #reward = self.step_reward #-1 
           #done = False
           #done = self.check_eviction()
@@ -430,23 +447,23 @@ class CacheGuessingGameEnv(gym.Env):
           '''
           if evicted_addr != "-1":
             self.vprint('evicted_addr (mapped) is ' + str(int(evicted_addr,2)) +' victim address is ' + str(self.victim_address) + ' mapped victim address is ' + str(self.ceaser_mapping(self.victim_address)) )
-          if int(evicted_addr,2) == self.ceaser_mapping(self.victim_address):
+          ###if int(evicted_addr,2) == self.ceaser_mapping(self.victim_address):
           
-            # if the target is evicted, considering change the response to 3
-            #r = 3 # 0 hit, 1 miss, 2 not observable, 3 victim evicted
-            
-            reward = self.correct_reward
+          ###  # if the target is evicted, considering change the response to 3
+          ###  #r = 3 # 0 hit, 1 miss, 2 not observable, 3 victim evicted
+          ###  
+          ###  reward = self.correct_reward
           
-            self.evict_count += 1
-            if self.evict_count == 5:
-              self.evict_count = 0
-              done = True
-              self.vprint('victim address evicted, Done')
-            else:
-              done = False
-              self.vprint('victim address evicted, self.evict_count ' + str(self.evict_count))
-          else:
-            done = False
+          ###  self.evict_count += 1
+          ###  if self.evict_count == 5:
+          ###    self.evict_count = 0
+          ###    done = True
+          ###    self.vprint('victim address evicted, Done')
+          ###  else:
+          ###    done = False
+          ###    self.vprint('victim address evicted, self.evict_count ' + str(self.evict_count))
+          ###else:
+          ###  done = False
         else:    # is_flush == True
           self.l1.cflush(address, self.current_step, domain_id='X')
           #cflush = 1
@@ -658,14 +675,14 @@ class CacheGuessingGameEnv(gym.Env):
   '''
   randomize the cache so that the attacker has to do a prime step
   '''
-  def _randomize_cache(self, mode = "union", seed=-1):
+  def _randomize_cache(self, mode = "evset", seed=-1):
     # use seed so that we can get identical initialization states
     if seed != -1:
       random.seed(seed)
-    if mode == "attacker":
-      self.l1.read(hex(self.ceaser_mapping(0))[2:], -2, domain_id='X')
-      self.l1.read(hex(self.ceaser_mapping(1))[2:], -1, domain_id='X')
-      return
+    #####if mode == "attacker":
+    #####  self.l1.read(hex(self.ceaser_mapping(0))[2:], -2, domain_id='X')
+    #####  self.l1.read(hex(self.ceaser_mapping(1))[2:], -1, domain_id='X')
+    #####  return
     if mode == "none":
       return
     self.current_step = -self.cache_size * 2 
@@ -673,6 +690,8 @@ class CacheGuessingGameEnv(gym.Env):
       if mode == "victim":
         addr = random.randint(self.victim_address_min, self.victim_address_max)
       elif mode == "attacker":
+        addr = random.randint(self.attacker_address_min, self.attacker_address_max)
+      elif mode == "evset": 
         addr = random.randint(self.attacker_address_min, self.attacker_address_max)
       elif mode == "union":
         addr = random.randint(self.victim_address_min, self.victim_address_max) if random.randint(0,1) == 1 else random.randint(self.attacker_address_min, self.attacker_address_max)
@@ -683,6 +702,9 @@ class CacheGuessingGameEnv(gym.Env):
       self.l1.read(hex(self.ceaser_mapping(addr))[2:], self.current_step, domain_id='X')
       self.current_step += 1
 
+    if mode == "evset":
+      self.l1.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='X')
+      self.current_step += 1
   '''
   rerturns the dimension of the observation space
   '''
