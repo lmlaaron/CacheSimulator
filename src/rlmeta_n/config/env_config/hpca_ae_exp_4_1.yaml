@@ -11,7 +11,7 @@ flush_inst: false
 allow_victim_multi_access: true
 allow_empty_victim_access: false
 attacker_addr_s: 2 
-attacker_addr_e: 70
+attacker_addr_e: 512 
 victim_addr_s: 0
 victim_addr_e: 0
 reset_limit: 1
@@ -31,4 +31,4 @@ cache_configs:
   mem:
     hit_time: 1000
 
-window_size: 64
+window_size: 640

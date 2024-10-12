@@ -2,7 +2,7 @@
 # date 2021.12.3
 # description: environment for study RL for side channel attack
 from collections import deque
-
+from cache_simulator import print_cache
 import numpy as np
 import random
 import os
@@ -586,6 +586,7 @@ class CacheGuessingGameEnv(gym.Env):
 
     self.last_state = None
 
+    print_cache(self.l1)
     return np.array(list(reversed(self.state)))
 
   '''

@@ -2,7 +2,7 @@ type: "mlp"
 args:
   latency_dim: 3
   victim_acc_dim: 2
-  action_dim: 64
+  action_dim: 512 
   step_dim: 64
   window_size: -1
   action_embed_dim: 16
