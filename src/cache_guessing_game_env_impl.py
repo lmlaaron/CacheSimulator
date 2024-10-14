@@ -173,13 +173,15 @@ class CacheGuessingGameEnv(gym.Env):
     self.victim_address_space = range(self.victim_address_min,
                                 self.victim_address_max + 1)  #
 
+    self.virtual_space_size = 1048576
     '''
     for randomized address mapping rerandomization
     '''
     #if self.rerandomize_victim == True:
     addr_space = max(self.victim_address_max, self.attacker_address_max) + 1
-    self.perm = [i for i in range(addr_space)]
-    
+    #self.perm = [i for i in range(addr_space)]
+    self.perm = [ i for i in range(self.virtual_space_size+1)]
+
     if self.rerandomize_victim == True:
         random.shuffle(self.perm)    
 
@@ -601,7 +603,15 @@ class CacheGuessingGameEnv(gym.Env):
         #print(self.ceaser_mapping(i))
         #print(int(self.ceaser_mapping(i) / self.num_ways))
         mapped_addr[self.ceaser_mapping(i) % int(self.cache_size / self.num_ways)  ].append(i)
-    print(mapped_addr)
+    
+    # not enough
+    while len(mapped_addr[self.ceaser_mapping(self.victim_address_max) % int(self.cache_size / self.num_ways)]) < self.num_ways+ 1:
+        print("not forming a eviction set, remap again")
+        random.shuffle(self.perm)    
+        print(mapped_addr)
+    
+    #print("forming eviction set")
+    #print(mapped_addr)
 
     return np.array(list(reversed(self.state)))
 
