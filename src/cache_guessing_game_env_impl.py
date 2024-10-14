@@ -179,13 +179,17 @@ class CacheGuessingGameEnv(gym.Env):
     #if self.rerandomize_victim == True:
     addr_space = max(self.victim_address_max, self.attacker_address_max) + 1
     self.perm = [i for i in range(addr_space)]
-    random.shuffle(self.perm)    
+    
+    if self.rerandomize_victim == True:
+        random.shuffle(self.perm)    
 
     # keeping track of the victim remap length
     self.ceaser_access_count = 0
     self.mapping_func = lambda addr : addr
     # initially do a remap for the remapped cache
-    self.remap()
+    
+    if self.rerandomize_victim == True:
+        self.remap()
    
     '''
     define the action space
@@ -586,7 +590,19 @@ class CacheGuessingGameEnv(gym.Env):
 
     self.last_state = None
 
-    print_cache(self.l1)
+    #print_cache(self.l1)
+    #print(self.perm)
+    mapped_addr = []
+    for i in range(0, int( self.cache_size / self.num_ways)):
+        mapped_addr.append([])
+
+    #print(mapped_addr)
+    for i in range(0, self.attacker_address_max + 1):
+        #print(self.ceaser_mapping(i))
+        #print(int(self.ceaser_mapping(i) / self.num_ways))
+        mapped_addr[self.ceaser_mapping(i) % int(self.cache_size / self.num_ways)  ].append(i)
+    print(mapped_addr)
+
     return np.array(list(reversed(self.state)))
 
   '''

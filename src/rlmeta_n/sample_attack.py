@@ -19,7 +19,6 @@ from rlmeta.agents.ppo.ppo_agent import PPOAgent
 from rlmeta.core.types import Action, TimeStep
 from rlmeta.envs.env import Env
 from rlmeta.utils.stats_dict import StatsDict
-from cache_simulator import print_cache
 import model_utils
 
 from cache_env_wrapper import CacheEnvWrapperFactory
