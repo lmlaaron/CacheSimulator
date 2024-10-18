@@ -182,8 +182,8 @@ class CacheGuessingGameEnv(gym.Env):
     #self.perm = [i for i in range(addr_space)]
     self.perm = [ i for i in range(self.virtual_space_size+1)]
 
-    if self.rerandomize_victim == True:
-        random.shuffle(self.perm)    
+    #if self.rerandomize_victim == True:
+    #    random.seed()
 
     # keeping track of the victim remap length
     self.ceaser_access_count = 0
@@ -594,6 +594,8 @@ class CacheGuessingGameEnv(gym.Env):
 
     #print_cache(self.l1)
     #print(self.perm)
+    random.shuffle(self.perm)    
+ 
     mapped_addr = []
     for i in range(0, int( self.cache_size / self.num_ways)):
         mapped_addr.append([])
@@ -611,7 +613,7 @@ class CacheGuessingGameEnv(gym.Env):
         print(mapped_addr)
     
     #print("forming eviction set")
-    #print(mapped_addr)
+    print(mapped_addr)
 
     return np.array(list(reversed(self.state)))
 
@@ -704,8 +706,9 @@ class CacheGuessingGameEnv(gym.Env):
   '''
   def _randomize_cache(self, mode = "evset", seed=-1):
     # use seed so that we can get identical initialization states
-    if seed != -1:
-      random.seed(seed)
+    #if seed != -1:
+    #  random.seed(seed)
+
     #####if mode == "attacker":
     #####  self.l1.read(hex(self.ceaser_mapping(0))[2:], -2, domain_id='X')
     #####  self.l1.read(hex(self.ceaser_mapping(1))[2:], -1, domain_id='X')
