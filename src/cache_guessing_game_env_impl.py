@@ -156,7 +156,7 @@ class CacheGuessingGameEnv(gym.Env):
       #self.window_size = self.cache_size * 4 + 8 #10 
     else:
       self.window_size = window_size
-    self.feature_size = 4
+    self.feature_size = 3#4
 
     '''
     instantiate the cache
@@ -200,26 +200,26 @@ class CacheGuessingGameEnv(gym.Env):
     if self.flush_inst == False:
       # one-hot encoding
       if self.allow_empty_victim_access == True:
-        # | attacker_addr | 
+        # | attacker_addr | v | 
         self.action_space = spaces.Discrete(
-          ( self.no_measure_factor + 1 )  * len(self.attacker_address_space)  
+          ( self.no_measure_factor + 1 )  * len(self.attacker_address_space) + 1
         )
       else:
-        # | attacker_addr | 
+        # | attacker_addr | v |
         self.action_space = spaces.Discrete(
-          ( self.no_measure_factor + 1 )* len(self.attacker_address_space)  
+          ( self.no_measure_factor + 1 )* len(self.attacker_address_space) + 1
         )
     else:
       # one-hot encoding
       if self.allow_empty_victim_access == True:
-        # | attacker_addr | flush_attacker_addr |  
+        # | attacker_addr | flush_attacker_addr | v | 
         self.action_space = spaces.Discrete(
-          (( self.no_measure_factor + 1 )+ 1) * len(self.attacker_address_space)  
+          (( self.no_measure_factor + 1 )+ 1) * len(self.attacker_address_space) + 1  
         )
       else:
-        # | attacker_addr | flush_attacker_addr |  
+        # | attacker_addr | flush_attacker_addr | v |
         self.action_space = spaces.Discrete(
-          (( self.no_measure_factor + 1 ) + 1) * len(self.attacker_address_space) 
+          (( self.no_measure_factor + 1 ) + 1) * len(self.attacker_address_space) + 1
         )
     
     '''
@@ -227,7 +227,7 @@ class CacheGuessingGameEnv(gym.Env):
     '''
     self.max_box_value = max(self.window_size + 2,  2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space) + 1)#max(self.window_size + 2, len(self.attacker_address_space) + 1) 
     self.observation_space = spaces.Box(low=-1, high=self.max_box_value, shape=(self.window_size, self.feature_size))
-    self.state = deque([[-1, -1, -1, -1]] * self.window_size)
+    self.state = deque([[-1, -1, -1]] * self.window_size)
 
     '''
     initilizate the environment configurations
@@ -455,24 +455,24 @@ class CacheGuessingGameEnv(gym.Env):
             self.vprint('evicted_addr (mapped) is ' + hex(int(evicted_addr,2)) +' victim address is ' + str(self.victim_address) + ' mapped victim address is ' + hex(self.ceaser_mapping(self.victim_address)) )
           
 
-            if int(evicted_addr,2) == self.ceaser_mapping(self.victim_address):
-              # if the target is evicted, considering change the response to 3
-              #r = 3 # 0 hit, 1 miss, 2 not observable, 3 victim evicted
-              
-              self.l1.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='v')
+            ####if int(evicted_addr,2) == self.ceaser_mapping(self.victim_address):
+            ####  # if the target is evicted, considering change the response to 3
+            ####  #r = 3 # 0 hit, 1 miss, 2 not observable, 3 victim evicted
+            ####  
+            ####  self.l1.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='v')
 
-              reward = self.correct_reward
-            
-              self.evict_count += 1
-              if self.evict_count == 5:
-                self.evict_count = 0
-                done = True
-                self.vprint('victim address evicted, Done')
-              else:
-                done = False
-                self.vprint('victim address evicted, self.evict_count ' + str(self.evict_count))
-            else:
-              done = False
+            ####  reward = self.correct_reward
+            ####
+            ####  self.evict_count += 1
+            ####  if self.evict_count == 5:
+            ####    self.evict_count = 0
+            ####    done = True
+            ####    self.vprint('victim address evicted, Done')
+            ####  else:
+            ####    done = False
+            ####    self.vprint('victim address evicted, self.evict_count ' + str(self.evict_count))
+            ####else:
+            ####  done = False
         else:    # is_flush == True
           self.l1.cflush(address, self.current_step, domain_id='X')
           #cflush = 1
@@ -504,11 +504,11 @@ class CacheGuessingGameEnv(gym.Env):
     append the current observation to the sliding window
     '''
     victim_accessed = 0
-    self.state.append([r, victim_accessed, original_action, self.step_count])
+    self.state.append([r, victim_accessed, original_action])#, self.step_count])
     self.state.popleft()
 
     self.step_count += 1
-    
+
     #####'''
     #####support for multiple guess per episode
     #####'''
@@ -583,7 +583,7 @@ class CacheGuessingGameEnv(gym.Env):
     reset the observation space
     '''
     if reset_observation:
-        self.state = deque([[-1, -1, -1, -1]] * self.window_size)
+        self.state = deque([[-1, -1, -1]] * self.window_size)
         self.step_count = 0
 
     self.reset_time = 0
