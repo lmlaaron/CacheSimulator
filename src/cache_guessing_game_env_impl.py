@@ -562,9 +562,9 @@ class CacheGuessingGameEnv(gym.Env):
             reset_cache_state=False,
             reset_observation=True,
             seed = -1):
-    if self.ceaser_access_count > self.ceaser_remap_period:
-      self.remap() # do the remap, generating a new mapping function if remap is set true
-      self.ceaser_access_count = 0
+    #if self.ceaser_access_count > self.ceaser_remap_period:
+    self.remap() # do the remap, generating a new mapping function if remap is set true
+    #self.ceaser_access_count = 0
 
     if self.cache_state_reset or reset_cache_state or seed != -1:
       self.vprint('Reset...(also the cache state)')
@@ -597,7 +597,7 @@ class CacheGuessingGameEnv(gym.Env):
 
     #print_cache(self.l1)
     #print(self.perm)
-    random.shuffle(self.perm)    
+    #random.shuffle(self.perm)    
  
     mapped_addr = []
     for i in range(0, int( self.cache_size / self.num_ways)):
