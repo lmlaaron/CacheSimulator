@@ -39,16 +39,16 @@ class CachePPOTransformerModel(PPOModel):
         # self.window_size = window_size
 
         self.action_embed_dim = action_embed_dim
-        self.step_embed_dim = step_embed_dim
+        #self.step_embed_dim = step_embed_dim
         self.input_dim = (self.latency_dim + self.victim_acc_dim +
-                          self.action_embed_dim + self.step_embed_dim)
+                          self.action_embed_dim)
         self.hidden_dim = hidden_dim
         self.output_dim = output_dim
         self.num_layers = num_layers
 
         self.action_embed = nn.Embedding(self.action_dim,
                                          self.action_embed_dim)
-        self.step_embed = nn.Embedding(self.step_dim, self.step_embed_dim)
+        #self.step_embed = nn.Embedding(self.step_dim, self.step_embed_dim)
 
         self.linear_i = nn.Linear(self.input_dim, self.hidden_dim)
         # self.linear_o = nn.Linear(self.hidden_dim * self.window_size,
@@ -65,15 +65,17 @@ class CachePPOTransformerModel(PPOModel):
         self._device = None
 
     def make_one_hot(self, src: torch.Tensor, num_classes: int,
-                     mask: torch.Tensor) -> torch.Tensor:
-        # mask = (src == -1)
+            ): 
+                    #mask: torch.Tensor) -> torch.Tensor:
+        mask = (src == -1)
         src = src.masked_fill(mask, 0)
         ret = F.one_hot(src, num_classes)
         return ret.masked_fill(mask.unsqueeze(-1), 0.0)
 
     def make_embedding(self, src: torch.Tensor, embed: nn.Embedding,
-                       mask: torch.Tensor) -> torch.Tensor:
-        # mask = (src == -1)
+            ):
+            #mask: torch.Tensor) -> torch.Tensor:
+        mask = (src == -1)
         src = src.masked_fill(mask, 0)
         ret = embed(src)
         return ret.masked_fill(mask.unsqueeze(-1), 0.0)
@@ -83,14 +85,14 @@ class CachePPOTransformerModel(PPOModel):
         assert obs.dim() == 3
 
         # batch_size = obs.size(0)
-        l, v, act, stp = torch.unbind(obs, dim=-1)
-        mask = (stp == -1)
-        l = self.make_one_hot(l, self.latency_dim, mask)
-        v = self.make_one_hot(v, self.victim_acc_dim, mask)
-        act = self.make_embedding(act, self.action_embed, mask)
-        stp = self.make_embedding(stp, self.step_embed, mask)
+        l, v, act = torch.unbind(obs, dim=-1)
+        #mask = (stp == -1)
+        l = self.make_one_hot(l, self.latency_dim)
+        v = self.make_one_hot(v, self.victim_acc_dim)
+        act = self.make_embedding(act, self.action_embed)
+        #stp = self.make_embedding(stp, self.step_embed, mask)
 
-        x = torch.cat((l, v, act, stp), dim=-1)
+        x = torch.cat((l, v, act), dim=-1)
         x = self.linear_i(x)
         x = x.transpose(0, 1).contiguous()
         h = self.encoder(x)
