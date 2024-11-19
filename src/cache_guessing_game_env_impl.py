@@ -164,6 +164,8 @@ class CacheGuessingGameEnv(gym.Env):
     self.hierarchy = build_hierarchy(self.configs, self.logger)
     self.step_count = 0
 
+    self.reset_count = 0
+
     self.attacker_address_min = attacker_addr_s
     self.attacker_address_max = attacker_addr_e
     self.attacker_address_space = range(self.attacker_address_min,
@@ -563,7 +565,7 @@ class CacheGuessingGameEnv(gym.Env):
             reset_observation=True,
             seed = -1):
     #if self.ceaser_access_count > self.ceaser_remap_period:
-    self.remap() # do the remap, generating a new mapping function if remap is set true
+    #self.remap() # do the remap, generating a new mapping function if remap is set true
     #self.ceaser_access_count = 0
 
     if self.cache_state_reset or reset_cache_state or seed != -1:
@@ -592,12 +594,14 @@ class CacheGuessingGameEnv(gym.Env):
       assert(self.victim_address_min == self.victim_address_max) # for plru_pl cache, only one address is allowed
       self.vprint("[reset] victim access %d locked cache line" % self.victim_address_max)
       lat, cyclic_set_index, cyclic_way_index = self.l1.read(hex(self.ceaser_mapping(self.victim_address_max))[2:], self.current_step, replacement_policy.PL_LOCK, domain_id='v')
-
     self.last_state = None
 
-    #print_cache(self.l1)
-    #print(self.perm)
-    #random.shuffle(self.perm)    
+    self.reset_count += 1
+    if self.reset_count == 5:
+        self.reset_count = 0
+        #print_cache(self.l1)
+        #print(self.perm)
+        random.shuffle(self.perm)    
  
     mapped_addr = []
     for i in range(0, int( self.cache_size / self.num_ways)):
@@ -609,16 +613,18 @@ class CacheGuessingGameEnv(gym.Env):
         #print(int(self.ceaser_mapping(i) / self.num_ways))
         mapped_addr[self.ceaser_mapping(i) % int(self.cache_size / self.num_ways)  ].append(i)
         #print(self.ceaser_mapping(i))    
-    # not enough
+        # not enough
+    
     while len(mapped_addr[self.ceaser_mapping(self.victim_address_max) % int(self.cache_size / self.num_ways)]) < self.num_ways+ 1:
         print("not forming a eviction set, remap again")
         random.shuffle(self.perm)    
-        print(mapped_addr)
-    
+        #print(mapped_addr)
+        
 
     self.l1.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='X')
     #print("forming eviction set")
     #print_cache(self.l1)
+    print(self.reset_count)
     print(mapped_addr)
 
     return np.array(list(reversed(self.state)))
