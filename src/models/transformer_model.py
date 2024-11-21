@@ -85,13 +85,13 @@ class TransformerModel(TorchModelV2, nn.Module):
         assert obs.dim() == 3
 
         # batch_size = obs.size(0)
-        l, v, act, stp = torch.unbind(obs, dim=-1)
+        l, v, act = torch.unbind(obs, dim=-1)
         l = self.make_one_hot(l, self.latency_dim)
         v = self.make_one_hot(v, self.victim_acc_dim)
         act = self.make_embedding(act, self.action_embed)
-        stp = self.make_embedding(stp, self.step_embed)
+        #stp = self.make_embedding(stp, self.step_embed)
 
-        x = torch.cat((l, v, act, stp), dim=-1)
+        x = torch.cat((l, v, ac), dim=-1)
         x = self.linear_i(x)
         x = x.transpose(0, 1).contiguous()
         h = self.encoder(x)
