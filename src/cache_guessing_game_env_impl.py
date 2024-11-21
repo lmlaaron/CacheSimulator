@@ -597,7 +597,7 @@ class CacheGuessingGameEnv(gym.Env):
     self.last_state = None
 
     self.reset_count += 1
-    if self.reset_count == 5:
+    if self.reset_count == 3:
         self.reset_count = 0
         #print_cache(self.l1)
         #print(self.perm)
