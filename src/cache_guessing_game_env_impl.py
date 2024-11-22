@@ -97,7 +97,7 @@ class CacheGuessingGameEnv(gym.Env):
     self.no_measure_factor = env_config["enable_no_measure_access"] if "enable_no_measure_access" in env_config else 0
     # remapping function for randomized cache
     self.rerandomize_victim = env_config["rerandomize_victim"] if "rerandomize_victim" in env_config else False
-    self.ceaser_remap_period = env_config["ceaser_remap_period"] if "ceaser_remap_period" in env_config else 200000
+    # self.ceaser_remap_period = env_config["ceaser_remap_period"] if "ceaser_remap_period" in env_config else 200000
     # set-based channel or address-based channel
     self.allow_empty_victim_access = env_config["allow_empty_victim_access"] if "allow_empty_victim_access" in env_config else False
     # enable HPC-based-detection escaping setalthystreamline
@@ -192,8 +192,8 @@ class CacheGuessingGameEnv(gym.Env):
     self.mapping_func = lambda addr : addr
     # initially do a remap for the remapped cache
     
-    if self.rerandomize_victim == True:
-        self.remap()
+    # if self.rerandomize_victim == True:
+    #     self.remap()
    
     '''
     define the action space
@@ -269,12 +269,12 @@ class CacheGuessingGameEnv(gym.Env):
   '''
   remap the victim address range
   '''
-  def remap(self):
-    if self.rerandomize_victim == False:
-      self.mapping_func = lambda addr : addr
-    else:
-      self.vprint("doing remapping!")
-      random.shuffle(self.perm)
+  # def remap(self):
+  #   if self.rerandomize_victim == False:
+  #     self.mapping_func = lambda addr : addr
+  #   else:
+  #     self.vprint("doing remapping!")
+  #     random.shuffle(self.perm)
 
 
   '''
@@ -596,12 +596,12 @@ class CacheGuessingGameEnv(gym.Env):
       lat, cyclic_set_index, cyclic_way_index = self.l1.read(hex(self.ceaser_mapping(self.victim_address_max))[2:], self.current_step, replacement_policy.PL_LOCK, domain_id='v')
     self.last_state = None
 
-    self.reset_count += 1
-    if self.reset_count == 3:
-        self.reset_count = 0
-        #print_cache(self.l1)
-        #print(self.perm)
-        random.shuffle(self.perm)    
+    # self.reset_count += 1
+    # if self.reset_count == 3:
+    #     self.reset_count = 0
+    #     #print_cache(self.l1)
+    #     #print(self.perm)
+    #     random.shuffle(self.perm)    
  
     mapped_addr = []
     for i in range(0, int( self.cache_size / self.num_ways)):
@@ -615,10 +615,10 @@ class CacheGuessingGameEnv(gym.Env):
         #print(self.ceaser_mapping(i))    
         # not enough
     
-    while len(mapped_addr[self.ceaser_mapping(self.victim_address_max) % int(self.cache_size / self.num_ways)]) < self.num_ways+ 1:
-        print("not forming a eviction set, remap again")
-        random.shuffle(self.perm)    
-        #print(mapped_addr)
+    # while len(mapped_addr[self.ceaser_mapping(self.victim_address_max) % int(self.cache_size / self.num_ways)]) < self.num_ways+ 1:
+    #     print("not forming a eviction set, remap again")
+    #     random.shuffle(self.perm)    
+    #     #print(mapped_addr)
         
 
     self.l1.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='X')
