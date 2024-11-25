@@ -22,8 +22,7 @@ from rlmeta.utils.stats_dict import StatsDict
 import model_utils
 
 from cache_env_wrapper import CacheEnvWrapperFactory
-from textbook_attacker import OccupancyAgent
-
+from textbook_attacker import OccupancyAgent, RandomAgent
 
 
 
@@ -125,7 +124,7 @@ def main(cfg):
     agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
 
 
-    agent = OccupancyAgent(
+    agent = RandomAgent(
         cfg.env_config
     )  #PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
 
