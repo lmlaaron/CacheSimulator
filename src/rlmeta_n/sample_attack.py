@@ -125,9 +125,9 @@ def main(cfg):
     agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
 
 
-    agent = OccupancyAgent(
-        cfg.env_config
-    )  #PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
+    ####agent = OccupancyAgent(
+    ####    cfg.env_config
+    ####)  #PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
 
 
     # Run loops
