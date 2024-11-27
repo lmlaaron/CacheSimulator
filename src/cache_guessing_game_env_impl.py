@@ -440,20 +440,18 @@ class CacheGuessingGameEnv(gym.Env):
               else:  
                 reward = self.correct_reward #self.wrong_reward
                 done = False
-
-
-         else: 
+          else: 
               self.vprint("wrongly add " +str(action[0]+self.attacker_address_min) +" to eviction set ")
               #self.evset_size += 1
               r = 1
               reward = self.wrong_reward #-9999
               done = False #True
 
-         if self.victim_accessed == False:
-             done = True 
-             reward = 2 * self.wrong_reward
-         else:
-             self.victim_accessed = False
+          #######if self.victim_accessed == False:
+          #######    done = True 
+          #######    reward = 5 * self.wrong_reward
+          #######else:
+          #######    self.victim_accessed = False
  
 
           ####if self.evset_size == self.num_ways:
