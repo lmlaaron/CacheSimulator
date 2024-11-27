@@ -1,4 +1,4 @@
-length_violation_reward: -1.0
+length_violation_reward: -10.0
 double_victim_access_reward: -0.01
 victim_access_reward: -0.01
 correct_reward: 1.0
