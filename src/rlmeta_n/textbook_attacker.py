@@ -7,13 +7,13 @@
 # which can have high reward for the cache guessing game
 # used to generate the attack sequence that can be detected by cchunter
 # currently it only works for the direct-map cache (associativity=1)
-
+import bisect
 import random
 class TextbookAgent():
 
     # the config is the same as the config cor cache_guessing_game_env_impl
     def __init__(self, env_config):
-        self.local_step = 0
+        self.local_step = 0 
         self.lat = []
         self.no_prime = False # set to true after first prime
         if "cache_configs" in env_config:
@@ -179,13 +179,14 @@ class OccupancyAgent():
         ####    self.lat.append(timestep.observation[0][0])
         return
 
- 
+# single holdout method for eviction set finding
 class SHMAgent():
     # the config is the same as the config cor cache_guessing_game_env_impl
     def __init__(self, env_config):
-        self.local_step = 0
+        self.local_step = -1
         self.lat = []
         self.no_prime = False # set to true after first prime
+        self.cand_action = 0
         if "cache_configs" in env_config:
             #self.logger.info('Load config from JSON')
             self.configs = env_config["cache_configs"]
@@ -205,7 +206,7 @@ class SHMAgent():
     # initialize the agent with an observation
     def observe_init(self, timestep):
         # initialization doing nothing
-        self.local_step = 0
+        self.local_step = -1 
         self.lat = []
         self.no_prime = False
         return
@@ -214,37 +215,49 @@ class SHMAgent():
     # returns an action
     def act(self, timestep):
         info = {}
+        print(self.candidates)
+        print(self.local_step)
+        print(self.cand_action)
+        ###### print(self.lat)
         # do prime
         #action = self.local_step % ( 1 + self.attacker_addr_e - self.attacker_addr_s )  # do prime 
-
-
-        if self.local_step < len(self.candidates) :
+        if self.local_step < 0:
+            action =  1 + self.attacker_addr_e - self.attacker_addr_s  # victim access
+            self.local_step += 1
+        elif self.local_step < len(self.candidates) :
             # prime
-            action = self.candidates[self.local_step % self.cadndiates]
-
+            action = self.candidates[self.local_step]
+            self.local_step += 1
         elif self.local_step == len(self.candidates) :
             action =  1 + self.attacker_addr_e - self.attacker_addr_s  # victim access
+            self.local_step += 1
         else: 
-            if self.lat[self.local_step-1].int() == 1: # check if add to evset or 
-                action = cand_action +   1 + self.attacker_addr_e - self.attacker_addr_s 
-                cand_action = self.candidates[0]
-                self.candidates.remove(cand_action)
+            if self.lat[-1].int() == 1: # check if add to evset or 
+                self.cand_action = self.candidates[0]
+                self.candidates.remove(self.cand_action)
+                self.local_step = 0
+                action = self.candidates[self.local_step] #self.cand_action + 2 + self.attacker_addr_e - self.attacker_addr_s 
             else:
+                action = self.cand_action + 1 + self.attacker_addr_e - self.attacker_addr_s   
+                print("self.candidates")
+                bisect.insort(self.candidates, self.cand_action)
+                print(self.candidates)
                 act = -1
                 for act in self.candidates:
-                  if act > cand_action:
-                    act = cand_action
+                  if act > self.cand_action:
+                    self.cand_action = act
                     break
                 
                 if act == -1:
                     exit(-1)
                 else:    
-                    bisect.insort(self.candidates, cand_action)
-                    self.candidates.remove(act)
-                    cand_action = act
+                    self.candidates.remove(self.cand_action)
                 
-                self.local_step = 0
-                action =self.candidates[self.local_step]    
+                print(self.candidates)
+                
+                self.local_step = 0 
+
+
         return action, info
 
     # is it useful for non-ML agent or not???
