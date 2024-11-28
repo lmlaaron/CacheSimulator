@@ -380,12 +380,14 @@ class CacheGuessingGameEnv(gym.Env):
             victim_latency = 1
             self.current_step += 1
             reward = self.victim_miss_reward #-5000
+            self.vprint("victim miss")
             if self.force_victim_hit == True:
               done = True
               self.vprint("victim access has to be hit! terminate!")
             else:
               done = False
           else:
+            self.vprint("victim hit")
             victim_latency = 0
             self.current_step += 1
             reward = self.victim_access_reward #-10
