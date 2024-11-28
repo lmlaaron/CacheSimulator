@@ -209,6 +209,12 @@ class SHMAgent():
         self.local_step = -1 
         self.lat = []
         self.no_prime = False
+        self.cand_action = 0
+
+        self.candidates = []
+        for i in  range(0,1 + self.attacker_addr_e - self.attacker_addr_s):
+            self.candidates.append(i)    
+
         return
 
 
@@ -233,10 +239,18 @@ class SHMAgent():
             self.local_step += 1
         else: 
             if self.lat[-1].int() == 1: # check if add to evset or 
-                self.cand_action = self.candidates[0]
+                act = -1
+                for act in self.candidates:
+                  if act >= self.cand_action:
+                    self.cand_action = act
+                    break
+ 
+
+                #self.cand_action = self.candidates[0]
                 self.candidates.remove(self.cand_action)
                 self.local_step = 0
                 action = self.candidates[self.local_step] #self.cand_action + 2 + self.attacker_addr_e - self.attacker_addr_s 
+                self.local_step = 1
             else:
                 action = self.cand_action + 1 + self.attacker_addr_e - self.attacker_addr_s   
                 print("self.candidates")
@@ -254,9 +268,7 @@ class SHMAgent():
                     self.candidates.remove(self.cand_action)
                 
                 print(self.candidates)
-                
                 self.local_step = 0 
-
 
         return action, info
 
