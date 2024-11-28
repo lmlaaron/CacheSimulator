@@ -847,7 +847,7 @@ class CacheGuessingGameEnv(gym.Env):
         #action ==  ( self.no_measure_factor + 1 ) * len(self.attacker_address_space):
         #is_victim = 1
         is_guess = 1
-        address = action - ( ( self.no_measure_factor + 1 ) * len(self.attacker_address_space) ) 
+        address = action - (1+ ( self.no_measure_factor + 1 ) * len(self.attacker_address_space) ) 
     else:
       if action < ( self.no_measure_factor + 1 )  * len(self.attacker_address_space):
         address = action % len(self.attacker_address_space) 

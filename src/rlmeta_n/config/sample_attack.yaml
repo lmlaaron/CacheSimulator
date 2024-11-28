@@ -1,4 +1,4 @@
-num_episodes: 10 
+num_episodes: 100 
 seed: null
 reset_cache_state: False
 

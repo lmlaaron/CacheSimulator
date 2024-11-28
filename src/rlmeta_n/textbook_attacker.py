@@ -204,8 +204,14 @@ class SHMAgent():
             self.candidates.append(i)    
 
         self.cand_action = 0
+        act = -1
+        for act in self.candidates:
+          if act >= self.cand_action:
+            self.cand_action = act
+            break
+
         self.candidates.remove(self.cand_action)
- 
+
     # initialize the agent with an observation
     def observe_init(self, timestep):
         # initialization doing nothing
@@ -218,8 +224,15 @@ class SHMAgent():
         for i in  range(0,1 + self.attacker_addr_e - self.attacker_addr_s):
             self.candidates.append(i)    
 
-        self.cand_action = 0
+        act = -1
+        for act in self.candidates:
+          if act >= self.cand_action:
+            self.cand_action = act
+            break
+        
         self.candidates.remove(self.cand_action)
+
+        #self.cand_action = self.candidates[0]
         return
 
 
@@ -263,7 +276,8 @@ class SHMAgent():
                 action = self.candidates[self.local_step] #self.cand_action + 2 + self.attacker_addr_e - self.attacker_addr_s 
                 self.local_step = 1
             else:
-                action = self.cand_action + 1 + self.attacker_addr_e - self.attacker_addr_s   
+                action = self.cand_action + 1  + 1 + self.attacker_addr_e - self.attacker_addr_s   
+                print("action " + str(action))
                 print("self.candidates")
                 bisect.insort(self.candidates, self.cand_action)
                 print(self.candidates)
