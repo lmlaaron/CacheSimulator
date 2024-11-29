@@ -77,13 +77,12 @@ def run_loops(env: Env,
               seed: int = 0,
               reset_cache_state: bool = False) -> StatsDict:
     # env.seed(seed)
-    env.reset(seed=seed)
+    env.reset()
     metrics = StatsDict()
 
     if num_episodes == -1:
         start = env.env.victim_address_min
-        stop = env.env.victim_address_max + 1 + int(
-            env.env.allow_empty_victim_access)
+        stop = env.env.victim_address_max + 1 #+ int(env.env.allow_empty_victim_access)
         for victim_addr in range(start, stop):
             cur_metrics = run_loop(env,
                                    agent,

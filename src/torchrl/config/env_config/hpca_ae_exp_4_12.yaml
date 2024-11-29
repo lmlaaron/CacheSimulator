@@ -5,15 +5,15 @@ correct_reward: 1.0
 wrong_reward: -1.0
 step_reward: -0.01
 
-verbose: 0 
+verbose: 0
 force_victim_hit: false
-flush_inst: true
+flush_inst: false
 allow_victim_multi_access: true
-allow_empty_victim_access: false
+allow_empty_victim_access: true
 attacker_addr_s: 0
-attacker_addr_e: 3 
+attacker_addr_e: 15 
 victim_addr_s: 0
-victim_addr_e: 3
+victim_addr_e: 0 
 reset_limit: 1
 
 cache_configs:
@@ -22,8 +22,8 @@ cache_configs:
     block_size: 1
     write_back: true
   cache_1:
-    blocks: 4
-    associativity: 1
+    blocks: 8
+    associativity: 8 
     hit_time: 1
     rep_policy: "lru"
   mem:

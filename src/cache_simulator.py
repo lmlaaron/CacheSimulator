@@ -134,7 +134,7 @@ def simulate(hierarchy, trace, logger, result_file=''):
                 l = l1_c2
             else:
                 l = l1
-            r, _, _, _ = l.read(address, current_step)
+            r, _  = l.read(address, current_step)
             logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')
             responses.append(r)
         elif op == 'RL' or op == 'RL2':      # pl cache lock cacheline
@@ -142,7 +142,7 @@ def simulate(hierarchy, trace, logger, result_file=''):
             # multilcore not implemented
             assert(op == 'RL')
             logger.info(str(current_step) + ':\tReading ' + address + ' ' + op)
-            r, _, _, _ = l1.read(address, current_step, pl_opt = PL_LOCK )
+            r, _  = l1.read(address, current_step, pl_opt = PL_LOCK )
             logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')
             responses.append(r)
         elif op == 'RU' or op == 'RU2':      # pl cache unlock cacheline
@@ -166,7 +166,7 @@ def simulate(hierarchy, trace, logger, result_file=''):
             ## multilcore not implemented
             #assert(op == 'F')
             logger.info(str(current_step) + ':\tFlushing ' + address + ' ' + op)
-            r, _, _ = l1.cflush(address, current_step)
+            r  = l1.clflush(address, current_step)
             #logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')            
         else:
             raise InvalidOpError
@@ -265,7 +265,6 @@ def build_cache(configs, name, next_level_cache, logger):
                 logger,
                 next_level_cache,
                 rep_policy = configs[name]['rep_policy'] if 'rep_policy' in configs[name] else '',
-                prefetcher = configs[name]['prefetcher'] if 'prefetcher' in configs[name] else "none",
                 verbose = configs['verbose'] if 'verbose' in configs else 'False' )
 
 

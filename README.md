@@ -70,10 +70,7 @@ $ conda activate py38
 Undet the py38 environment
 
 ```
-(py38) $ pip install sklearn seaborn pyyaml hydra-core terminaltables torch pep517
-```
-```
-(py38) $ pip install moolib
+(py38) $ pip install sklearn seaborn pyyaml hydra-core terminaltables torch pep517 tqdm
 ```
 
 The environment is based on openai [gym](https://github.com/openai/gym). To install it, use the following.
@@ -82,18 +79,48 @@ The environment is based on openai [gym](https://github.com/openai/gym). To inst
 (py38) $ pip install gym==0.25
 ```
 
-The RL trainer is based on [RLMeta](https://github.com/facebookresearch/rlmeta). 
-
-Please follow setup process on [rlmeta](https://github.com/facebookresearch/rlmeta) for install RLMeta.
+To install the latest version of TorchRL and tensordict, execute these commands:
 
 ```
-(py38) $ git clone https://github.com/facebookresearch/rlmeta
-(py38) $ cd rlmeta
-(py38) $ git submodule sync && git submodule update --init --recursive
-(py38) $ pip install -e .
+(py38) $ pip install git+https://github.com/pytorch-labs/tensordict
+(py38) $ pip install git+https://github.com/pytorch/rl
+```
+
+Alternatively, we have prebuilt a docker image that can be deployed on a AWS g5.xlarge instance with Deep Learning AMI GPU PyTorch 2.0.0 (Ubuntu 20.04) 20230401 image (ami-0a4caa099fc23090f). Please follow this on installing the latest version of docker engine. The docker image can be pulled by
+
+```
+$ docker pull ml2558/autocat-torchrl:gpu
+```
+
+Run the docker image 
+
+```
+$ docker run -it --gpus all ml2558/autocat-torchrl:gpu /bin/bash
 ```
 
 
+For X86 machine without CPU, use the following to launch and run 
+
+```
+$ docker pull ml2558/autocat-torchrl:cpu
+$ docker run -it ml2558/autocat-torchrl:cpu /bin/bash
+```
+
+For Apple m series chip use the following to launch and run 
+
+```
+$ docker pull ml2558/autocat-torchrl:apple-m1
+$ docker run -it ml2558/autocat-torchrl:apple-m1 /bin/bash
+```
+
+Inside the docker containeer, set the conda environment variables and activate py38 environment.
+
+```
+# eval "$(/root/miniconda3/bin/conda shell.bash hook)" 
+# conda activate py38
+```
+
+This will prepare all dependencies for running the experiments.
 
 
 ## General flow for Training and evaluating RL agent
@@ -114,7 +141,7 @@ $ export GIT_ROOT=<path_to_the_autocat_repo>
 You can launch the experiment to train the RL agent
 
 ```
-$ cd ${GIT_ROOT}/src/rlmeta
+$ cd ${GIT_ROOT}/src/torchrl
 $ python train_ppo_attack.py table_view=True
 ```
 

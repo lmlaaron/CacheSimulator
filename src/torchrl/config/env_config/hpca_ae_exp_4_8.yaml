@@ -5,7 +5,7 @@ correct_reward: 1.0
 wrong_reward: -1.0
 step_reward: -0.01
 
-verbose: 0 
+verbose: 0
 force_victim_hit: false
 flush_inst: true
 allow_victim_multi_access: true
@@ -23,7 +23,7 @@ cache_configs:
     write_back: true
   cache_1:
     blocks: 4
-    associativity: 1
+    associativity: 4
     hit_time: 1
     rep_policy: "lru"
   mem:

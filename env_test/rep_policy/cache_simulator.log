@@ -1,52 +1,69 @@
 [32mLoading config...[0m
 [32mMemory hierarchy built.[0m
 [32mLoading tracefile...[0m
-[32mLoaded tracefile llc3/test.txt[0m
+[32mLoaded tracefile flush/test.txt[0m
 [32mBegin simulation![0m
-[32m0:	Reading 00000000 R2[0m
-[33m	hit_list: {'cache_1_core_2': False, 'cache_2': False, 'mem': True}	time: 1017
+[32m0:	Reading 00000000 R[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
 [0m
-[32m1:	Reading 00000001 R2[0m
-[33m	hit_list: {'cache_1_core_2': False, 'cache_2': False, 'mem': True}	time: 1017
+[32m1:	Reading 00000001 R[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
 [0m
 [32m2:	Reading 00000002 R[0m
-[33m	hit_list: {'cache_1': False, 'cache_2': False, 'mem': True}	time: 1017
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
 [0m
-[32m3:	Reading 00000000 R2[0m
-[33m	hit_list: {'cache_1_core_2': False, 'cache_2': False, 'mem': True}	time: 1017
+[32m3:	Reading 00000003 R[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
 [0m
-[32m4:	Reading 00000001 R2[0m
-[33m	hit_list: {'cache_1_core_2': True}	time: 1
+[32m4:	Reading 00000004 R[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
 [0m
-[32m5:	Reading 00000000 R2[0m
-[33m	hit_list: {'cache_1_core_2': True}	time: 1
+[32m5:	Flushing 00000000 F[0m
+[32m6:	Flushing 00000001 F[0m
+[32m7:	Flushing 00000002 F[0m
+[32m8:	Flushing 00000003 F[0m
+[32m9:	Flushing 00000004 F[0m
+[32m10:	Reading 00000004 R[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
 [0m
-[32m6:	Reading 00000001 R2[0m
-[33m	hit_list: {'cache_1_core_2': True}	time: 1
+[32m11:	Reading 00000003 R[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
 [0m
-[32m7:	Reading 00000003 R[0m
-[33m	hit_list: {'cache_1': False, 'cache_2': False, 'mem': True}	time: 1017
+[32m12:	Reading 00000002 R[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
 [0m
-[32m8:	Reading 00000000 R2[0m
-[33m	hit_list: {'cache_1_core_2': True}	time: 1
+[32m13:	Reading 00000001 R[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
 [0m
-[32m9:	Reading 00000001 R2[0m
-[33m	hit_list: {'cache_1_core_2': False, 'cache_2': False, 'mem': True}	time: 1017
+[32m14:	Reading 00000000 R[0m
+[33m	hit_list: {'cache_1': False, 'mem': True}	time: 1001
 [0m
+[32m15:	Reading 00000003 R[0m
+[33m	hit_list: {'cache_1': True}	time: 1
+[0m
+[32m16:	Reading 00000002 R[0m
+[33m	hit_list: {'cache_1': True}	time: 1
+[0m
+[32m17:	Reading 00000001 R[0m
+[33m	hit_list: {'cache_1': True}	time: 1
+[0m
+[32m18:	Reading 00000000 R[0m
+[33m	hit_list: {'cache_1': True}	time: 1
+[0m
+[32m19:	Flushing 00000001 F[0m
+[32m20:	Flushing 00000002 F[0m
+[32m21:	Flushing 00000003 F[0m
+[32m22:	Flushing 00000004 F[0m
 [32mSimulation complete[0m
 [32m
-Number of instructions: 10[0m
+Number of instructions: 14[0m
 [32m
-Total cycles taken: 6106
+Total cycles taken: 10014
 [0m
-[32mcache_2[0m
-[32m	Number of accesses: 6[0m
-[32m	Number of hits: 0[0m
-[32m	Number of misses: 6[0m
 [32mcache_1[0m
-[32m	Number of accesses: 2[0m
-[32m	Number of hits: 0[0m
-[32m	Number of misses: 2[0m
+[32m	Number of accesses: 14[0m
+[32m	Number of hits: 4[0m
+[32m	Number of misses: 10[0m
 [32m
 AMATs:
-{'cache_1': 1017.0, 'cache_2': 1016.0, 'mem': 1000}[0m
+{'cache_1': 715.2857142857143, 'mem': 1000}[0m
