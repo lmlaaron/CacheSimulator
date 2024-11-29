@@ -42,9 +42,12 @@ class CCHunterWrapper(gym.Env):
 
         self.step_count = 0
         self.cc_hunter_history = []
-
+        self.my_seed = 0
         self.no_guess = True
         self.no_guess_reward = env_config["no_guess_reward"]
+
+    def seed(self, seed):
+        self.my_seed = seed
 
     def reset(self, victim_address=-1, seed: int = -1):
         self.step_count = 0

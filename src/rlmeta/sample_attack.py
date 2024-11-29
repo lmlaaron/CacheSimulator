@@ -20,6 +20,7 @@ import model_utils
 from cache_env_wrapper import CacheEnvWrapperFactory
 
 
+
 def batch_obs(timestep: TimeStep) -> TimeStep:
     obs, reward, terminated, truncated, info = timestep
     return TimeStep(obs.unsqueeze(0), reward, terminated, truncated, info)
@@ -70,33 +71,35 @@ def run_loop(env: Env,
 
     return metrics
 
-
 def run_loops(env: Env,
               agent: PPOAgent,
               num_episodes: int = -1,
               seed: int = 0,
               reset_cache_state: bool = False) -> StatsDict:
-    # env.seed(seed)
-    env.reset(seed=seed)
-    metrics = StatsDict()
+    metric_callbacks = MetricCallbacks()
+    loop = LoopRunner(env,
+                      agent,
+                      replay_buffer=None,
+                      should_update=False,
+                      seed=seed,
+                      episode_callbacks=metric_callbacks)
 
+    metrics = StatsDict()
     if num_episodes == -1:
         start = env.env.victim_address_min
         stop = env.env.victim_address_max + 1 + int(
             env.env.allow_empty_victim_access)
         for victim_addr in range(start, stop):
-            cur_metrics = run_loop(env,
-                                   agent,
-                                   victim_addr=victim_addr,
+            cur_metrics = loop.run(num_episodes=1,
+                                   victim_address=victim_addr,
                                    reset_cache_state=reset_cache_state)
+            # Only one StatsItem, use mean value should be enough.
+            cur_metrics = {k: v["mean"] for k, v in cur_metrics.dict().items()}
             metrics.extend(cur_metrics)
     else:
-        for _ in range(num_episodes):
-            cur_metrics = run_loop(env,
-                                   agent,
-                                   victim_addr=-1,
-                                   reset_cache_state=reset_cache_state)
-            metrics.extend(cur_metrics)
+        metrics = loop.run(num_episodes=num_episodes,
+                           victim_address=-1,
+                           reset_cache_state=reset_cache_state)
 
     return metrics
 

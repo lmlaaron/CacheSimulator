@@ -3,6 +3,7 @@
 # description: environment for study RL for side channel attack
 from calendar import c
 from collections import deque
+from tkinter import W
 
 import numpy as np
 import random
@@ -92,11 +93,14 @@ class CacheGuessingGameEnv(gym.Env):
     }
   }
 ):
+
     # prefetcher
     # pretetcher: "none" "nextline" "stream"
     # cf https://my.eng.utah.edu/~cs7810/pres/14-7810-13-pref.pdf
     self.prefetcher = env_config["prefetcher"] if "prefetcher" in env_config else "none"
-
+    self.ev_addr = env_config["ev_addr"] if "ev_addr" in env_config else 0
+    self.ev_mode = env_config["ev_mode"] if "ev_mode" in env_config else False
+  
     # remapping function for randomized cache
     self.rerandomize_victim = env_config["rerandomize_victim"] if "rerandomize_victim" in env_config else False
     self.ceaser_remap_period = env_config["ceaser_remap_period"] if "ceaser_remap_period" in env_config else 200000
@@ -120,6 +124,12 @@ class CacheGuessingGameEnv(gym.Env):
     victim_addr_s = env_config["victim_addr_s"] if "victim_addr_s" in env_config else 0
     victim_addr_e = env_config["victim_addr_e"] if "victim_addr_e" in env_config else 3
     flush_inst = env_config["flush_inst"] if "flush_inst" in env_config else False
+    self.ev_candidate = env_config['ev_candidate'] if "ev_candidate" in env_config else attacker_addr_s
+
+    self.prime_scope = env_config["prime_scope"] if "prime_scope" in env_config else False
+    self.prime_scope_reward = env_config["prime_scope_reward"] if "prime_scope_reward" in env_config else self.length_violation_reward
+ 
+ 
     self.verbose = env_config["verbose"] if "verbose" in env_config else 0
     self.super_verbose = env_config["super_verbose"] if "super_verbose" in env_config else 0
     self.logger = logging.getLogger()
@@ -196,34 +206,42 @@ class CacheGuessingGameEnv(gym.Env):
     # initially do a remap for the remapped cache
     self.remap()
    
+    if self.prime_scope != False:
+      self.victim_access_step = 0
+
     '''
     define the action space
     '''
     # using tightened action space
-    if self.flush_inst == False:
-      # one-hot encoding
-      if self.allow_empty_victim_access == True:
-        # | attacker_addr | v | victim_guess_addr | guess victim not access |
-        self.action_space = spaces.Discrete(
-          len(self.attacker_address_space) + 1 + len(self.victim_address_space) + 1
-        )
-      else:
-        # | attacker_addr | v | victim_guess_addr | 
-        self.action_space = spaces.Discrete(
-          len(self.attacker_address_space) + 1 + len(self.victim_address_space)
-        )
+    if self.ev_mode != False or self.prime_scope != False:
+      # |attacker_addr| terminate|
+      self.action_space = spaces.Discrete(len(self.attacker_address_space) + 1)
+    
     else:
-      # one-hot encoding
-      if self.allow_empty_victim_access == True:
-        # | attacker_addr | flush_attacker_addr | v | victim_guess_addr | guess victim not access |
-        self.action_space = spaces.Discrete(
-          2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space) + 1
-        )
+      if self.flush_inst == False:
+        # one-hot encoding
+        if self.allow_empty_victim_access == True:
+          # | attacker_addr | v | victim_guess_addr | guess victim not access |
+          self.action_space = spaces.Discrete(
+            len(self.attacker_address_space) + 1 + len(self.victim_address_space) + 1
+          )
+        else:
+          # | attacker_addr | v | victim_guess_addr | 
+          self.action_space = spaces.Discrete(
+            len(self.attacker_address_space) + 1 + len(self.victim_address_space)
+          )
       else:
-        # | attacker_addr | flush_attacker_addr | v | victim_guess_addr |
-        self.action_space = spaces.Discrete(
-          2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space) 
-        )
+        # one-hot encoding
+        if self.allow_empty_victim_access == True:
+          # | attacker_addr | flush_attacker_addr | v | victim_guess_addr | guess victim not access |
+          self.action_space = spaces.Discrete(
+            2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space) + 1
+          )
+        else:
+          # | attacker_addr | flush_attacker_addr | v | victim_guess_addr |
+          self.action_space = spaces.Discrete(
+            2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space) 
+          )
     
     '''
     define the observation space
@@ -267,6 +285,9 @@ class CacheGuessingGameEnv(gym.Env):
     self.guess_buffer_size = 100
     self.guess_buffer = [False] * self.guess_buffer_size
     self.last_state = None
+
+    if self.ev_mode != False:
+      self.l1.read(hex(self.ceaser_mapping(self.ev_addr))[2:], -2, domain_id='X')
 
   '''
   clear the history buffer that calculates the correctness rate
@@ -333,6 +354,183 @@ class CacheGuessingGameEnv(gym.Env):
     is_flush = action[3]                                              # check whether to flush
     victim_addr = hex(action[4] + self.victim_address_min)[2:]        # victim address
     
+    if self.ev_mode != False and original_action == len(self.attacker_address_space): # is_victim is interpretted as terminate
+      t, cyclic_set_index, cyclic_way_index, _ = self.lv.read(hex(self.ceaser_mapping(self.ev_addr))[2:], self.current_step, domain_id='v')
+      t = t.time # do not need to lock again
+      if t > 500:
+        reward = self.correct_reward
+        self.vprint("evicted correctly!")
+        info['guess_correct'] = 1
+      else:
+        reward = self.wrong_reward
+        self.vprint("not evicted!")
+        info['guess_correct'] = 0
+
+      self.step_count += 1
+      done = True
+      self.state.append([2, 0, original_action, self.step_count])
+      self.state.popleft()
+      info['is_guess'] = 1
+      return np.array(list(reversed(self.state))), reward, done, info
+
+    # for prime scope
+    if self.prime_scope != False:
+      info['is_guess'] = 1
+
+      if is_victim != 0:
+        # access EVC (default 
+
+        t, cyclic_set_index, cyclic_way_index, _ = self.lv.read(hex(self.ceaser_mapping(self.ev_candidate))[2:], self.current_step, domain_id='v')
+        t = t.time # do not need to lock again
+        if t > 500:   # for LRU attack, has to force victim access being hit
+          r1 = 1
+          self.current_step += 1
+          self.vprint("prime scope evc miss")
+        else:
+          r1 = 0
+          self.current_step += 1
+          self.vprint("prime scope evc hit")
+
+
+        #
+        t, cyclic_set_index, cyclic_way_index, _ = self.lv.read(hex(self.ceaser_mapping(self.ev_addr))[2:], self.current_step, domain_id='v')
+        t = t.time # do not need to lock again
+        if t > 500:   # for LRU attack, has to force victim access being hit
+          self.vprint("prime scope victim miss")
+          rv = 1
+        else:
+          self.vprint("prime scope victim hit")
+          rv = 0
+ 
+        t, cyclic_set_index, cyclic_way_index, _ = self.lv.read(hex(self.ceaser_mapping(self.ev_candidate))[2:], self.current_step, domain_id='v')
+        t = t.time # do not need to lock again
+        if t > 500:   # for LRU attack, has to force victim access being hit
+          self.vprint("prime scope evc miss")
+          r2 = 1
+          self.current_step += 1
+        else:
+          self.vprint("prime scope evc hit")
+          r2 = 0
+          self.current_step += 1
+
+        reward = 0 
+        if r1 == 0:
+          reward += self.correct_reward
+          if rv == 1:
+            reward += self.correct_reward
+
+            if r2 == 1:
+              info['guess_correct'] = 1
+              reward += self.correct_reward
+            else:
+              info['guess_correct'] = 0.5
+              reward += self.wrong_reward
+          else:
+            info['guess_correct'] = 0.5
+            reward += self.wrong_reward
+        else:
+          info['guess_correct'] = 0.5
+ 
+          reward = self.wrong_reward
+
+       ##if r1 == 0 and r2 == 1:
+        ##  info['guess_correct'] = 1
+        ##  self.vprint('prime_scope correct')
+        ##  reward = self.correct_reward
+        ##elif r1 == 0 or r2 == 1:
+        ##  info['guess_correct'] = 0.5
+        ##  self.vprint('prime_scope indistinguishable')
+        ##  reward = (self.correct_reward + self.wrong_reward )/ 2.0 
+        ##else:
+        ##  self.vprint('prime_scope_wrong')
+        ##  info['guess_correct'] = 0
+        ##  reward = self.wrong_reward
+        done = True
+
+        self.state.append([2, self.victim_accessed, original_action, self.step_count])
+        self.state.popleft()
+        return np.array(list(reversed(self.state))), reward, done, info
+
+        ###if self.current_step == self.victim_access_step + 2:
+        ###  if is_guess == 0:
+        ###    reward = -1.15#2.0 * self.prime_scope_reward
+        ###    done = True
+        ###    #print(reward)
+        ###    info['is_guess'] = 0
+        ###    self.vprint(original_action)
+        ###    self.vprint(address)
+        ###    self.vprint(is_guess)
+        ###    self.vprint(is_victim)
+        ###    self.vprint(is_flush)
+        ###    self.vprint(victim_addr)
+        ###    self.vprint("prime_scope rule violated! no guess after one measure")
+        ###    self.state.append([2, self.victim_accessed, original_action, self.step_count])
+        ###    self.state.popleft()
+
+        ###    return np.array(list(reversed(self.state))), reward, done, info
+        ###  else:
+        ###    info['is_guess'] = 1
+        ###    if self.victim_accessed and victim_addr == hex(self.victim_address)[2:]:
+        ###        info['guess_correct'] = 1
+        ###        if victim_addr != hex(self.victim_address_max + 1)[2:]: 
+        ###          self.vprint("correct guess (hex) " + victim_addr)
+        ###        else:
+        ###          self.vprint("correct guess empty access!")
+        ###        # update the guess buffer 
+        ###        self.guess_buffer.append(True)
+        ###        self.guess_buffer.pop(0)
+        ###        reward = 2.0 #self.correct_reward # 200
+        ###        done = True
+        ###    else:
+        ###        info['guess_correct'] = 0                
+        ###        if victim_addr != hex(self.victim_address_max + 1)[2:]:
+        ###          self.vprint("wrong guess (hex) " + victim_addr )
+        ###        else:
+        ###          self.vprint("wrong guess empty access!")
+        ###        # update the guess buffer 
+        ###        self.guess_buffer.append(False)
+        ###        self.guess_buffer.pop(0)
+        ###        reward = 0.5 #self.wrong_reward #-9999
+        ###        done = True
+        ###    #reward = 2.0
+        ###    self.state.append([2, self.victim_accessed, original_action, self.step_count])
+        ###    self.state.popleft()
+        ###    return np.array(list(reversed(self.state))), reward, done, info
+
+        ###    #####reward = 2.0
+        ###    #####reward = 1.1 * self.prime_scope_reward
+        ###    #####done = True
+        ###    #####print(reward)
+        ###    #####info['is_guess'] = 0
+        ###    ####self.vprint(original_action)
+        ###    ####self.vprint(address)
+        ###    ####self.vprint(is_guess)
+        ###    ####self.vprint(is_victim)
+        ###    ####self.vprint(is_flush)
+        ###    ####self.vprint(victim_addr)
+        ###    ####self.vprint("prime scope make a guess")
+        ###    #return np.array(list(reversed(self.state))), reward, done, info
+
+        ###elif self.current_step == self.victim_access_step + 1:
+        ###  if is_guess == 1 or is_victim == 1:
+        ###    reward = -1.2#1.8 * self.prime_scope_reward
+        ###    done = True
+        ###    #print(reward)
+        ###    info['is_guess'] = 0
+        ###    self.vprint("prime_scope rule violated! no access after victim access")
+        ###    self.state.append([2, self.victim_accessed, original_action, self.step_count])
+        ###    self.state.popleft()
+        ###    return np.array(list(reversed(self.state))), reward, done, info
+      elif self.victim_accessed == 0 and is_guess == 1:
+          reward = -1.3#1.9 * self.prime_scope_reward
+          #print(reward)
+          done = True
+          info['is_guess'] = 0
+          self.vprint("prime_scope rule violated! guess without victim access!")
+          self.state.append([2, self.victim_accessed, original_action, self.step_count])
+          self.state.popleft()
+          return np.array(list(reversed(self.state))), reward, done, info
+
     '''
     The actual stepping logic
 
@@ -354,6 +552,8 @@ class CacheGuessingGameEnv(gym.Env):
         if self.allow_victim_multi_access == True or self.victim_accessed == False:
           r = 2 #
           self.victim_accessed = True
+          if self.prime_scope != False:
+            self.victim_access_step = self.current_step
 
           if True: #self.configs['cache_1']["rep_policy"] == "plru_pl": no need to distinuish pl and normal rep_policy
             if self.victim_address <= self.victim_address_max:
@@ -523,6 +723,9 @@ class CacheGuessingGameEnv(gym.Env):
       self.remap() # do the remap, generating a new mapping function if remap is set true
       self.ceaser_access_count = 0
 
+    if self.prime_scope != False:
+      self.victim_access_step = 0
+
     if self.cache_state_reset or reset_cache_state or seed != -1:
       self.vprint('Reset...(also the cache state)')
       self.hierarchy = build_hierarchy(self.configs, self.logger)
@@ -562,6 +765,9 @@ class CacheGuessingGameEnv(gym.Env):
       for cache in self.hierarchy:
         if self.hierarchy[cache].next_level:
           print_cache(self.hierarchy[cache])
+
+    if self.ev_mode != False:
+      self.l1.read(hex(self.ceaser_mapping(self.ev_addr))[2:], -2, domain_id='X')
 
     return np.array(list(reversed(self.state)))
 

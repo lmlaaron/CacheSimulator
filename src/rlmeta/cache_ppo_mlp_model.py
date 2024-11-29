@@ -58,6 +58,8 @@ class CachePPOMlpModel(PPOModel):
             self._device = next(self.parameters()).device
 
         with torch.no_grad():
+            obs = obs.to(self.device)
+            deterministic_policy = deterministic_policy.to(self.device)
             logpi, v = self.forward(obs)
             greedy_action = logpi.argmax(-1, keepdim=True)
             sample_action = logpi.exp().multinomial(1, replacement=True)
@@ -65,4 +67,4 @@ class CachePPOMlpModel(PPOModel):
                                  sample_action)
             logpi = logpi.gather(dim=-1, index=action)
 
-        return action, logpi, v
+        return action.cpu(), logpi.cpu(), v.cpu()
