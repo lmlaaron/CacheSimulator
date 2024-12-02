@@ -35,7 +35,7 @@ def batch_obs(timestep: TimeStep) -> TimeStep:
 
 def unbatch_action(action: Action) -> Action:
     act, info = action
-    #act.squeeze_(0)
+    act.squeeze_(0)
     info = nested_utils.map_nested(lambda x: x.squeeze(0), info)
     return Action(act, info)
 
@@ -125,9 +125,9 @@ def main(cfg):
     agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
 
 
-    agent = OccupancyAgent(
-        cfg.env_config
-    )  #PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
+    # agent = OccupancyAgent(
+    #     cfg.env_config
+    # )  #PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
 
 
     # Run loops
