@@ -15,6 +15,7 @@ class Cache:
         self.write_time = write_time
         self.write_back = write_back
         self.logger = logger
+        self.same_level_caches = []
         self.logger.disabled = False#True
         self.set_rep_policy = {}
         self.verbose = verbose
@@ -112,9 +113,14 @@ class Cache:
             self.next_level.cflush(address, current_step)
 
         return r, cyclic_set_index, cyclic_way_index
+    
+    # for multicore caches, if two same levels are connected to the shared caches then add
+    def add_same_level_cache(self, cache):
+        self.same_level_caches.append(cache)
 
     # read with prefetcher
     def read(self, address, current_step, pl_opt= -1, domain_id = 'X'):
+        #address = address.zfill(8)
         if self.prefetcher == "none":
             return self.read_no_prefetch(address, current_step, pl_opt, domain_id)
         elif self.prefetcher == "nextline":
@@ -210,6 +216,46 @@ class Cache:
                 #Read from the next level of memory
                 r, cyclic_set_index, cyclic_way_index, _ = self.next_level.read(address, current_step, pl_opt)
                 r.deepen(self.write_time, self.name)
+
+                # code for coherent eviction below was taken from master branch - evict_addr replaced with victim_addr
+                # coherent eviction
+                # inclusive eviction (evicting in L1 if evicted by the higher level)
+                if victim_addr != -1:
+                    ###print('victim_addr '+ victim_addr)
+                    ###print(victim_addr)
+                    #assert(False)
+                    evict_block_offset, evict_index, evict_tag = self.parse_address(hex(int(victim_addr,2))[2:].zfill(8))#9 - len(hex(int(victim_addr,2))[2:])))
+                    ####print(evict_block_offset)
+                    ####print(evict_index)
+                    ####print(evict_tag)
+                    for i in range(0,len(self.data[evict_index])):
+                        if self.data[evict_index][i][0] == evict_tag:
+                            
+                            #print('\tEvict addr ' + victim_addr + ' for inclusive cache')
+                            self.data[evict_index][i] = (INVALID_TAG, block.Block(self.block_size, current_step, False, 'x'))
+                            self.set_rep_policy[evict_index].invalidate(evict_tag)
+                            #self.set_rep_policy[evict_index].instantiate_entry(INVALID_TAG, current_step)
+                            break
+                
+                    # coherent eviction for other cache lines
+                    for slc in self.same_level_caches:
+                        evict_block_offset, evict_index, evict_tag = slc.parse_address(hex(int(victim_addr,2))[2:].zfill(8))#9 - len(hex(int(victim_addr,2))[2:])))
+                        for i in range(0,len(slc.data[evict_index])):
+                            if slc.data[evict_index][i][0] == evict_tag:
+                                #slc.logger.info
+                                #print('\tcoherent Evict addr ' + victim_addr + ' for inclusive cache')
+                                slc.data[evict_index][i] = (INVALID_TAG, block.Block(slc.block_size, current_step, False, 'x'))
+                                slc.set_rep_policy[evict_index].invalidate(evict_tag)
+                                #slc.set_rep_policy[evict_index].instantiate_entry(INVALID_TAG, current_step)
+                                break
+
+                r.deepen(self.write_time, self.name)
+
+                # refresh in_cache after coherent eviction
+                in_cache = []
+                for i in range( 0, len(self.data[index]) ):
+                    if self.data[index][i][0] != INVALID_TAG:#'x':
+                        in_cache.append(self.data[index][i][0])
 
                 #If there's space in this set, add this block to it
                 if len(in_cache) < self.associativity:

@@ -144,6 +144,11 @@ class CacheGuessingGameEnv(gym.Env):
     self.reset_time = 0
     if "rep_policy" not in self.configs['cache_1']:
       self.configs['cache_1']['rep_policy'] = 'lru'
+
+    if 'cache_1_core_2' in self.configs:
+      if "rep_policy" not in self.configs['cache_1_core_2']:
+        self.configs['cache_1_core_2']['rep_policy'] = 'lru'
+      self.configs['cache_1_core_2']['prefetcher'] = self.prefetcher
     
     #with open_dict(self.configs):
     self.configs['cache_1']['prefetcher'] = self.prefetcher
@@ -236,6 +241,13 @@ class CacheGuessingGameEnv(gym.Env):
     ''' 
     self.vprint('Initializing...')
     self.l1 = self.hierarchy['cache_1']
+     # check multicore
+    if 'cache_1_core_2' in self.hierarchy:
+      self.lv = self.hierarchy['cache_1_core_2']
+    else:
+      self.lv = self.hierarchy['cache_1']
+
+
     self.current_step = 0
     self.victim_accessed = False
     if self.allow_empty_victim_access == True:
@@ -312,6 +324,8 @@ class CacheGuessingGameEnv(gym.Env):
     '''
     parse the action
     '''
+
+    # is_guess, is_flush, victim_addr are not set to 0 in master file
     original_action = action
     action = self.parse_action(original_action) 
     address = hex(action[0]+self.attacker_address_min)[2:]            # attacker address in attacker_address_space
@@ -347,7 +361,7 @@ class CacheGuessingGameEnv(gym.Env):
           if True: #self.configs['cache_1']["rep_policy"] == "plru_pl": no need to distinuish pl and normal rep_policy
             if self.victim_address <= self.victim_address_max:
               self.vprint("victim access %d " % self.victim_address)
-              t, cyclic_set_index, cyclic_way_index, _ = self.l1.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='v')
+              t, cyclic_set_index, cyclic_way_index, _ = self.lv.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='v')
               t = t.time # do not need to lock again            
             else:
               self.vprint("victim make a empty access!") # do not need to actually do something
@@ -572,6 +586,12 @@ class CacheGuessingGameEnv(gym.Env):
       self.vprint('Reset...(also the cache state)')
       self.hierarchy = build_hierarchy(self.configs, self.logger)
       self.l1 = self.hierarchy['cache_1']
+      # check multicore
+      if 'cache_1_core_2' in self.hierarchy:
+        self.lv = self.hierarchy['cache_1_core_2']
+      else:
+        self.lv = self.hierarchy['cache_1']
+
       if seed == -1:
         self._randomize_cache()
       else:
@@ -593,7 +613,7 @@ class CacheGuessingGameEnv(gym.Env):
     if self.configs['cache_1']["rep_policy"] == "plru_pl": # pl cache victim access always uses locked access
       assert(self.victim_address_min == self.victim_address_max) # for plru_pl cache, only one address is allowed
       self.vprint("[reset] victim access %d locked cache line" % self.victim_address_max)
-      lat, cyclic_set_index, cyclic_way_index = self.l1.read(hex(self.ceaser_mapping(self.victim_address_max))[2:], self.current_step, replacement_policy.PL_LOCK, domain_id='v')
+      lat, cyclic_set_index, cyclic_way_index = self.lv.read(hex(self.ceaser_mapping(self.victim_address_max))[2:], self.current_step, replacement_policy.PL_LOCK, domain_id='v')
     self.last_state = None
 
     # self.reset_count += 1
@@ -621,6 +641,7 @@ class CacheGuessingGameEnv(gym.Env):
     #     #print(mapped_addr)
         
 
+    #self.lv.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='X')
     self.l1.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='X')
     #print("forming eviction set")
     #print_cache(self.l1)

@@ -226,6 +226,10 @@ class bit_plru(rep_policy):
 
     #def reset(self, tag):
     def invalidate(self, tag):
+        # might have to use the two lines below instead to check if tag is invalid
+        #assert(tag == INVALID_TAG or tag not in self.blocks)
+        #assert(len(self.blocks) < self.associativity)
+        
         assert(tag in self.blocks)
         del self.blocks[tag]
 
