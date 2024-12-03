@@ -220,7 +220,7 @@ class Cache:
                 # code for coherent eviction below was taken from master branch - evict_addr replaced with victim_addr
                 # coherent eviction
                 # inclusive eviction (evicting in L1 if evicted by the higher level)
-                if victim_addr != -1:
+                if int(victim_addr) != -1:
                     ###print('victim_addr '+ victim_addr)
                     ###print(victim_addr)
                     #assert(False)

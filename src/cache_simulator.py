@@ -242,7 +242,7 @@ def build_hierarchy(configs, logger):
         cache_2 = build_cache(configs, 'cache_2', prev_level, logger)
         prev_level = cache_2
         hierarchy['cache_2'] = cache_2
-    if 'cache_1_core_2' in configs.key():
+    if 'cache_1_core_2' in configs.keys():
         cache_1_core_2 = build_cache(configs, 'cache_1_core_2', prev_level, logger)
         prev_level = cache_2
         hierarchy['cache_1_core_2'] = cache_1_core_2
