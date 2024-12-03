@@ -37,8 +37,8 @@ num_eval_episodes: 100
 
 seed: null
 
-table_view: false
+table_view: true
 
 defaults:
-  - env_config: hpca_ae_exp_4_1
+  - env_config: hpca_ae_exp_4_16
   - model_config: transformer 
