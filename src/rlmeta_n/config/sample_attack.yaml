@@ -2,7 +2,7 @@ num_episodes: 100
 seed: null
 reset_cache_state: False
 
-checkpoint: "/AutoCAT/src/rlmeta_n/outputs/2024-11-28/00-49-40/ppo_agent-0.pth"
+checkpoint: "/AutoCAT/src/rlmeta_n/outputs/2024-12-05/21-41-40/ppo_agent-0.pth"
 deterministic_policy: True 
 
 defaults:

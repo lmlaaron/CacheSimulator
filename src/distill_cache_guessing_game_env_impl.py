@@ -11,11 +11,15 @@ import sys
 import replacement_policy
 from itertools import permutations
 
+from rlmeta.core.types import Action, TimeStep
+
+import torch
+
 import gym
 from gym import spaces
 
 from omegaconf.omegaconf import open_dict
-
+from textbook_attacker import *
 from cache_simulator import *
 
 import time
@@ -53,7 +57,7 @@ Episode termination:
   when there is guess before victim violation
   episode terminates
 """
-class CacheGuessingGameEnv(gym.Env):
+class DistillCacheGuessingGameEnv(gym.Env):
   metadata = {'render.modes': ['human']}
   def __init__(self, env_config={
    "length_violation_reward":-10000,
@@ -191,7 +195,6 @@ class CacheGuessingGameEnv(gym.Env):
     self.ceaser_access_count = 0
     self.mapping_func = lambda addr : addr
     # initially do a remap for the remapped cache
-    
     if self.rerandomize_victim == True:
         self.remap()
    
@@ -272,13 +275,15 @@ class CacheGuessingGameEnv(gym.Env):
       self.vprint("[init] victim access %d locked cache line" % self.victim_address_max)
       self.l1.read(hex(self.ceaser_mapping(self.victim_address_max))[2:], self.current_step, replacement_policy.PL_LOCK, domain_id='v')
 
-    '''
-    internal guessing buffer
-    does not change after reset
-    '''
+
+    self.teacher_agent = SHMAgent(env_config) 
+    self.last_timestep = TimeStep(torch.from_numpy(np.array(list(reversed(self.state)))), 0, False, False, {})
+    self.teacher_agent.observe_init(self.last_timestep)
+
     self.guess_buffer_size = 100
     self.guess_buffer = [False] * self.guess_buffer_size
     self.last_state = None
+
 
   '''
   clear the history buffer that calculates the correctness rate
@@ -314,6 +319,8 @@ class CacheGuessingGameEnv(gym.Env):
   this is the function that implements most of the logic
   '''
   def step(self, action):
+
+    teacher_action, _ = self.teacher_agent.act(self.last_timestep)
     '''
     For cyclone, default value of the cyclic set and way index
     '''
@@ -333,7 +340,8 @@ class CacheGuessingGameEnv(gym.Env):
     parse the action
     '''
     original_action = action
-    action = self.parse_action(original_action) 
+    
+    action = self.parse_action(teacher_action) 
     address = hex(action[0]+self.attacker_address_min)[2:]            # attacker address in attacker_address_space
     is_guess = action[1]                                              # check whether to guess or not
     is_victim = action[2]                                             # check whether to invoke victim
@@ -434,7 +442,6 @@ class CacheGuessingGameEnv(gym.Env):
               self.vprint("add " +str(action[0]+self.attacker_address_min) +" to eviction set ")
               self.evset.remove(action[0]+self.attacker_address_min)
               
-
               r = 0  #
               if self.evset_size == self.num_ways:
                 reward = self.correct_reward
@@ -546,7 +553,7 @@ class CacheGuessingGameEnv(gym.Env):
     append the current observation to the sliding window
     '''
     victim_accessed = 0
-    self.state.append([r, victim_accessed, original_action])#, self.step_count])
+    self.state.append([r, victim_accessed, teacher_action])#, self.step_count])
     self.state.popleft()
 
     self.step_count += 1
@@ -594,6 +601,15 @@ class CacheGuessingGameEnv(gym.Env):
     info["cyclic_way_index"] = cyclic_way_index
     info["cyclic_set_index"] = cyclic_set_index
 
+    if original_action == teacher_action:
+        reward = 1
+    else:
+        reward = 0
+
+    timestep = TimeStep(torch.from_numpy( np.array(list(reversed(self.state)))), reward, done, False, info)
+
+    self.teacher_agent.observe(0, timestep)
+    self.last_timestep = timestep
     return np.array(list(reversed(self.state))), reward, done, info
 
   '''
@@ -620,7 +636,6 @@ class CacheGuessingGameEnv(gym.Env):
       self.vprint('Reset...(cache state the same)')
 
     #self._reset(victim_address)  # fake reset
-
     '''
     reset the observation space
     '''
@@ -682,6 +697,10 @@ class CacheGuessingGameEnv(gym.Env):
     print(mapped_addr)
     #print(self.evset)
     self.evset.remove(self.victim_address_max)
+
+    self.last_timestep = TimeStep(torch.from_numpy( np.array(list(reversed(self.state)))),  0, False, False, {})
+    self.teacher_agent.observe_init(self.last_timestep)
+
     return np.array(list(reversed(self.state)))
 
   '''
@@ -866,3 +885,4 @@ class CacheGuessingGameEnv(gym.Env):
     #print(address)
     #print(is_guess)
     return [ address, is_guess, is_victim, is_flush, victim_addr, no_measure ] 
+

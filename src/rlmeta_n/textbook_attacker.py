@@ -211,6 +211,10 @@ class SHMAgent():
             break
 
         self.candidates.remove(self.cand_action)
+        self.evset_size = 0
+
+    def get_evset_size(self):
+        return self.evset_size
 
     # initialize the agent with an observation
     def observe_init(self, timestep):
@@ -220,6 +224,7 @@ class SHMAgent():
         self.no_prime = False
         self.cand_action = 0
 
+        self.evset_size = 0
         self.candidates = []
         for i in  range(0,1 + self.attacker_addr_e - self.attacker_addr_s):
             self.candidates.append(i)    
@@ -257,6 +262,8 @@ class SHMAgent():
             self.local_step += 1
         else: 
             if self.lat[-1].int() == 1: # check if add to evset or 
+                #print(type(self.lat[-1]))
+                #exit(-1)
                 act = -1
                 for act in self.candidates:
                   if act >= self.cand_action:
@@ -277,6 +284,7 @@ class SHMAgent():
                 self.local_step = 1
             else:
                 action = self.cand_action + 1  + 1 + self.attacker_addr_e - self.attacker_addr_s   
+                self.evset_size += 1
                 print("action " + str(action))
                 print("self.candidates")
                 bisect.insort(self.candidates, self.cand_action)
