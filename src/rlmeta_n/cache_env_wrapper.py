@@ -14,10 +14,7 @@ from rlmeta.envs.gym_wrapper import GymWrapper
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from cache_guessing_game_env_impl import CacheGuessingGameEnv
-<<<<<<< HEAD
-=======
 from distill_cache_guessing_game_env_impl import DistillCacheGuessingGameEnv
->>>>>>> remap_simp2
 from cchunter_wrapper import CCHunterWrapper
 from cyclone_wrapper import CycloneWrapper
 

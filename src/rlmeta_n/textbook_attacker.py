@@ -182,7 +182,8 @@ class OccupancyAgent():
 # single holdout method for eviction set finding
 class SHMAgent():
     # the config is the same as the config cor cache_guessing_game_env_impl
-    def __init__(self, env_config):
+    def __init__(self, env_config, name="default"):
+        self.name = name
         self.local_step = -1
         self.lat = []
         self.no_prime = False # set to true after first prime
@@ -244,9 +245,9 @@ class SHMAgent():
     # returns an action
     def act(self, timestep):
         info = {}
-        print(self.candidates)
-        print(self.local_step)
-        print(self.cand_action)
+        #####print(self.candidates)
+        #####print(self.local_step)
+        #####print(self.cand_action)
         ###### print(self.lat)
         # do prime
         #action = self.local_step % ( 1 + self.attacker_addr_e - self.attacker_addr_s )  # do prime 
@@ -274,9 +275,9 @@ class SHMAgent():
                 #if act == -1:
                 
                 #else:
-                print("check")
-                print(self.candidates)
-                print(self.cand_action)
+                #print("check")
+                #print(self.candidates)
+                #print(self.cand_action)
                 self.candidates.remove(self.cand_action)
                 
                 self.local_step = 0
@@ -285,10 +286,10 @@ class SHMAgent():
             else:
                 action = self.cand_action + 1  + 1 + self.attacker_addr_e - self.attacker_addr_s   
                 self.evset_size += 1
-                print("action " + str(action))
-                print("self.candidates")
+                #print("action " + str(action))
+                #print("self.candidates")
                 bisect.insort(self.candidates, self.cand_action)
-                print(self.candidates)
+                #print(self.candidates)
                 act = -1
                 for act in self.candidates:
                   if act > self.cand_action:
@@ -300,15 +301,18 @@ class SHMAgent():
                 else:    
                     self.candidates.remove(self.cand_action)
                 
-                print(self.candidates)
+                #print(self.candidates)
                 self.local_step = 0 
-
+        ####print(self.name + ' action')
+        ####print(action)
         return action, info
 
     # is it useful for non-ML agent or not???
     def observe(self, action, timestep):
         ####if self.local_step < 2 * self.cache_size + 1 + 1 - (self.cache_size if self.no_prime else 0 ) and self.local_step > self.cache_size - (self.cache_size if self.no_prime else 0 ):#- 1:
         ######    self.local_step += 1
+        ####print(self.name + ' observe ')
+        ####print(timestep.observation[0][0].int())
         self.lat.append(timestep.observation[0][0])
         return
 

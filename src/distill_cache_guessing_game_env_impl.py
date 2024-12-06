@@ -276,7 +276,7 @@ class DistillCacheGuessingGameEnv(gym.Env):
       self.l1.read(hex(self.ceaser_mapping(self.victim_address_max))[2:], self.current_step, replacement_policy.PL_LOCK, domain_id='v')
 
 
-    self.teacher_agent = SHMAgent(env_config) 
+    self.teacher_agent = SHMAgent(env_config, "teacher " ) 
     self.last_timestep = TimeStep(torch.from_numpy(np.array(list(reversed(self.state)))), 0, False, False, {})
     self.teacher_agent.observe_init(self.last_timestep)
 
@@ -671,7 +671,7 @@ class DistillCacheGuessingGameEnv(gym.Env):
         # not enough
     
     while len(mapped_addr[self.ceaser_mapping(self.victim_address_max) % int(self.cache_size / self.num_ways)]) < self.num_ways+ 1:
-        print("not forming a eviction set, remap again")
+        #print("not forming a eviction set, remap again")
         random.shuffle(self.perm)    
         #print(mapped_addr)
 
@@ -693,8 +693,8 @@ class DistillCacheGuessingGameEnv(gym.Env):
     self.l1.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='X')
     #print("forming eviction set")
     #print_cache(self.l1)
-    print(self.reset_count)
-    print(mapped_addr)
+    #print(self.reset_count)
+    #print(mapped_addr)
     #print(self.evset)
     self.evset.remove(self.victim_address_max)
 
@@ -717,9 +717,9 @@ class DistillCacheGuessingGameEnv(gym.Env):
   def calc_correct_seq(self, action_buffer):
     last_action, _ = action_buffer[-1]
     last_action = self.parse_action(last_action)
-    print(last_action)
+    #print(last_action)
     guess_addr = last_action[4]
-    print(guess_addr)
+    #print(guess_addr)
     self.reset(victim_addr = guess_addr)
     self.total_guess = 0
     self.correct_guess = 0

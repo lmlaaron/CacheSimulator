@@ -21,7 +21,9 @@ from rlmeta.envs.env import Env
 from rlmeta.utils.stats_dict import StatsDict
 import model_utils
 
-from cache_env_wrapper import CacheEnvWrapperFactory
+
+
+from cache_env_wrapper import DistillCacheEnvWrapperFactory, CacheEnvWrapperFactory
 from textbook_attacker import *
 
 
@@ -127,9 +129,10 @@ def main(cfg):
     ####agent = OccupancyAgent(
     ####    cfg.env_config
     ####)  #PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
-    agent = SHMAgent(
-        cfg.env_config
-    )  #PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
+    ####agent = SHMAgent(
+    ####    cfg.env_config,
+    ####    "sample "
+    ####)  #PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
 
 
     # Run loops
