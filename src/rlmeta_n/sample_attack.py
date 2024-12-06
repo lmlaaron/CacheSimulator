@@ -114,7 +114,7 @@ def run_loops(env: Env,
 def main(cfg):
     # Create env
     cfg.env_config.verbose = 1
-    env_fac = CacheEnvWrapperFactory(OmegaConf.to_container(cfg.env_config))
+    env_fac = DistillCacheEnvWrapperFactory(OmegaConf.to_container(cfg.env_config))
     env = env_fac(index=0)
 
     # Load model
@@ -123,16 +123,16 @@ def main(cfg):
     model.eval()
 
     # Create agent
-    agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
+    agent = PPOAgent(model, deterministic_policy=True)#cfg.deterministic_policy)
 
 
     ####agent = OccupancyAgent(
     ####    cfg.env_config
     ####)  #PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
-    ####agent = SHMAgent(
-    ####    cfg.env_config,
-    ####    "sample "
-    ####)  #PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
+    agent = SHMAgent(
+        cfg.env_config,
+        "sample "
+    )  #PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
 
 
     # Run loops

@@ -447,7 +447,7 @@ class CacheGuessingGameEnv(gym.Env):
               #self.evset_size += 1
               r = 1
               reward = self.wrong_reward #-9999
-              done = False #True
+              done = True
 
           #######if self.victim_accessed == False:
           #######    done = True 

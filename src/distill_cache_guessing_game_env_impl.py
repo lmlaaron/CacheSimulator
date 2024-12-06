@@ -604,7 +604,10 @@ class DistillCacheGuessingGameEnv(gym.Env):
     if original_action == teacher_action:
         reward = 1
     else:
+        #####print("original action :" +str(original_action))
+        #####print("teacher_action :"+str(teacher_action))
         reward = 0
+        done = True
 
     timestep = TimeStep(torch.from_numpy( np.array(list(reversed(self.state)))), reward, done, False, info)
 
