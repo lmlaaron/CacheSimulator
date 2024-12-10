@@ -114,16 +114,16 @@ def run_loops(env: Env,
 def main(cfg):
     # Create env
     cfg.env_config.verbose = 1
-    env_fac = DistillCacheEnvWrapperFactory(OmegaConf.to_container(cfg.env_config))
+    env_fac = CacheEnvWrapperFactory(OmegaConf.to_container(cfg.env_config))
     env = env_fac(index=0)
 
-    # Load model
-    model = model_utils.get_model(cfg.model_config, cfg.env_config.window_size,
-                                  env.action_space.n, cfg.checkpoint)
-    model.eval()
+    ###### Load model
+    #####model = model_utils.get_model(cfg.model_config, cfg.env_config.window_size,
+    #####                              env.action_space.n, cfg.checkpoint)
+    #####model.eval()
 
-    # Create agent
-    agent = PPOAgent(model, deterministic_policy=True)#cfg.deterministic_policy)
+    ###### Create agent
+    #####agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
 
 
     ####agent = OccupancyAgent(

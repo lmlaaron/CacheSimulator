@@ -229,7 +229,7 @@ class CacheGuessingGameEnv(gym.Env):
     '''
     self.max_box_value = max(self.window_size + 2,  2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space) + 1)#max(self.window_size + 2, len(self.attacker_address_space) + 1) 
     self.observation_space = spaces.Box(low=-1, high=self.max_box_value, shape=(self.window_size, self.feature_size))
-    self.state = deque([[-1, -1, -1]] * self.window_size)
+    self.state = deque([[-1, -1, -1, -1]] * self.window_size)
 
     '''
     initilizate the environment configurations
@@ -447,7 +447,7 @@ class CacheGuessingGameEnv(gym.Env):
               #self.evset_size += 1
               r = 1
               reward = self.wrong_reward #-9999
-              done = True
+              done = False #True
 
           #######if self.victim_accessed == False:
           #######    done = True 
@@ -546,7 +546,7 @@ class CacheGuessingGameEnv(gym.Env):
     append the current observation to the sliding window
     '''
     victim_accessed = 0
-    self.state.append([r, victim_accessed, original_action])#, self.step_count])
+    self.state.append([r, victim_accessed, original_action, self.step_count])
     self.state.popleft()
 
     self.step_count += 1
@@ -625,7 +625,7 @@ class CacheGuessingGameEnv(gym.Env):
     reset the observation space
     '''
     if reset_observation:
-        self.state = deque([[-1, -1, -1]] * self.window_size)
+        self.state = deque([[-1,-1, -1, -1]] * self.window_size)
         self.step_count = 0
 
     self.reset_time = 0
@@ -637,7 +637,7 @@ class CacheGuessingGameEnv(gym.Env):
     self.last_state = None
 
     self.reset_count += 1
-    if self.reset_count == 3:
+    if self.reset_count == 5:#3:
         self.reset_count = 0
         #print_cache(self.l1)
         #print(self.perm)

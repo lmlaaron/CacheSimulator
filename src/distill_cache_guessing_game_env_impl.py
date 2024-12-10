@@ -232,7 +232,7 @@ class DistillCacheGuessingGameEnv(gym.Env):
     '''
     self.max_box_value = max(self.window_size + 2,  2 * len(self.attacker_address_space) + 1 + len(self.victim_address_space) + 1)#max(self.window_size + 2, len(self.attacker_address_space) + 1) 
     self.observation_space = spaces.Box(low=-1, high=self.max_box_value, shape=(self.window_size, self.feature_size))
-    self.state = deque([[-1, -1, -1]] * self.window_size)
+    self.state = deque([[-1, -1, -1, -1]] * self.window_size)
 
     '''
     initilizate the environment configurations
@@ -553,7 +553,7 @@ class DistillCacheGuessingGameEnv(gym.Env):
     append the current observation to the sliding window
     '''
     victim_accessed = 0
-    self.state.append([r, victim_accessed, teacher_action])#, self.step_count])
+    self.state.append([r, victim_accessed, teacher_action, self.step_count])
     self.state.popleft()
 
     self.step_count += 1
@@ -602,12 +602,12 @@ class DistillCacheGuessingGameEnv(gym.Env):
     info["cyclic_set_index"] = cyclic_set_index
 
     if original_action == teacher_action:
-        reward = 1
+        reward = 1 #1.0/ pow(2,self.current_step)
     else:
         #####print("original action :" +str(original_action))
         #####print("teacher_action :"+str(teacher_action))
-        reward = 0
-        done = True
+        reward = -1 #-1.0 / pow(2, self.current_step)
+        ######done = True
 
     timestep = TimeStep(torch.from_numpy( np.array(list(reversed(self.state)))), reward, done, False, info)
 
@@ -643,7 +643,7 @@ class DistillCacheGuessingGameEnv(gym.Env):
     reset the observation space
     '''
     if reset_observation:
-        self.state = deque([[-1, -1, -1]] * self.window_size)
+        self.state = deque([[-1, -1, -1, -1]] * self.window_size)
         self.step_count = 0
 
     self.reset_time = 0

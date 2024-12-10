@@ -50,9 +50,12 @@ def main(cfg):
     env_fac = CacheEnvWrapperFactory(OmegaConf.to_container(cfg.env_config))
     env = env_fac(index=0)
 
+    print("checkpoint: "+ cfg.checkpoint)
     train_model = model_utils.get_model(
         cfg.model_config, cfg.env_config.window_size,
-        env.action_space.n, cfg.checkpoint ).to(cfg.train_device)
+        env.action_space.n ).to(cfg.train_device)
+        #env.action_space.n, cfg.checkpoint ).to(cfg.train_device)
+ 
     infer_model = copy.deepcopy(train_model).to(cfg.infer_device)
     infer_model.eval()
     optimizer = make_optimizer(train_model.parameters(), **cfg.optimizer)
@@ -86,7 +89,7 @@ def main(cfg):
                      optimizer=optimizer,
                      batch_size=cfg.batch_size,
                      learning_starts=cfg.get("learning_starts", None),
-                     entropy_coeff=cfg.get("entropy_coeff", 0.01),
+                     entropy_coeff=cfg.get("entropy_coeff", 0.1),
                      model_push_period=cfg.model_push_period)
     t_agent_fac = AgentFactory(PPOAgent, t_model, replay_buffer=t_rb)
     e_agent_fac = AgentFactory(PPOAgent, e_model, deterministic_policy=True)

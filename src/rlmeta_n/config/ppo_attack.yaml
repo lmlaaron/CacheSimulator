@@ -10,6 +10,7 @@ c_server_addr: "127.0.0.1:4413"
 train_device: "cuda:0"
 infer_device: "cuda:0"
 
+checkpoint: "/AutoCAT/src/rlmeta_n/outputs/2024-12-06/15-31-36/ppo_agent-16.pth"
 num_train_rollouts: 4 
 num_train_workers: 2 
 
