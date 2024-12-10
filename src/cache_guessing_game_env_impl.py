@@ -261,6 +261,18 @@ class CacheGuessingGameEnv(gym.Env):
         random.shuffle(self.perm)    
         #print(mapped_addr)
 
+    mapped_addr = []
+    for i in range(0, int( self.cache_size / self.num_ways)):
+        mapped_addr.append([])
+
+    #print(mapped_addr)
+    for i in range(0, self.attacker_address_max + 1):
+        #print(self.ceaser_mapping(i))
+        #print(int(self.ceaser_mapping(i) / self.num_ways))
+        mapped_addr[self.ceaser_mapping(i) % int(self.cache_size / self.num_ways)  ].append(i)
+        #print(self.ceaser_mapping(i))    
+        # not enough
+
     self.evset = mapped_addr[self.ceaser_mapping(self.victim_address_max) % int(self.cache_size / self.num_ways)]
     self.evset.remove(self.victim_address_max)
     self.evset_size = 0
