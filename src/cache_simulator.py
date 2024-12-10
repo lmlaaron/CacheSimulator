@@ -99,13 +99,15 @@ def print_cache(cache):
             set_ways = cache.data[set_indexes[len(set_indexes) - 1]].keys()
             temp_way = ['Set ' + str(len(set_indexes) - 1)]
             for w in range(0, cache.associativity):
-                temp_way.append(cache.data[set_indexes[len(set_indexes) - 1]][w][1].address)
+                temp_way.append(cache.data[set_indexes[len(set_indexes) - 1]][w][1].address + ' '
+                                     + str(cache.data[set_indexes[len(set_indexes) - 1]][w][1].last_accessed))
             sets.append(temp_way)
         else: 
             for s in range(len(set_indexes)):
                 temp_way = ["Set " + str(s)]
                 for w in range(0, cache.associativity):
-                    temp_way.append(cache.data[set_indexes[s]][w][1].address)
+                    temp_way.append(cache.data[set_indexes[s]][w][1].address + ' ' +
+                                       str( cache.data[set_indexes[s]][w][1].last_accessed))
                 sets.append(temp_way)
 
         table = UnixTable(sets)

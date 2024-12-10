@@ -261,17 +261,20 @@ class CacheGuessingGameEnv(gym.Env):
         random.shuffle(self.perm)    
         #print(mapped_addr)
 
-    mapped_addr = []
-    for i in range(0, int( self.cache_size / self.num_ways)):
-        mapped_addr.append([])
+        mapped_addr = []
+        for i in range(0, int( self.cache_size / self.num_ways)):
+            mapped_addr.append([])
 
-    #print(mapped_addr)
-    for i in range(0, self.attacker_address_max + 1):
-        #print(self.ceaser_mapping(i))
-        #print(int(self.ceaser_mapping(i) / self.num_ways))
-        mapped_addr[self.ceaser_mapping(i) % int(self.cache_size / self.num_ways)  ].append(i)
-        #print(self.ceaser_mapping(i))    
-        # not enough
+        #print(mapped_addr)
+        for i in range(0, self.attacker_address_max + 1):
+            #print(self.ceaser_mapping(i))
+            #print(int(self.ceaser_mapping(i) / self.num_ways))
+            mapped_addr[self.ceaser_mapping(i) % int(self.cache_size / self.num_ways)  ].append(i)
+            #print(self.ceaser_mapping(i))    
+            # not enough
+
+        if not len(mapped_addr[self.ceaser_mapping(self.victim_address_max) % int(self.cache_size / self.num_ways)]) < self.num_ways+ 1:
+            break
 
     self.evset = mapped_addr[self.ceaser_mapping(self.victim_address_max) % int(self.cache_size / self.num_ways)]
     self.evset.remove(self.victim_address_max)
@@ -326,6 +329,11 @@ class CacheGuessingGameEnv(gym.Env):
   this is the function that implements most of the logic
   '''
   def step(self, action):
+    #print_cache(self.l1)
+
+
+
+
     '''
     For cyclone, default value of the cyclic set and way index
     '''
@@ -667,27 +675,51 @@ class CacheGuessingGameEnv(gym.Env):
         #print(self.ceaser_mapping(i))    
         # not enough
     
+    ####while len(mapped_addr[self.ceaser_mapping(self.victim_address_max) % int(self.cache_size / self.num_ways)]) < self.num_ways+ 1:
+    ####    print("not forming a eviction set, remap again")
+    ####    random.shuffle(self.perm)    
+    ####    #print(mapped_addr)
+
+    ####mapped_addr = []
+    ####for i in range(0, int( self.cache_size / self.num_ways)):
+    ####    mapped_addr.append([])
+
+    #####print(mapped_addr)
+    ####for i in range(0, self.attacker_address_max + 1):
+    ####    #####print(i)
+    ####    #####print(hex(self.ceaser_mapping(i)))
+    ####    #####print(int(self.ceaser_mapping(i) / self.num_ways))
+    ####    mapped_addr[self.ceaser_mapping(i) % int(self.cache_size / self.num_ways)  ].append(i)
+    ####    #print(self.ceaser_mapping(i))    
+    ####    # not enough
+
+
     while len(mapped_addr[self.ceaser_mapping(self.victim_address_max) % int(self.cache_size / self.num_ways)]) < self.num_ways+ 1:
         print("not forming a eviction set, remap again")
-        random.shuffle(self.perm)    
+        random.shuffle(self.perm)
         #print(mapped_addr)
 
-    mapped_addr = []
-    for i in range(0, int( self.cache_size / self.num_ways)):
-        mapped_addr.append([])
+        mapped_addr = []
+        for i in range(0, int( self.cache_size / self.num_ways)):
+            mapped_addr.append([])
 
-    #print(mapped_addr)
-    for i in range(0, self.attacker_address_max + 1):
-        #print(self.ceaser_mapping(i))
-        #print(int(self.ceaser_mapping(i) / self.num_ways))
-        mapped_addr[self.ceaser_mapping(i) % int(self.cache_size / self.num_ways)  ].append(i)
-        #print(self.ceaser_mapping(i))    
-        # not enough
+        #print(mapped_addr)
+        for i in range(0, self.attacker_address_max + 1):
+            #print(self.ceaser_mapping(i))
+            #print(int(self.ceaser_mapping(i) / self.num_ways))
+            mapped_addr[self.ceaser_mapping(i) % int(self.cache_size / self.num_ways)  ].append(i)
+            #print(self.ceaser_mapping(i))    
+            # not enough
+
+        if not len(mapped_addr[self.ceaser_mapping(self.victim_address_max) % int(self.cache_size / self.num_ways)]) < self.num_ways+ 1:
+            break
+
 
     self.evset = mapped_addr[self.ceaser_mapping(self.victim_address_max) % int(self.cache_size / self.num_ways)]
     self.evset_size = 0
 
     self.l1.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='X')
+    self.current_step += 1
     #print("forming eviction set")
     #print_cache(self.l1)
     print(self.reset_count)
@@ -740,7 +772,7 @@ class CacheGuessingGameEnv(gym.Env):
   the actual physical state of the cache does not change
   '''
   def _reset(self, victim_address=-1):
-    self.current_step = 0
+    self.current_step = 0 
     self.victim_accessed = False
     if victim_address == -1:
       if self.allow_empty_victim_access == False:
@@ -794,7 +826,7 @@ class CacheGuessingGameEnv(gym.Env):
     #####  return
     if mode == "none":
       return
-    self.current_step = -self.cache_size * 2 
+    self.current_step = -self.cache_size * 2
     for _ in range(self.cache_size * 2):
       if mode == "victim":
         addr = random.randint(self.victim_address_min, self.victim_address_max)
@@ -812,9 +844,9 @@ class CacheGuessingGameEnv(gym.Env):
       self.current_step += 1
 
     if mode == "evset":
-      self.l1.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='X')
-      self.vprint("installed victim")
-      self.current_step += 1
+        self.l1.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='X')
+        self.vprint("installed victim")
+        self.current_step += 1
   '''
   rerturns the dimension of the observation space
   '''

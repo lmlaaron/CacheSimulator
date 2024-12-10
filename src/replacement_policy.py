@@ -40,6 +40,14 @@ class lru_policy(rep_policy):
     def touch(self, tag, timestamp):
         assert(tag in self.blocks)
         self.blocks[tag].last_accessed = timestamp
+        #for itag in self.blocks:
+        #    #if itag == INVALID_TAG:
+        #    #    print(itag)
+        #    #else:
+        #    #    print(hex(itag))
+        #    print(hex(self.blocks[itag].address))
+        #    print(self.blocks[itag].last_accessed)
+        
 
     def reset(self, tag, timestamp):
         return self.touch(tag, timestamp)

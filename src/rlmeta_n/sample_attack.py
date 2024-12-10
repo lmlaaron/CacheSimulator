@@ -117,13 +117,13 @@ def main(cfg):
     env_fac = CacheEnvWrapperFactory(OmegaConf.to_container(cfg.env_config))
     env = env_fac(index=0)
 
-    ###### Load model
-    #####model = model_utils.get_model(cfg.model_config, cfg.env_config.window_size,
-    #####                              env.action_space.n, cfg.checkpoint)
-    #####model.eval()
+    # Load model
+    model = model_utils.get_model(cfg.model_config, cfg.env_config.window_size,
+                                  env.action_space.n, cfg.checkpoint)
+    model.eval()
 
     ###### Create agent
-    #####agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
+    agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
 
 
     ####agent = OccupancyAgent(
