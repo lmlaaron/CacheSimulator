@@ -39,4 +39,4 @@ cache_configs:
   mem:
     hit_time: 1000
 
-window_size: 64
+window_size: 128
