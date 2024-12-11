@@ -177,9 +177,9 @@ class Cache:
         r = None
         #Check if this is main memory
         #Main memory is always a hit
-        victim_addr = "-1"
         if not self.next_level:
             r = response.Response({self.name:True}, self.hit_time)
+            victim_addr = "-1"
         else:
             #Parse our address to look through this cache
             block_offset, index, tag = self.parse_address(address)
@@ -212,9 +212,12 @@ class Cache:
                 if pl_opt != -1: 
                     self.set_rep_policy[index].setlock(tag, pl_opt)
                 r = response.Response({self.name:True}, self.hit_time)
+                
+                victim_addr = "-1"
+
             else:
                 #Read from the next level of memory
-                r, cyclic_set_index, cyclic_way_index, _ = self.next_level.read(address, current_step, pl_opt)
+                r, cyclic_set_index, cyclic_way_index, victim_addr = self.next_level.read(address, current_step, pl_opt)
                 r.deepen(self.write_time, self.name)
 
                 # code for coherent eviction below was taken from master branch - evict_addr replaced with victim_addr
@@ -306,6 +309,10 @@ class Cache:
                         self.set_rep_policy[index].instantiate_entry(tag, current_step)
                         if pl_opt != -1:
                             self.set_rep_policy[index].setlock(tag, pl_opt)
+
+                    else:
+                        victim_addr = "-1"
+
         return r, cyclic_set_index, cyclic_way_index, victim_addr
 
     # pl_opt: indicates the PL cache option

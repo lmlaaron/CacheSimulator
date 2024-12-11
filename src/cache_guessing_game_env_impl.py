@@ -640,9 +640,9 @@ class CacheGuessingGameEnv(gym.Env):
     #     random.shuffle(self.perm)    
     #     #print(mapped_addr)
         
+    # reads victim address into the cache after reset
+    self.lv.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='X')
 
-    #self.lv.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='X')
-    self.l1.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='X')
     #print("forming eviction set")
     #print_cache(self.l1)
     print(self.reset_count)
