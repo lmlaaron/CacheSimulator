@@ -29,7 +29,7 @@ optimizer:
 learning_starts: 65536
 model_push_period: 10
 
-entropy_coeff: 0.02
+entropy_coeff: 0.1
 
 num_epochs: 1000
 steps_per_epoch: 3000
@@ -38,7 +38,7 @@ num_eval_episodes: 100
 
 seed: null
 
-table_view: false
+table_view: true
 
 defaults:
   - env_config: hpca_ae_exp_4_1

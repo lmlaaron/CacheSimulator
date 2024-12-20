@@ -118,12 +118,12 @@ def main(cfg):
     env = env_fac(index=0)
 
     # Load model
-    model = model_utils.get_model(cfg.model_config, cfg.env_config.window_size,
-                                  env.action_space.n, cfg.checkpoint)
-    model.eval()
+    #model = model_utils.get_model(cfg.model_config, cfg.env_config.window_size,
+    #                              env.action_space.n, cfg.checkpoint)
+    #model.eval()
 
     ###### Create agent
-    agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
+    #agent = PPOAgent(model, deterministic_policy=cfg.deterministic_policy)
 
 
     ####agent = OccupancyAgent(
