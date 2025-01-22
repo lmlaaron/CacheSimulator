@@ -361,7 +361,9 @@ class CacheGuessingGameEnv(gym.Env):
           if True: #self.configs['cache_1']["rep_policy"] == "plru_pl": no need to distinuish pl and normal rep_policy
             if self.victim_address <= self.victim_address_max:
               self.vprint("victim access %d " % self.victim_address)
-              t, cyclic_set_index, cyclic_way_index, _ = self.lv.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='v')
+              t, cyclic_set_index, cyclic_way_index, evicted_addr = self.lv.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='v')
+              if evicted_addr != "-1":
+                self.vprint('evicted_addr (mapped) is ' + hex(int(evicted_addr,2)) +' victim address is ' + str(self.victim_address) + ' mapped victim address is ' + hex(self.ceaser_mapping(self.victim_address)) )
               t = t.time # do not need to lock again            
             else:
               self.vprint("victim make a empty access!") # do not need to actually do something
@@ -642,9 +644,12 @@ class CacheGuessingGameEnv(gym.Env):
         
     # reads victim address into the cache after reset
     self.lv.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='X')
+    self.current_step += 1
 
     #print("forming eviction set")
     #print_cache(self.l1)
+    
+    # comment this out for cleaner training output
     print(self.reset_count)
     print(mapped_addr)
 

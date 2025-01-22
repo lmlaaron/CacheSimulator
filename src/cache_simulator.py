@@ -169,7 +169,7 @@ def simulate(hierarchy, trace, logger, result_file=''):
             #assert(op == 'F')
             logger.info(str(current_step) + ':\tFlushing ' + address + ' ' + op)
             r, _, _ = l1.cflush(address, current_step)
-            #logger.warning('\thit_list: ' + pprint.pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')                       
+            #logger.warning('\thit_list: ' + pcd ..pformat(r.hit_list) + '\ttime: ' + str(r.time) + '\n')                       
         else:
             raise InvalidOpError
         
@@ -234,24 +234,41 @@ def build_hierarchy(configs, logger):
     main_memory = build_cache(configs, 'mem', None, logger)
     prev_level = main_memory
     hierarchy['mem'] = main_memory
+    
     if 'cache_3' in configs.keys():
         cache_3 = build_cache(configs, 'cache_3', prev_level, logger)
         prev_level = cache_3
         hierarchy['cache_3'] = cache_3
+    
     if 'cache_2' in configs.keys():
         cache_2 = build_cache(configs, 'cache_2', prev_level, logger)
         prev_level = cache_2
         hierarchy['cache_2'] = cache_2
-    if 'cache_1_core_2' in configs.keys():
-        cache_1_core_2 = build_cache(configs, 'cache_1_core_2', prev_level, logger)
-        prev_level = cache_2
-        hierarchy['cache_1_core_2'] = cache_1_core_2
+    
     #Cache_1 is required
     cache_1 = build_cache(configs, 'cache_1', prev_level, logger)
-    if 'cache_1_core_2' in configs.keys():
+    hierarchy['cache_1'] = cache_1
+    
+    if 'cache_2_core_2' in configs.keys():
+        prev_level = main_memory
+        if 'cache_3' in configs.keys():
+            prev_level = cache_3
+        cache_2_core_2 = build_cache(configs, 'cache_2_core_2', prev_level, logger)
+        hierarchy['cache_2_core_2'] = cache_2_core_2
+        cache_2.add_same_level_cache(cache_2_core_2)
+        cache_2_core_2.add_same_level_cache(cache_2)
+        
+        prev_level = cache_2_core_2
+        # if statement likely unnecessary b/c cache_2_core_2 will probably always be used with cache_1_core_2
+        if 'cache_1_core_2' in configs.keys():
+            cache_1_core_2 = build_cache(configs, 'cache_1_core_2', prev_level, logger)
+            hierarchy['cache_1_core_2'] = cache_1_core_2
+    elif 'cache_1_core_2' in configs.keys():
+        cache_1_core_2 = build_cache(configs, 'cache_1_core_2', prev_level, logger)
+        hierarchy['cache_1_core_2'] = cache_1_core_2
         cache_1.add_same_level_cache(cache_1_core_2)
         cache_1_core_2.add_same_level_cache(cache_1)
-    hierarchy['cache_1'] = cache_1
+    
     return hierarchy
 
 def build_cache(configs, name, next_level_cache, logger):

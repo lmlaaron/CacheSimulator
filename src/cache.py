@@ -252,6 +252,9 @@ class Cache:
                                 #slc.set_rep_policy[evict_index].instantiate_entry(INVALID_TAG, current_step)
                                 break
 
+                    self.vprint(f"Victim address: {address}, Index: {index}, Tag: {tag}")
+                    self.vprint(f"Evicted address: {hex(int(victim_addr, 2))}, Index: {evict_index}, Tag: {evict_tag}")
+
                 r.deepen(self.write_time, self.name)
 
                 # refresh in_cache after coherent eviction
@@ -312,7 +315,8 @@ class Cache:
 
                     else:
                         victim_addr = "-1"
-
+        
+        
         return r, cyclic_set_index, cyclic_way_index, victim_addr
 
     # pl_opt: indicates the PL cache option
