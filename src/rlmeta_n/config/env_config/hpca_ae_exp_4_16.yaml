@@ -10,10 +10,10 @@ force_victim_hit: false
 flush_inst: false
 allow_victim_multi_access: true
 allow_empty_victim_access: false
-attacker_addr_s: 4 
-attacker_addr_e: 11
+attacker_addr_s: 4
+attacker_addr_e: 19
 victim_addr_s: 0
-victim_addr_e: 0 
+victim_addr_e: 0
 reset_limit: 1
 
 cache_configs:
@@ -26,14 +26,24 @@ cache_configs:
     associativity: 2
     hit_time: 1
     rep_policy: "lru"
-  cache_1_core_2:  
+  cache_1_core_2:
     blocks: 8
     associativity: 2
     hit_time: 1
     rep_policy: "lru"
   cache_2:
     blocks: 8
-    associativity: 2 
+    associativity: 2
+    hit_time: 501
+    rep_policy: "lru"
+  cache_2_core_2:
+    blocks: 8
+    associativity: 2
+    hit_time: 501
+    rep_polocy: "lru"
+  cache_3:
+    blocks: 8
+    associativity: 4
     hit_time: 501
     rep_policy: "lru"
   mem:

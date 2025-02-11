@@ -1,16 +1,34 @@
 # YAML config file for cache simulator
 
 architecture:
-  word_size: 1 #bytes
-  block_size: 1 #bytes
-  write_back: true
-
-cache_1: #required
-  blocks: 4 
-  associativity: 4  
-  hit_time: 1 #cycles
+    word_size: 1
+    block_size: 1
+    write_back: true
+cache_1:
+  blocks: 8
+  associativity: 4
+  hit_time: 1
   rep_policy: lru
-
-mem: #required
-  hit_time: 1000 #cycles
+cache_1_core_2:
+  blocks: 8
+  associativity: 4
+  hit_time: 1
+  rep_policy: lru
+cache_2:
+  blocks: 8
+  associativity: 2
+  hit_time: 10
+  rep_policy: lru
+cache_2_core_2:
+  blocks: 8
+  associativity: 2
+  hit_time: 10
+  rep_polocy: lru
+cache_3:
+  blocks: 8
+  associativity: 4
+  hit_time: 100
+  rep_policy: lru
+mem:
+  hit_time: 1000
 

@@ -62,6 +62,9 @@ class Cache:
         #Main memory gets the default None value
         self.next_level = next_level
 
+        #Pointer to the level of memory next closest to the CPU (only used for L2)
+        self.next_higher_level = None
+
         #Figure out spans to cut the binary addresses into block_offset, index, and tag
         self.block_offset_size = int(math.log(self.block_size, 2))
         self.index_size = int(math.log(self.n_sets, 2))
@@ -117,6 +120,9 @@ class Cache:
     # for multicore caches, if two same levels are connected to the shared caches then add
     def add_same_level_cache(self, cache):
         self.same_level_caches.append(cache)
+
+    def add_next_higher_level(self, cache):
+        self.next_higher_level = cache
 
     # read with prefetcher
     def read(self, address, current_step, pl_opt= -1, domain_id = 'X'):
@@ -250,7 +256,23 @@ class Cache:
                                 slc.data[evict_index][i] = (INVALID_TAG, block.Block(slc.block_size, current_step, False, 'x'))
                                 slc.set_rep_policy[evict_index].invalidate(evict_tag)
                                 #slc.set_rep_policy[evict_index].instantiate_entry(INVALID_TAG, current_step)
+
+                                if slc.name == "cache_2":
+                                    l1_to_evict = slc.next_higher_level
+                                elif slc.name == "cache_2_core_2":
+                                    l1_to_evict = slc.next_higher_level
+                                else:
+                                    l1_to_evict = None
+                                
+                                if l1_to_evict:
+                                    evict_l1_block_offset, evict_l1_index, evict_l1_tag = l1_to_evict.parse_address(hex(int(victim_addr, 2))[2:].zfill(8))
+                                    for j in range(len(l1_to_evict.data[evict_l1_index])):
+                                        if l1_to_evict.data[evict_l1_index][j][0] == evict_l1_tag:
+                                            l1_to_evict.data[evict_l1_index][j] = (INVALID_TAG, block.Block(l1_to_evict.block_size, current_step, False, "x"))
+                                            l1_to_evict.set_rep_policy[evict_l1_index].invalidate(evict_l1_tag)
+                                            break
                                 break
+                                
 
                     self.vprint(f"Victim address: {address}, Index: {index}, Tag: {tag}")
                     self.vprint(f"Evicted address: {hex(int(victim_addr, 2))}, Index: {evict_index}, Tag: {evict_tag}")
