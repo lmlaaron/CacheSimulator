@@ -5,30 +5,30 @@ architecture:
     block_size: 1
     write_back: true
 cache_1:
-  blocks: 8
-  associativity: 4
+  blocks: 32
+  associativity: 8
   hit_time: 1
-  rep_policy: lru
+  rep_policy: plru
 cache_1_core_2:
-  blocks: 8
-  associativity: 4
+  blocks: 32
+  associativity: 8
   hit_time: 1
-  rep_policy: lru
+  rep_policy: plru
 cache_2:
-  blocks: 8
-  associativity: 2
-  hit_time: 10
-  rep_policy: lru
-cache_2_core_2:
-  blocks: 8
-  associativity: 2
-  hit_time: 10
-  rep_polocy: lru
-cache_3:
-  blocks: 8
+  blocks: 16
   associativity: 4
+  hit_time: 10
+  rep_policy: plru
+cache_2_core_2:
+  blocks: 16
+  associativity: 4
+  hit_time: 10
+  rep_polocy: plru
+cache_3:
+  blocks: 64
+  associativity: 16
   hit_time: 100
-  rep_policy: lru
+  rep_policy: brrip
 mem:
   hit_time: 1000
 
