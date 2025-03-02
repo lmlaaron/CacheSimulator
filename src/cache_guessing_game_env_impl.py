@@ -371,9 +371,7 @@ class CacheGuessingGameEnv(gym.Env):
               # access scope line to check if it's in the attacker's private cache
               # ** might need to add r= statement ** 
               self.vprint("attacker access scope line (address %d)" % self.scope_line)
-              scope_t, cyclic_set_index, cyclic_way_index, evicted_addr = self.l1.read(hex(self.ceaser_mapping(self.scope_line))[2:], self.current_step, domain_id='v')
-              self.step_count+=1
-              self.current_step+=1
+              scope_t, cyclic_set_index, cyclic_way_index, evicted_addr = self.l1.read(hex(self.ceaser_mapping(self.scope_line))[2:], self.current_step, domain_id='a')
               if evicted_addr != "-1":
                 self.vprint('evicted_addr (mapped) is ' + hex(int(evicted_addr,2)) +' victim address is ' + str(self.victim_address) + ' mapped victim address is ' + hex(self.ceaser_mapping(self.victim_address)) )
               scope_t = scope_t.time
@@ -381,6 +379,7 @@ class CacheGuessingGameEnv(gym.Env):
                 reward += self.scope_line_not_in_cache_reward
               else:
                 reward += self.scope_line_in_cache_reward
+              self.current_step+=1
 
               self.vprint("victim access %d " % self.victim_address)
               t, cyclic_set_index, cyclic_way_index, evicted_addr = self.lv.read(hex(self.ceaser_mapping(self.victim_address))[2:], self.current_step, domain_id='v')
@@ -391,16 +390,15 @@ class CacheGuessingGameEnv(gym.Env):
               # access scope line again to check if it was evicted by the victim
               # ** might need to add r= statement **
               self.vprint("attacker access scope line (address %d)" % self.scope_line)
-              scope_t, cyclic_set_index, cyclic_way_index, evicted_addr = self.l1.read(hex(self.ceaser_mapping(self.scope_line))[2:], self.current_step, domain_id='v')
-              self.step_count+=1
-              self.current_step+=1
+              scope_t, cyclic_set_index, cyclic_way_index, evicted_addr = self.l1.read(hex(self.ceaser_mapping(self.scope_line))[2:], self.current_step, domain_id='a')
               if evicted_addr != "-1":
                 self.vprint('evicted_addr (mapped) is ' + hex(int(evicted_addr,2)) +' victim address is ' + str(self.victim_address) + ' mapped victim address is ' + hex(self.ceaser_mapping(self.victim_address)) )
               scope_t = scope_t.time
               if scope_t > 500:
                 reward += self.scope_line_evicted_reward
               else:
-                reward += self.scope_line_not_evicted_reward     
+                reward += self.scope_line_not_evicted_reward   
+              self.current_step+=1  
 
             else:
               self.vprint("victim make a empty access!") # do not need to actually do something
@@ -409,7 +407,7 @@ class CacheGuessingGameEnv(gym.Env):
           if t > 500:   # for LRU attack, has to force victim access being hit
             victim_latency = 1
             self.current_step += 1
-            reward += self.victim_miss_reward #-5000
+            v_reward = self.victim_miss_reward #-5000
             if self.force_victim_hit == True:
               done = True
               self.vprint("victim access has to be hit! terminate!")
@@ -418,12 +416,12 @@ class CacheGuessingGameEnv(gym.Env):
           else:
             victim_latency = 0
             self.current_step += 1
-            reward += self.victim_access_reward #-10
+            v_reward = self.victim_access_reward #-10
             done = False
 
 
           if victim_latency == 1:
-            reward += self.correct_reward
+            v_reward = self.correct_reward
             self.evict_count += 1
             if self.evict_count == 5:
               self.evict_count = 0
@@ -433,18 +431,21 @@ class CacheGuessingGameEnv(gym.Env):
               done = False
               self.vprint('victim access miss, self.evict_count ' + str(self.evict_count))
           else:
-              reward +=  3 * self.step_reward
+              v_reward  =  3 * self.step_reward
               self.vprint('victim access hit')
 
           # make victims latency available (for eviction set finding)
           r = victim_latency
+
+          reward += v_reward
         else:
           r = 2
           self.vprint("does not allow multi victim access in this config, terminate!")
           self.current_step += 1
-          reward += self.double_victim_access_reward # -10000
+          reward = self.double_victim_access_reward # -10000
 
           done = True
+
       else:
         if False: #is_guess == True:
           r = 2  #
@@ -687,8 +688,8 @@ class CacheGuessingGameEnv(gym.Env):
     #print_cache(self.l1)
     
     # comment this out for cleaner training output
-    print(self.reset_count)
-    print(mapped_addr)
+    # print(self.reset_count)
+    # print(mapped_addr)
 
     return np.array(list(reversed(self.state)))
 

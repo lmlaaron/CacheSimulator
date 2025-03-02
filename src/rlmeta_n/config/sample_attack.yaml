@@ -1,4 +1,4 @@
-num_episodes: 1000 
+num_episodes: 1
 seed: null
 reset_cache_state: False
 
@@ -6,5 +6,5 @@ checkpoint: "/AutoCAT/src/rlmeta_n/outputs/2024-11-22/03-18-34/ppo_agent-16.pth"
 deterministic_policy: True 
 
 defaults:
-  - env_config: hpca_ae_exp_4_1
+  - env_config: hpca_ae_exp_4_16
   - model_config: transformer
